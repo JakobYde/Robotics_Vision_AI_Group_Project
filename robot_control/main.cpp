@@ -4,7 +4,11 @@
 
 #include <opencv2/opencv.hpp>
 
+#include <fl/Headers.h>
+
+#include <array>
 #include <iostream>
+#include <math.h>
 
 static boost::mutex mutex;
 
@@ -49,9 +53,135 @@ void cameraCallback(ConstImageStampedPtr &msg) {
   mutex.unlock();
 }
 
-void lidarCallback(ConstLaserScanStampedPtr &msg) {
+const int subRanges = 5;
+std::array<float, subRanges> rangeArray;
 
-  //  std::cout << ">> " << msg->DebugString() << std::endl;
+struct line
+{
+    float alpha;
+    float radius;
+    line(float alphaInit, float radiusInit) {
+        alpha = alphaInit;
+        radius = radiusInit;
+    }
+    line() {}
+};
+
+struct point
+{
+    float tehta;
+    float radius;
+    point(float tehtaInit, float radiusInit) {
+        tehta = tehtaInit;
+        radius = radiusInit;
+    }
+    point() {}
+};
+
+line calLine(std::vector<point> poins){
+    float sum1T1 = 0.0f;
+    float sum1B1 = 0.0f;
+    float sum1T2 = 0.0f;
+    float sum1B2 = 0.0f;
+
+    line lin;
+
+    for(size_t i = 0; i<poins.size(); i++){
+        float tehtai = poins.at(i).tehta;
+        float radiusi = poins.at(i).radius;
+
+        float power = pow(radiusi,2);
+        sum1T1 += power*sin(2*tehtai);
+        sum1B1 += power*cos(2*tehtai);
+
+        for(size_t j = 0; j<poins.size(); j++){
+            float tehtaj = poins.at(j).tehta;
+            float radiusj = poins.at(j).radius;
+            sum1T2 += radiusi*radiusj*cos(tehtai)*sin(tehtaj);
+            sum1B2 += radiusi*radiusj*cos(tehtai+tehtaj);
+        }
+    }
+
+    lin.alpha = 1/2.0*atan((sum1T1-(2.0f/poins.size())*sum1T2)/(sum1B1-(1.0f/poins.size())*sum1B2));
+
+    float sum2T = 0.0f;
+
+    for(size_t i = 0; i<poins.size(); i++){
+        float tehtai = poins.at(i).tehta;
+        float radiusi = poins.at(i).radius;
+
+        sum2T += radiusi*cos(tehtai-lin.alpha);
+    }
+
+    lin.radius = sum2T/poins.size();
+
+    return lin;
+}
+
+float dist(point pos, line lin){
+    return (float)(pos.radius*cos(pos.tehta-lin.alpha)-lin.radius);
+}
+
+int findMaxDistIndex(std::vector<point> poins, line lin){
+    float max = 0;
+    int maxIndex = -1;
+    for (size_t i = 0; i < poins.size(); i++) {
+        float dis = dist(poins.at(i), lin);
+        if(max < dis){
+            max = dis;
+            maxIndex = i;
+        }
+    }
+    return maxIndex;
+}
+
+float calDistSum(std::vector<point> poins, line lin){
+    float disSum = 0.0f;
+    for(size_t i = 0; i<poins.size(); i++){
+        disSum += pow(dist(poins.at(i), lin),2);
+    }
+    return disSum;
+}
+
+std::vector<line> splitAndMerge(std::vector<point> poins){
+    float maxDistThreshold = 10;
+    std::vector<line> doneLines;
+
+    std::vector<std::vector<point>> l;
+
+    l.push_back(poins);
+
+    while(not l.empty()){
+
+        std::vector<point> set = l.front();
+        l.pop_back();
+
+        line lin = calLine(set);
+        int maxIndex = findMaxDistIndex(set,lin);
+        float maxDist = dist(set.at(maxIndex),lin);
+        std::cout << "Number of sets: " << l.size() << " max dist: " << maxDist << std::endl;
+        if(maxDist >= maxDistThreshold){
+            std::vector<point> set1;
+            std::vector<point> set2;
+
+            for(size_t i = 0; i<maxIndex; i++){
+                set1.push_back(set.at(i));
+            }
+            for(size_t i = maxIndex; i<set.size(); i++){
+                set2.push_back(set.at(i));
+            }
+            l.push_back(set1);
+            l.push_back(set2);
+        }else{
+            doneLines.push_back(lin);
+        }
+    }
+    return doneLines;
+}
+
+void lidarCallbackImg(ConstLaserScanStampedPtr &msg) {
+
+  //std::cout << ">> " << msg->DebugString() << std::endl;
   float angle_min = float(msg->scan().angle_min());
   //  double angle_max = msg->scan().angle_max();
   float angle_increment = float(msg->scan().angle_step());
@@ -81,8 +211,14 @@ void lidarCallback(ConstLaserScanStampedPtr &msg) {
                         200.5f - range_min * px_per_m * std::sin(angle));
     cv::Point2f endpt(200.5f + range * px_per_m * std::cos(angle),
                       200.5f - range * px_per_m * std::sin(angle));
-    cv::line(im, startpt * 16, endpt * 16, cv::Scalar(255, 255, 255, 255), 1,
-             cv::LINE_AA, 4);
+
+    cv::Scalar collor = cv::Scalar(255, 255, 255, 255);
+
+    if(i%(nranges/subRanges)==0 or i==(nranges-1)) collor = cv::Scalar(0,0, 255, 255);
+    else if(range==rangeArray.at(i/(nranges/subRanges))) collor = cv::Scalar(0,255, 0, 255);
+
+    cv::line(im, startpt * 16, endpt * 16, collor, 1, cv::LINE_AA, 4);
+
 
     //    std::cout << angle << " " << range << " " << intensity << std::endl;
   }
@@ -94,6 +230,57 @@ void lidarCallback(ConstLaserScanStampedPtr &msg) {
   mutex.lock();
   cv::imshow("lidar", im);
   mutex.unlock();
+}
+
+void lidarCallbackArrayUpdate(ConstLaserScanStampedPtr &msg) {
+
+  //std::cout << ">> " << msg->DebugString() << std::endl;
+  /*double angle_min = msg->scan().angle_min();
+  double angle_max = msg->scan().angle_max();
+  std::cout<< "[" << angle_min << ", " << angle_max << "]" << std::endl;*/
+  //float angle_increment = float(msg->scan().angle_step());
+
+  //float range_min = float(msg->scan().range_min());
+  float range_max = float(msg->scan().range_max());
+
+
+  int nranges = msg->scan().ranges_size();
+  int nintensities = msg->scan().intensities_size();
+
+  assert(nranges == nintensities);
+
+  rangeArray.fill(range_max);
+
+  for(int subR = 0; subR < subRanges; subR++){
+      for(int i = (nranges/subRanges)*subR; i < (nranges/subRanges)*(subR+1); i++){
+        float range = std::min(float(msg->scan().ranges(i)), range_max);
+        if(range < rangeArray.at(subR)) rangeArray.at(subR) = range;
+      }
+  }
+}
+
+void lidarCallbackLines(ConstLaserScanStampedPtr &msg) {
+    float angle_min = float(msg->scan().angle_min());
+    float range_max = float(msg->scan().range_max());
+    int nranges = msg->scan().ranges_size();
+    int nintensities = msg->scan().intensities_size();
+    float angle_increment = float(msg->scan().angle_step());
+    assert(nranges == nintensities);
+
+    std::vector<point> poins;
+
+    for(int i = 0; i < nranges; i++){
+        float angle = angle_min + i * angle_increment;
+        float range = std::min(float(msg->scan().ranges(i)), range_max);
+        poins.push_back(point(angle,range));
+    }
+
+    std::vector<line> lines = splitAndMerge(poins);
+
+    for(line li : lines){
+        std::cout << li.alpha << ", " << li.radius<< "; ";
+    }
+    std::cout << std::endl;
 }
 
 int main(int _argc, char **_argv) {
@@ -108,14 +295,16 @@ int main(int _argc, char **_argv) {
   gazebo::transport::SubscriberPtr statSubscriber =
       node->Subscribe("~/world_stats", statCallback);
 
-  gazebo::transport::SubscriberPtr poseSubscriber =
-      node->Subscribe("~/pose/info", poseCallback);
+  //gazebo::transport::SubscriberPtr poseSubscriber =
+  //    node->Subscribe("~/pose/info", poseCallback);
 
   gazebo::transport::SubscriberPtr cameraSubscriber =
       node->Subscribe("~/pioneer2dx/camera/link/camera/image", cameraCallback);
 
+  gazebo::transport::SubscriberPtr lidarSubscriber2 =
+      node->Subscribe("~/pioneer2dx/hokuyo/link/laser/scan", lidarCallbackArrayUpdate);
   gazebo::transport::SubscriberPtr lidarSubscriber =
-      node->Subscribe("~/pioneer2dx/hokuyo/link/laser/scan", lidarCallback);
+      node->Subscribe("~/pioneer2dx/hokuyo/link/laser/scan", lidarCallbackImg);
 
   // Publish to the robot vel_cmd topic
   gazebo::transport::PublisherPtr movementPublisher =
@@ -129,18 +318,57 @@ int main(int _argc, char **_argv) {
   worldPublisher->WaitForConnection();
   worldPublisher->Publish(controlMessage);
 
+  using namespace fl;
+  Engine* engine = FllImporter().fromFile("/home/rb-rca5/Desktop/rb-rca5/robot_control/ObstacleAvoidance.fll");
+
+  std::string status;
+  if (not engine->isReady(&status))
+      throw Exception("[engine error] engine is not ready:\n" + status, FL_AT);
+
+  InputVariable* sL2 = engine->getInputVariable("sL2");
+  InputVariable* sL1 = engine->getInputVariable("sL1");
+  InputVariable* sM = engine->getInputVariable("sM");
+  InputVariable* sR1 = engine->getInputVariable("sR1");
+  InputVariable* sR2 = engine->getInputVariable("sR2");
+
+  OutputVariable* speed = engine->getOutputVariable("speed");
+  OutputVariable* dir = engine->getOutputVariable("dir");
+  //*
   const int key_left = 81;
   const int key_up = 82;
   const int key_down = 84;
   const int key_right = 83;
   const int key_esc = 27;
-
-  float speed = 0.0;
-  float dir = 0.0;
-
+  //*/
+  double speedOut = 0.0;
+  double dirOut = 0.0;
+  double speedOut2 = 0.0;
+  double dirOut2 = 0.0;
   // Loop
   while (true) {
     gazebo::common::Time::MSleep(10);
+
+    scalar senR2 = rangeArray.at(0);
+    sR2->setValue(senR2);
+    scalar senR1 = rangeArray.at(1);
+    sR1->setValue(senR1);
+    scalar senM = rangeArray.at(2);
+    sM->setValue(senM);
+    scalar senL1 = rangeArray.at(3);
+    sL1->setValue(senL1);
+    scalar senL2 = rangeArray.at(4);
+    sL2->setValue(senL2);
+
+    engine->process();
+
+    FL_LOG("Speed.output = " << Op::str(speed->getValue()) << " Dir.output = " << Op::str(dir->getValue()));
+
+    speedOut = speed->getValue();
+    dirOut = dir->getValue();
+
+    //Show range array
+    //for(int i = 0; i < subRanges-1; i++) std::cout << rangeArray.at(i) << ", ";
+    //std::cout<<rangeArray.at(subRanges-1)<<std::endl;
 
     mutex.lock();
     int key = cv::waitKey(1);
@@ -148,28 +376,35 @@ int main(int _argc, char **_argv) {
 
     if (key == key_esc)
       break;
-
-    if ((key == key_up) && (speed <= 1.2f))
-      speed += 0.05;
-    else if ((key == key_down) && (speed >= -1.2f))
-      speed -= 0.05;
-    else if ((key == key_right) && (dir <= 0.4f))
-      dir += 0.05;
-    else if ((key == key_left) && (dir >= -0.4f))
-      dir -= 0.05;
+    //Speed  -1.2 til 1.2
+    //Dir -0.4 til 0.4
+    /*
+    if ((key == key_up) && (speedOut <= 1.2f))
+      speedOut += 0.05;
+    else if ((key == key_down) && (speedOut >= -1.2f))
+      speedOut -= 0.05;
+    else if ((key == key_right) && (dirOut <= 0.4f))
+      dirOut += 0.05;
+    else if ((key == key_left) && (dirOut >= -0.4f))
+      dirOut -= 0.05;
     else {
       // slow down
       //      speed *= 0.1;
       //      dir *= 0.1;
     }
+    /*/
+
+
+
 
     // Generate a pose
-    ignition::math::Pose3d pose(double(speed), 0, 0, 0, 0, double(dir));
+    ignition::math::Pose3d pose(speedOut, 0, 0, 0, 0, dirOut);
 
     // Convert to a pose message
     gazebo::msgs::Pose msg;
     gazebo::msgs::Set(&msg, pose);
     movementPublisher->Publish(msg);
+
   }
 
   // Make sure to shut everything down.
