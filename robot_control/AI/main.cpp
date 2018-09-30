@@ -319,7 +319,7 @@ int main(int _argc, char **_argv) {
   worldPublisher->Publish(controlMessage);
 
   using namespace fl;
-  Engine* engine = FllImporter().fromFile("/home/rb-rca5/Desktop/rb-rca5/robot_control/ObstacleAvoidance.fll");
+  Engine* engine = FllImporter().fromFile("/home/simonlbs/rb-rca5-group2/robot_control/AI/ObstacleAvoidance.fll");//Skal laves dymainsk
 
   std::string status;
   if (not engine->isReady(&status))
@@ -333,17 +333,17 @@ int main(int _argc, char **_argv) {
 
   OutputVariable* speed = engine->getOutputVariable("speed");
   OutputVariable* dir = engine->getOutputVariable("dir");
-  //*
+
+  const int key_esc = 27;
+  /*
   const int key_left = 81;
   const int key_up = 82;
   const int key_down = 84;
   const int key_right = 83;
-  const int key_esc = 27;
   //*/
+
   double speedOut = 0.0;
   double dirOut = 0.0;
-  double speedOut2 = 0.0;
-  double dirOut2 = 0.0;
   // Loop
   while (true) {
     gazebo::common::Time::MSleep(10);
