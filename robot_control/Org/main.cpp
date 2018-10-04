@@ -1,19 +1,10 @@
- #include <gazebo/gazebo_client.hh>
+#include <gazebo/gazebo_client.hh>
 #include <gazebo/msgs/msgs.hh>
 #include <gazebo/transport/transport.hh>
 
 #include <opencv2/opencv.hpp>
 
-#include <fl/Headers.h>
-
-#include <array>
 #include <iostream>
-#include <math.h>
-
-#include "FuzzyBugController.h"
-#include "LaserScanner.h"
-
-#define ESC_KEY 27
 
 static boost::mutex mutex;
 
@@ -58,9 +49,9 @@ void cameraCallback(ConstImageStampedPtr &msg) {
   mutex.unlock();
 }
 
-void lidarCallbackImg(ConstLaserScanStampedPtr &msg) {
+void lidarCallback(ConstLaserScanStampedPtr &msg) {
 
-  //std::cout << ">> " << msg->DebugString() << std::endl;
+  //  std::cout << ">> " << msg->DebugString() << std::endl;
   float angle_min = float(msg->scan().angle_min());
   //  double angle_max = msg->scan().angle_max();
   float angle_increment = float(msg->scan().angle_step());
@@ -90,11 +81,8 @@ void lidarCallbackImg(ConstLaserScanStampedPtr &msg) {
                         200.5f - range_min * px_per_m * std::sin(angle));
     cv::Point2f endpt(200.5f + range * px_per_m * std::cos(angle),
                       200.5f - range * px_per_m * std::sin(angle));
-
-    cv::Scalar collor = cv::Scalar(255, 255, 255, 255);
-
-    cv::line(im, startpt * 16, endpt * 16, collor, 1, cv::LINE_AA, 4);
-
+    cv::line(im, startpt * 16, endpt * 16, cv::Scalar(255, 255, 255, 255), 1,
+             cv::LINE_AA, 4);
 
     //    std::cout << angle << " " << range << " " << intensity << std::endl;
   }
@@ -109,11 +97,6 @@ void lidarCallbackImg(ConstLaserScanStampedPtr &msg) {
 }
 
 int main(int _argc, char **_argv) {
-  //Lav controller
-  LaserScanner controllerScan;
-  FuzzyBugController controller( & controllerScan);
-  controller.buildController();
-
   // Load gazebo
   gazebo::client::setup(_argc, _argv);
 
@@ -125,18 +108,16 @@ int main(int _argc, char **_argv) {
   gazebo::transport::SubscriberPtr statSubscriber =
       node->Subscribe("~/world_stats", statCallback);
 
-  //gazebo::transport::SubscriberPtr poseSubscriber =
-  //    node->Subscribe("~/pose/info", poseCallback);
+  gazebo::transport::SubscriberPtr poseSubscriber =
+      node->Subscribe("~/pose/info", poseCallback);
 
   gazebo::transport::SubscriberPtr cameraSubscriber =
       node->Subscribe("~/pioneer2dx/camera/link/camera/image", cameraCallback);
 
   gazebo::transport::SubscriberPtr lidarSubscriber =
-      node->Subscribe("~/pioneer2dx/hokuyo/link/laser/scan", lidarCallbackImg);
-  gazebo::transport::SubscriberPtr lidarSubscriberController =
-      node->Subscribe("~/pioneer2dx/hokuyo/link/laser/scan", controllerScan.parseLaserScannerMessage);
+      node->Subscribe("~/pioneer2dx/hokuyo/link/laser/scan", lidarCallback);
 
-  // Publish to the robot velkey_esc_cmd topic
+  // Publish to the robot vel_cmd topic
   gazebo::transport::PublisherPtr movementPublisher =
       node->Advertise<gazebo::msgs::Pose>("~/pioneer2dx/vel_cmd");
 
@@ -148,31 +129,47 @@ int main(int _argc, char **_argv) {
   worldPublisher->WaitForConnection();
   worldPublisher->Publish(controlMessage);
 
+  const int key_left = 81;
+  const int key_up = 82;
+  const int key_down = 84;
+  const int key_right = 83;
+  const int key_esc = 27;
+
+  float speed = 0.0;
+  float dir = 0.0;
+
   // Loop
   while (true) {
     gazebo::common::Time::MSleep(10);
-
-    //Få control signal
-    ControlOutput controllerOut = controller.getControlOutput();
-
-    //FL_LOG("SenM" << Op::str(senM)<<" : "<< Op::str(sM->getValue())<< " dif: " << Op::str(senM-sM->getValue())
-    //       << "; Speed.output = " << Op::str(speed->getValue()));
 
     mutex.lock();
     int key = cv::waitKey(1);
     mutex.unlock();
 
-    if (key == ESC_KEY)
+    if (key == key_esc)
       break;
 
+    if ((key == key_up) && (speed <= 1.2f))
+      speed += 0.05;
+    else if ((key == key_down) && (speed >= -1.2f))
+      speed -= 0.05;
+    else if ((key == key_right) && (dir <= 0.4f))
+      dir += 0.05;
+    else if ((key == key_left) && (dir >= -0.4f))
+      dir -= 0.05;
+    else {
+      // slow down
+      //      speed *= 0.1;
+      //      dir *= 0.1;
+    }
+
     // Generate a pose
-    ignition::math::Pose3d pose(controllerOut.speed, 0, 0, 0, 0, controllerOut.direction);
+    ignition::math::Pose3d pose(double(speed), 0, 0, 0, 0, double(dir));
 
     // Convert to a pose message
     gazebo::msgs::Pose msg;
     gazebo::msgs::Set(&msg, pose);
     movementPublisher->Publish(msg);
-
   }
 
   // Make sure to shut everything down.

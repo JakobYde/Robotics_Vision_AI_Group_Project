@@ -3,9 +3,7 @@ CONFIG += console c++11
 CONFIG -= app_bundle
 CONFIG -= qt
 
-SOURCES += main.cpp \
-    FuzzyBugController.cpp \
-    LaserScanner.cpp
+SOURCES += main.cpp
 
 CONFIG += link_pkgconfig
 PKGCONFIG += gazebo
@@ -15,10 +13,3 @@ unix:!macx: LIBS += -L$$PWD/../../fuzzylite-6.0-linux64/fuzzylite-6.0/release/bi
 
 INCLUDEPATH += $$PWD/../../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite
 DEPENDPATH += $$PWD/../../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite
-
-DISTFILES += \
-    fuzzybugcontroller.fll
-
-HEADERS += \
-    FuzzyBugController.h \
-    LaserScanner.h

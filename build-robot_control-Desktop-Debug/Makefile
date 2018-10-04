@@ -50,9 +50,14 @@ OBJECTS_DIR   = ./
 
 ####### Files
 
-SOURCES       = ../robot_control/AI/main.cpp 
-OBJECTS       = main.o
-DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
+SOURCES       = ../robot_control/AI/main.cpp \
+		../robot_control/AI/FuzzyBugController.cpp \
+		../robot_control/AI/LaserScanner.cpp 
+OBJECTS       = main.o \
+		FuzzyBugController.o \
+		LaserScanner.o
+DIST          = ../robot_control/AI/fuzzybugcontroller.fll \
+		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/common/unix.conf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/common/linux.conf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/common/sanitize.conf \
@@ -121,7 +126,10 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/exceptions.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/yacc.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/lex.prf \
-		../robot_control/robot_control/AI/robot_control.pro  ../robot_control/AI/main.cpp
+		../robot_control/robot_control/AI/robot_control.pro FuzzyBugController.h \
+		LaserScanner.h ../robot_control/AI/main.cpp \
+		../robot_control/AI/FuzzyBugController.cpp \
+		../robot_control/AI/LaserScanner.cpp
 QMAKE_TARGET  = robot_control
 DESTDIR       = 
 TARGET        = robot_control
@@ -427,6 +435,122 @@ main.o: ../robot_control/AI/main.cpp ../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzz
 		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/variable/Variable.h \
 		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/variable/OutputVariable.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o main.o ../robot_control/AI/main.cpp
+
+FuzzyBugController.o: ../robot_control/AI/FuzzyBugController.cpp ../robot_control/AI/FuzzyBugController.h \
+		../robot_control/AI/LaserScanner.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/Headers.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/fuzzylite.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/Benchmark.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/Complexity.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/imex/FldExporter.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/imex/Exporter.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/Console.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/Engine.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/Exception.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/activation/Activation.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/activation/First.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/activation/General.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/activation/Highest.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/activation/Last.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/activation/Lowest.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/activation/Proportional.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/activation/Threshold.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/defuzzifier/Bisector.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/defuzzifier/IntegralDefuzzifier.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/defuzzifier/Defuzzifier.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/defuzzifier/Centroid.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/defuzzifier/SmallestOfMaximum.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/defuzzifier/LargestOfMaximum.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/defuzzifier/MeanOfMaximum.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/defuzzifier/WeightedAverage.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/defuzzifier/WeightedDefuzzifier.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/defuzzifier/WeightedSum.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/factory/ActivationFactory.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/factory/ConstructionFactory.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/hedge/Hedge.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/norm/SNorm.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/norm/Norm.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/norm/TNorm.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/term/Term.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/Operation.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/factory/CloningFactory.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/factory/FactoryManager.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/factory/TNormFactory.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/factory/SNormFactory.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/factory/DefuzzifierFactory.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/factory/TermFactory.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/factory/HedgeFactory.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/factory/FunctionFactory.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/term/Function.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/imex/CppExporter.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/imex/FclImporter.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/imex/Importer.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/imex/FclExporter.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/imex/FisImporter.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/imex/FisExporter.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/imex/FllImporter.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/imex/FllExporter.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/imex/JavaExporter.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/imex/RScriptExporter.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/hedge/Any.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/hedge/Extremely.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/hedge/HedgeFunction.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/hedge/Not.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/hedge/Seldom.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/hedge/Somewhat.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/hedge/Very.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/norm/s/AlgebraicSum.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/norm/s/BoundedSum.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/norm/s/DrasticSum.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/norm/s/EinsteinSum.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/norm/s/HamacherSum.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/norm/s/Maximum.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/norm/s/NilpotentMaximum.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/norm/s/NormalizedSum.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/norm/s/SNormFunction.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/norm/s/UnboundedSum.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/norm/t/AlgebraicProduct.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/norm/t/BoundedDifference.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/norm/t/DrasticProduct.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/norm/t/EinsteinProduct.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/norm/t/HamacherProduct.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/norm/t/Minimum.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/norm/t/NilpotentMinimum.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/norm/t/TNormFunction.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/rule/Antecedent.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/rule/Consequent.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/rule/Rule.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/rule/RuleBlock.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/rule/Expression.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/term/Aggregated.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/term/Activated.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/term/Bell.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/term/Binary.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/term/Concave.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/term/Constant.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/term/Cosine.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/term/Discrete.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/term/Gaussian.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/term/GaussianProduct.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/term/Linear.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/term/PiShape.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/term/Ramp.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/term/Rectangle.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/term/SShape.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/term/Sigmoid.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/term/SigmoidDifference.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/term/SigmoidProduct.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/term/Spike.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/term/Trapezoid.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/term/Triangle.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/term/ZShape.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/variable/InputVariable.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/variable/Variable.h \
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/variable/OutputVariable.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o FuzzyBugController.o ../robot_control/AI/FuzzyBugController.cpp
+
+LaserScanner.o: ../robot_control/AI/LaserScanner.cpp ../robot_control/AI/LaserScanner.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o LaserScanner.o ../robot_control/AI/LaserScanner.cpp
 
 ####### Install
 
