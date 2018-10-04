@@ -1,4 +1,4 @@
-#include <gazebo/gazebo_client.hh>
+ #include <gazebo/gazebo_client.hh>
 #include <gazebo/msgs/msgs.hh>
 #include <gazebo/transport/transport.hh>
 
@@ -325,14 +325,14 @@ int main(int _argc, char **_argv) {
   if (not engine->isReady(&status))
       throw Exception("[engine error] engine is not ready:\n" + status, FL_AT);
 
-  InputVariable* sL2 = engine->getInputVariable("sL2");
-  InputVariable* sL1 = engine->getInputVariable("sL1");
+  //InputVariable* sL2 = engine->getInputVariable("sL2");
+  //InputVariable* sL1 = engine->getInputVariable("sL1");
   InputVariable* sM = engine->getInputVariable("sM");
-  InputVariable* sR1 = engine->getInputVariable("sR1");
-  InputVariable* sR2 = engine->getInputVariable("sR2");
+  //InputVariable* sR1 = engine->getInputVariable("sR1");
+  //InputVariable* sR2 = engine->getInputVariable("sR2");
 
   OutputVariable* speed = engine->getOutputVariable("speed");
-  OutputVariable* dir = engine->getOutputVariable("dir");
+  //OutputVariable* dir = engine->getOutputVariable("dir");
 
   const int key_esc = 27;
   /*
@@ -348,23 +348,32 @@ int main(int _argc, char **_argv) {
   while (true) {
     gazebo::common::Time::MSleep(10);
 
-    scalar senR2 = rangeArray.at(0);
-    sR2->setValue(senR2);
-    scalar senR1 = rangeArray.at(1);
-    sR1->setValue(senR1);
+    //scalar senR2 = rangeArray.at(0);
+    //sR2->setValue(senR2);
+    //scalar senR1 = rangeArray.at(1);
+    //sR1->setValue(senR1);
     scalar senM = rangeArray.at(2);
     sM->setValue(senM);
-    scalar senL1 = rangeArray.at(3);
-    sL1->setValue(senL1);
-    scalar senL2 = rangeArray.at(4);
-    sL2->setValue(senL2);
+    //scalar senL1 = rangeArray.at(3);
+    //sL1->setValue(senL1);
+    //scalar senL2 = rangeArray.at(4);
+    //sL2->setValue(senL2);
 
     engine->process();
 
-    FL_LOG("Speed.output = " << Op::str(speed->getValue()) << " Dir.output = " << Op::str(dir->getValue()));
+    /*
+    FL_LOG("SenR2" << Op::str(senR2)<<" : "<< Op::str(sR2->getValue()) << " dif: " << Op::str(senR2-sR2->getValue())
+           << "; SenR1" << Op::str(senR1)<<" : "<< Op::str(sR1->getValue())<< " dif: " << Op::str(senR1-sR1->getValue())
+           << "; SenM" << Op::str(senM)<<" : "<< Op::str(sM->getValue())<< " dif: " << Op::str(senM-sM->getValue())
+           << "; senL1" << Op::str(senL1)<<" : "<< Op::str(sL1->getValue())<< " dif: " << Op::str(senL1-sL1->getValue())
+           << "; senL2" << Op::str(senL2)<<" : " << Op::str(sL2->getValue())<< " dif: " << Op::str(senL2-sL2->getValue())
+           << "; Speed.output = " << Op::str(speed->getValue()) << "; Dir.output = " << Op::str(dir->getValue()));
+    */
+    FL_LOG("SenM" << Op::str(senM)<<" : "<< Op::str(sM->getValue())<< " dif: " << Op::str(senM-sM->getValue())
+           << "; Speed.output = " << Op::str(speed->getValue()));
 
     speedOut = speed->getValue();
-    dirOut = dir->getValue();
+    //dirOut = dir->getValue();
 
     //Show range array
     //for(int i = 0; i < subRanges-1; i++) std::cout << rangeArray.at(i) << ", ";
@@ -393,9 +402,6 @@ int main(int _argc, char **_argv) {
       //      dir *= 0.1;
     }
     /*/
-
-
-
 
     // Generate a pose
     ignition::math::Pose3d pose(speedOut, 0, 0, 0, 0, dirOut);
