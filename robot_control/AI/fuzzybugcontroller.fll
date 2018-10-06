@@ -25,9 +25,9 @@ OutputVariable: SteerDirection
   default: 0
   lock-previous: false
   term: sharpright Ramp -1 -1.57
-  term: right      Triangle -1.2 -0.600 0
+  term: left      Triangle -1.2 -0.600 0
   term: straight   Triangle -0.2 0.000 0.2
-  term: left       Triangle 0 0.6 1.2
+  term: right       Triangle 0 0.6 1.2
   term: sharpleft  Ramp  1 1.57
 
 OutputVariable: Speed
