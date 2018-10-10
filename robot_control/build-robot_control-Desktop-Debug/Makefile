@@ -35,10 +35,10 @@ MOVE          = mv -f
 TAR           = tar -cf
 COMPRESS      = gzip -9f
 DISTNAME      = robot_control1.0.0
-DISTDIR = /home/simonlbs/rb-rca5-group2/robot_control/build-robot_control-Desktop-Debug/.tmp/robot_control1.0.0
+DISTDIR = /home/mnj/rb-rca5-group2/robot_control/build-robot_control-Desktop-Debug/.tmp/robot_control1.0.0
 LINK          = g++
 LFLAGS        = 
-LIBS          = $(SUBLIBS) -L/home/simonlbs/rb-rca5-group2/robot_control/AI/../../fuzzylite-6.0-linux64/fuzzylite-6.0/release/bin/ -lfuzzylite-static -L/usr/lib/x86_64-linux-gnu/gazebo-9/plugins -Wl,-rpath,/usr/lib/x86_64-linux-gnu/gazebo-9/plugins -lgazebo_transport -lgazebo_physics -lgazebo_sensors -lgazebo_rendering -lgazebo_gui -lgazebo_client -lgazebo_msgs -lgazebo_common -lgazebo -lboost_thread -lboost_signals -lboost_system -lboost_filesystem -lboost_program_options -lboost_regex -lboost_iostreams -lboost_date_time -lboost_chrono -lboost_atomic -lsdformat -ltbb -latomic -lignition-transport4 -luuid -lignition-msgs1 -lprotobuf -pthread -lpthread -lignition-math4 -lignition-fuel_tools1 -lopencv_shape -lopencv_stitching -lopencv_superres -lopencv_videostab -lopencv_aruco -lopencv_bgsegm -lopencv_bioinspired -lopencv_ccalib -lopencv_datasets -lopencv_dpm -lopencv_face -lopencv_freetype -lopencv_fuzzy -lopencv_hdf -lopencv_line_descriptor -lopencv_optflow -lopencv_video -lopencv_plot -lopencv_reg -lopencv_saliency -lopencv_stereo -lopencv_structured_light -lopencv_phase_unwrapping -lopencv_rgbd -lopencv_viz -lopencv_surface_matching -lopencv_text -lopencv_ximgproc -lopencv_calib3d -lopencv_features2d -lopencv_flann -lopencv_xobjdetect -lopencv_objdetect -lopencv_ml -lopencv_xphoto -lopencv_highgui -lopencv_videoio -lopencv_imgcodecs -lopencv_photo -lopencv_imgproc -lopencv_core 
+LIBS          = $(SUBLIBS) -L/home/mnj/rb-rca5-group2/fuzzylite-6.0-linux64/fuzzylite-6.0/release/bin/ -lfuzzylite-static -L/usr/lib/x86_64-linux-gnu/gazebo-9/plugins -Wl,-rpath,/usr/lib/x86_64-linux-gnu/gazebo-9/plugins -lgazebo_transport -lgazebo_physics -lgazebo_sensors -lgazebo_rendering -lgazebo_gui -lgazebo_client -lgazebo_msgs -lgazebo_common -lgazebo -lboost_thread -lboost_signals -lboost_system -lboost_filesystem -lboost_program_options -lboost_regex -lboost_iostreams -lboost_date_time -lboost_chrono -lboost_atomic -lsdformat -ltbb -latomic -lignition-transport4 -luuid -lignition-msgs1 -lprotobuf -pthread -lpthread -lignition-math4 -lignition-fuel_tools1 -lopencv_shape -lopencv_stitching -lopencv_superres -lopencv_videostab -lopencv_aruco -lopencv_bgsegm -lopencv_bioinspired -lopencv_ccalib -lopencv_datasets -lopencv_dpm -lopencv_face -lopencv_freetype -lopencv_fuzzy -lopencv_hdf -lopencv_line_descriptor -lopencv_optflow -lopencv_video -lopencv_plot -lopencv_reg -lopencv_saliency -lopencv_stereo -lopencv_structured_light -lopencv_phase_unwrapping -lopencv_rgbd -lopencv_viz -lopencv_surface_matching -lopencv_text -lopencv_ximgproc -lopencv_calib3d -lopencv_features2d -lopencv_flann -lopencv_xobjdetect -lopencv_objdetect -lopencv_ml -lopencv_xphoto -lopencv_highgui -lopencv_videoio -lopencv_imgcodecs -lopencv_photo -lopencv_imgproc -lopencv_core 
 AR            = ar cqs
 RANLIB        = 
 SED           = sed
@@ -111,6 +111,7 @@ DIST          = ../AI/fuzzybugcontroller.fll \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/qt_config.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++/qmake.conf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_post.prf \
+		../AI/.qmake.stash \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/exclusive_builds.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/toolchain.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/default_pre.prf \
@@ -194,6 +195,7 @@ Makefile: ../AI/robot_control.pro /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g+
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/qt_config.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++/qmake.conf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_post.prf \
+		.qmake.stash \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/exclusive_builds.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/toolchain.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/default_pre.prf \
@@ -264,6 +266,7 @@ Makefile: ../AI/robot_control.pro /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g+
 /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/qt_config.prf:
 /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++/qmake.conf:
 /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_post.prf:
+.qmake.stash:
 /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/exclusive_builds.prf:
 /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/toolchain.prf:
 /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/default_pre.prf:
