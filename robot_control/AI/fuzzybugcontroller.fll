@@ -4,17 +4,32 @@ InputVariable: ObstacleDirection
   enabled: true
   range: -1.6 1.6
   lock-range: false
-  term: right Ramp 0 -1.57
-  term: center Triangle -0.785 0.000 0.785
-  term: left Ramp 0 1.57
+  term: right Ramp -0.65 -1.3
+  term: centerright Triangle -1.3 -0.65 0  
+  term: center Triangle -0.65 0 0.65 
+  term: centerleft Triangle 0 0.65 1.3
+  term: left Ramp 0.65 1.3
 
 InputVariable: ObstacleDistance
   enabled: true
   range: 0 10
   lock-range: false
-  term: veryclose Ramp 1 0
-  term: close Triangle 0.8 1.40 2
-  term: far Ramp 1.8 2.5
+  term: extremelyclose Ramp 1 0
+  term: veryclose Triangle 0 1 3
+  term: close Triangle 1 3 5
+  term: far Triangle 3 5 7
+  term: veryfar Ramp 5 7
+
+#InputVariable: Velocity
+#  enabled: false
+#  range: ???????
+#  lock-range: false
+#  term: reverse Ramp 0.6 0
+#  term: still Triangle 0 0.6 1.3
+#  term: veryslow Triangle 0.6 1.3 2
+#  term: slow Triangle 1.3 2 2.8
+#  term: fast Ramp 2 2.8
+
 
 OutputVariable: SteerDirection
   enabled: true
@@ -24,11 +39,11 @@ OutputVariable: SteerDirection
   defuzzifier: Centroid 100
   default: 0
   lock-previous: false
-  term: sharpright Ramp -1 -1.57
-  term: left      Triangle -1.2 -0.600 0
-  term: straight   Triangle -0.2 0.000 0.2
-  term: right       Triangle 0 0.6 1.2
-  term: sharpleft  Ramp  1 1.57
+  term: sharpleft Ramp -1 -1.57
+  term: left       Triangle 0 -0.8 -1.4
+  term: straight   Triangle -0.4 0.000 0.4
+  term: right      Triangle 1.4 0.800 0
+  term: sharpright  Ramp  1 1.57
 
 OutputVariable: Speed
   enabled: true
@@ -37,9 +52,12 @@ OutputVariable: Speed
   aggregation: Maximum
   defuzzifier: Centroid 100
   default: 0
-  lock-previous: false
-  term: backward Ramp  0.1 -1
-  term: forward  Ramp  -0.1 1
+  lock-previous: false 
+  term: backward Ramp  0 -0.2 
+  term: stop Triangle -0.2 0 0.2
+  term: veryslow Triangle 0.4 0.2 0.1
+  term: slow Triangle 1 0.4 0.2 
+  term: fast Ramp  0.4 1
 
 
 RuleBlock: mamdani
@@ -48,10 +66,36 @@ RuleBlock: mamdani
   disjunction: Maximum
   implication: Minimum
   activation: General
-  rule: if ObstacleDistance is far then SteerDirection is straight
-  rule: if ObstacleDistance is close and ObstacleDirection is left then SteerDirection is right
+
+  rule: if ObstacleDistance is veryfar then SteerDirection is straight
+  rule: if ObstacleDirection is center then SteerDirection is straight
+
+  rule: if ObstacleDistance is far and ObstacleDirection is left then SteerDirection is straight
+  rule: if ObstacleDistance is far and ObstacleDirection is centerleft then SteerDirection is straight
+  rule: if ObstacleDistance is far and ObstacleDirection is centerright then SteerDirection is straight
+  rule: if ObstacleDistance is far and ObstacleDirection is right then SteerDirection is straight
+
+  rule: if ObstacleDistance is close and ObstacleDirection is left then SteerDirection is straight
+  rule: if ObstacleDistance is close and ObstacleDirection is centerleft then SteerDirection is sharpright
+  rule: if ObstacleDistance is close and ObstacleDirection is centerright then SteerDirection is sharpleft
+  rule: if ObstacleDistance is close and ObstacleDirection is right then SteerDirection is straight
+
   rule: if ObstacleDistance is veryclose and ObstacleDirection is left then SteerDirection is sharpright
-  rule: if ObstacleDistance is close and ObstacleDirection is right then SteerDirection is left
+  rule: if ObstacleDistance is veryclose and ObstacleDirection is centerleft then SteerDirection is sharpright
+  rule: if ObstacleDistance is veryclose and ObstacleDirection is centerright then SteerDirection is sharpleft
   rule: if ObstacleDistance is veryclose and ObstacleDirection is right then SteerDirection is sharpleft
-  rule: if ObstacleDistance is veryclose then Speed is backward
-  rule: if ObstacleDistance is close or ObstacleDistance is far then Speed is forward
+
+  rule: if ObstacleDistance is extremelyclose and ObstacleDirection is left then SteerDirection is sharpright
+  rule: if ObstacleDistance is extremelyclose and ObstacleDirection is centerleft then SteerDirection is sharpright
+  rule: if ObstacleDistance is extremelyclose and ObstacleDirection is centerright then SteerDirection is sharpleft
+  rule: if ObstacleDistance is extremelyclose and ObstacleDirection is right then SteerDirection is sharpleft
+
+  rule: if ObstacleDirection is not center then Speed is fast
+
+  rule: if ObstacleDistance is veryfar and ObstacleDirection is center then Speed is fast
+  rule: if ObstacleDistance is far and ObstacleDirection is center then Speed is fast
+  rule: if ObstacleDistance is close and ObstacleDirection is center then Speed is slow and SteerDirection is right
+  rule: if ObstacleDistance is veryclose and ObstacleDirection is center then Speed is veryslow and SteerDirection is right
+  rule: if ObstacleDistance is extremelyclose and ObstacleDirection is center then Speed is backward and SteerDirection is sharpright
+
+
