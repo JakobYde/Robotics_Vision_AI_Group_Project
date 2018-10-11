@@ -16,6 +16,7 @@
 #define ESC_KEY 27
 
 static boost::mutex mutex;
+LaserScanner controllerScan;
 
 void statCallback(ConstWorldStatisticsPtr &_msg) {
   (void)_msg;
@@ -59,7 +60,7 @@ void cameraCallback(ConstImageStampedPtr &msg) {
 }
 
 void lidarCallbackImg(ConstLaserScanStampedPtr &msg) {
-
+  controllerScan.parseLaserScannerMessage(msg);
   //std::cout << ">> " << msg->DebugString() << std::endl;
   float angle_min = float(msg->scan().angle_min());
   //  double angle_max = msg->scan().angle_max();
@@ -110,7 +111,7 @@ void lidarCallbackImg(ConstLaserScanStampedPtr &msg) {
 
 int main(int _argc, char **_argv) {
   //Lav controller
-  LaserScanner controllerScan;
+
   FuzzyBugController controller( & controllerScan);
   controller.buildController();
 
@@ -133,8 +134,6 @@ int main(int _argc, char **_argv) {
 
   gazebo::transport::SubscriberPtr lidarSubscriber =
       node->Subscribe("~/pioneer2dx/hokuyo/link/laser/scan", lidarCallbackImg);
-  gazebo::transport::SubscriberPtr lidarSubscriberController =
-      node->Subscribe("~/pioneer2dx/hokuyo/link/laser/scan", controllerScan.parseLaserScannerMessage);
 
   // Publish to the robot velkey_esc_cmd topic
   gazebo::transport::PublisherPtr movementPublisher =
