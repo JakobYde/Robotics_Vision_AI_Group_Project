@@ -76,21 +76,25 @@ RuleBlock: mamdani
   rule: if ObstacleDistance is far and ObstacleDirection is right then SteerDirection is straight
 
   rule: if ObstacleDistance is close and ObstacleDirection is left then SteerDirection is straight
-  rule: if ObstacleDistance is close and ObstacleDirection is centerleft then SteerDirection is sharpright
-  rule: if ObstacleDistance is close and ObstacleDirection is centerright then SteerDirection is sharpleft
+  rule: if ObstacleDistance is close and ObstacleDirection is centerleft then SteerDirection is right
+  rule: if ObstacleDistance is close and ObstacleDirection is centerright then SteerDirection is left
   rule: if ObstacleDistance is close and ObstacleDirection is right then SteerDirection is straight
 
-  rule: if ObstacleDistance is veryclose and ObstacleDirection is left then SteerDirection is sharpright
+  rule: if ObstacleDistance is veryclose and ObstacleDirection is left then SteerDirection is right
   rule: if ObstacleDistance is veryclose and ObstacleDirection is centerleft then SteerDirection is sharpright
   rule: if ObstacleDistance is veryclose and ObstacleDirection is centerright then SteerDirection is sharpleft
-  rule: if ObstacleDistance is veryclose and ObstacleDirection is right then SteerDirection is sharpleft
+  rule: if ObstacleDistance is veryclose and ObstacleDirection is right then SteerDirection is left
 
   rule: if ObstacleDistance is extremelyclose and ObstacleDirection is left then SteerDirection is sharpright
   rule: if ObstacleDistance is extremelyclose and ObstacleDirection is centerleft then SteerDirection is sharpright
   rule: if ObstacleDistance is extremelyclose and ObstacleDirection is centerright then SteerDirection is sharpleft
   rule: if ObstacleDistance is extremelyclose and ObstacleDirection is right then SteerDirection is sharpleft
 
-  rule: if ObstacleDirection is not center then Speed is fast
+  rule: if ObstacleDirection is not center and ObstacleDistance is far then Speed is fast
+  rule: if ObstacleDirection is not center and ObstacleDistance is close then Speed is slow
+  rule: if ObstacleDirection is not center and ObstacleDistance is veryclose then Speed is veryslow
+  rule: if ObstacleDirection is not center and ObstacleDistance is extremelyclose then Speed is stop
+  #rule: if ObstacleDirection is not center then Speed is fast
 
   rule: if ObstacleDistance is veryfar and ObstacleDirection is center then Speed is fast
   rule: if ObstacleDistance is far and ObstacleDirection is center then Speed is fast
