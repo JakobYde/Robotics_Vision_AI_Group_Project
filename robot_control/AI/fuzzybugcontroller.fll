@@ -39,11 +39,11 @@ OutputVariable: SteerDirection
   defuzzifier: Centroid 100
   default: 0
   lock-previous: false
-  term: sharpleft Ramp -1 -1.57
-  term: left       Triangle 0 -0.8 -1.4
-  term: straight   Triangle -0.4 0.000 0.4
-  term: right      Triangle 1.4 0.800 0
-  term: sharpright  Ramp  1 1.57
+  term: sharpleft Triangle -1.57 -1.05 -0.52
+  term: left       Triangle -1.05 -0.52 0
+  term: straight   Triangle -0.52 0 0.52
+  term: right      Triangle 0 0.52 1.05
+  term: sharpright  Triangle  0.52 1.05 1.57
 
 OutputVariable: Speed
   enabled: true
@@ -53,11 +53,11 @@ OutputVariable: Speed
   defuzzifier: Centroid 100
   default: 0
   lock-previous: false 
-  term: backward Ramp  0 -0.2 
-  term: stop Triangle -0.2 0 0.2
-  term: veryslow Triangle 0.4 0.2 0.1
-  term: slow Triangle 1 0.4 0.2 
-  term: fast Ramp  0.4 1
+  term: backward Triangle  -1 -0.66 -0.33
+  term: stop Triangle  -0.66 -0.33 0
+  term: veryslow Triangle -0.33 0 0.33
+  term: slow Triangle 0.0 0.33 0.66
+  term: fast Triangle  0.33 0.66 1
 
 
 RuleBlock: mamdani
@@ -92,7 +92,12 @@ RuleBlock: mamdani
   rule: if ObstacleDistance is extremelyclose and ObstacleDirection is centerright then SteerDirection is sharpleft
   rule: if ObstacleDistance is extremelyclose and ObstacleDirection is right then SteerDirection is sharpleft
 
-  rule: if ObstacleDirection is not center then Speed is fast
+  #rule: if ObstacleDirection is not center then Speed is fast
+  rule: if ObstacleDirection is not center and ObstacleDistance is extremelyclose then Speed is veryslow
+  rule: if ObstacleDirection is not center and ObstacleDistance is veryclose then Speed is slow
+  rule: if ObstacleDirection is not center and ObstacleDistance is close then Speed is fast
+  rule: if ObstacleDirection is not center and ObstacleDistance is far then Speed is fast
+  rule: if ObstacleDirection is not center and ObstacleDistance is veryfar then Speed is fast
 
   rule: if ObstacleDistance is veryfar and ObstacleDirection is center then Speed is fast and SteerDirection is straight
   rule: if ObstacleDistance is far and ObstacleDirection is center then Speed is fast and SteerDirection is straight
