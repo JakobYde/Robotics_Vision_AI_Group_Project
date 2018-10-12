@@ -15,10 +15,10 @@ InputVariable: ObstacleDistance
   range: 0 10
   lock-range: false
   term: extremelyclose Ramp 1 0
-  term: veryclose Triangle 0 1 3
-  term: close Triangle 1 3 5
-  term: far Triangle 3 5 7
-  term: veryfar Ramp 5 7
+  term: veryclose Triangle 0 1 2
+  term: close Triangle 1 2 3
+  term: far Triangle 2 3 4
+  term: veryfar Ramp 3 4
 
 #InputVariable: Velocity
 #  enabled: false
@@ -47,17 +47,17 @@ OutputVariable: SteerDirection
 
 OutputVariable: Speed
   enabled: true
-  range: -1 1
+  range: -2 2
   lock-range: false
   aggregation: Maximum
   defuzzifier: Centroid 100
   default: 0
   lock-previous: false 
-  term: backward Triangle  -1 -0.66 -0.33
-  term: stop Triangle  -0.66 -0.33 0
-  term: veryslow Triangle -0.33 0 0.33
-  term: slow Triangle 0.0 0.33 0.66
-  term: fast Triangle  0.33 0.66 1
+  term: backward Triangle  -2 -1.3 -0.66
+  term: stop Triangle  -1.3 -0.66 0
+  term: veryslow Triangle -0.66 0 0.66
+  term: slow Triangle 0.0 0.66 1.3
+  term: fast Triangle  0.66 1.3 2
 
 
 RuleBlock: mamdani
@@ -92,12 +92,17 @@ RuleBlock: mamdani
   rule: if ObstacleDistance is extremelyclose and ObstacleDirection is centerright then SteerDirection is sharpright
   rule: if ObstacleDistance is extremelyclose and ObstacleDirection is right then SteerDirection is sharpright
 
-  #rule: if ObstacleDirection is not center then Speed is fast
-  rule: if ObstacleDirection is not center and ObstacleDistance is extremelyclose then Speed is stop
-  rule: if ObstacleDirection is not center and ObstacleDistance is veryclose then Speed is veryslow
-  rule: if ObstacleDirection is not center and ObstacleDistance is close then Speed is slow
-  rule: if ObstacleDirection is not center and ObstacleDistance is far then Speed is fast
-  rule: if ObstacleDirection is not center and ObstacleDistance is veryfar then Speed is fast
+  rule: if ObstacleDirection is centerleft or ObstacleDirection is centerright and ObstacleDistance is extremelyclose then Speed is stop
+  rule: if ObstacleDirection is centerleft or ObstacleDirection is centerright and ObstacleDistance is veryclose then Speed is veryslow
+  rule: if ObstacleDirection is centerleft or ObstacleDirection is centerright and ObstacleDistance is close then Speed is slow
+  rule: if ObstacleDirection is centerleft or ObstacleDirection is centerright and ObstacleDistance is far then Speed is fast
+  rule: if ObstacleDirection is centerleft or ObstacleDirection is centerright and ObstacleDistance is veryfar then Speed is fast
+
+  rule: if ObstacleDirection is left or ObstacleDirection is right and ObstacleDistance is extremelyclose then Speed is stop
+  rule: if ObstacleDirection is left or ObstacleDirection is right and ObstacleDistance is veryclose then Speed is veryslow
+  rule: if ObstacleDirection is left or ObstacleDirection is right and ObstacleDistance is close then Speed is slow
+  rule: if ObstacleDirection is left or ObstacleDirection is right and ObstacleDistance is far then Speed is fast
+  rule: if (ObstacleDirection is left or ObstacleDirection is right) and ObstacleDistance is veryfar then Speed is fast
 
   rule: if ObstacleDistance is veryfar and ObstacleDirection is center then Speed is fast and SteerDirection is straight
   rule: if ObstacleDistance is far and ObstacleDirection is center then Speed is fast and SteerDirection is straight
