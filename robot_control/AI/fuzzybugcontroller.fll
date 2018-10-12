@@ -67,8 +67,10 @@ RuleBlock: mamdani
   implication: Minimum
   activation: General
 
-  rule: if ObstacleDistance is veryfar then SteerDirection is straight
-  rule: if ObstacleDirection is center then SteerDirection is straight
+  rule: if ObstacleDistance is veryfar and ObstacleDirection is left then SteerDirection is straight
+  rule: if ObstacleDistance is veryfar and ObstacleDirection is centerleft then SteerDirection is straight
+  rule: if ObstacleDistance is veryfar and ObstacleDirection is centerright then SteerDirection is straight
+  rule: if ObstacleDistance is veryfar and ObstacleDirection is right then SteerDirection is straight
 
   rule: if ObstacleDistance is far and ObstacleDirection is left then SteerDirection is straight
   rule: if ObstacleDistance is far and ObstacleDirection is centerleft then SteerDirection is straight
@@ -90,14 +92,10 @@ RuleBlock: mamdani
   rule: if ObstacleDistance is extremelyclose and ObstacleDirection is centerright then SteerDirection is sharpleft
   rule: if ObstacleDistance is extremelyclose and ObstacleDirection is right then SteerDirection is sharpleft
 
-  rule: if ObstacleDirection is not center and ObstacleDistance is far then Speed is fast
-  rule: if ObstacleDirection is not center and ObstacleDistance is close then Speed is slow
-  rule: if ObstacleDirection is not center and ObstacleDistance is veryclose then Speed is veryslow
-  rule: if ObstacleDirection is not center and ObstacleDistance is extremelyclose then Speed is stop
-  #rule: if ObstacleDirection is not center then Speed is fast
+  rule: if ObstacleDirection is not center then Speed is fast
 
-  rule: if ObstacleDistance is veryfar and ObstacleDirection is center then Speed is fast
-  rule: if ObstacleDistance is far and ObstacleDirection is center then Speed is fast
+  rule: if ObstacleDistance is veryfar and ObstacleDirection is center then Speed is fast and SteerDirection is straight
+  rule: if ObstacleDistance is far and ObstacleDirection is center then Speed is fast and SteerDirection is straight
   rule: if ObstacleDistance is close and ObstacleDirection is center then Speed is slow and SteerDirection is right
   rule: if ObstacleDistance is veryclose and ObstacleDirection is center then Speed is veryslow and SteerDirection is right
   rule: if ObstacleDistance is extremelyclose and ObstacleDirection is center then Speed is backward and SteerDirection is sharpright
