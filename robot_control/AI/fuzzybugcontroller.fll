@@ -89,13 +89,13 @@ RuleBlock: mamdani
 
   rule: if ObstacleDistance is extremelyclose and ObstacleDirection is left then SteerDirection is sharpright
   rule: if ObstacleDistance is extremelyclose and ObstacleDirection is centerleft then SteerDirection is sharpright
-  rule: if ObstacleDistance is extremelyclose and ObstacleDirection is centerright then SteerDirection is sharpleft
-  rule: if ObstacleDistance is extremelyclose and ObstacleDirection is right then SteerDirection is sharpleft
+  rule: if ObstacleDistance is extremelyclose and ObstacleDirection is centerright then SteerDirection is sharpright
+  rule: if ObstacleDistance is extremelyclose and ObstacleDirection is right then SteerDirection is sharpright
 
   #rule: if ObstacleDirection is not center then Speed is fast
-  rule: if ObstacleDirection is not center and ObstacleDistance is extremelyclose then Speed is veryslow
-  rule: if ObstacleDirection is not center and ObstacleDistance is veryclose then Speed is slow
-  rule: if ObstacleDirection is not center and ObstacleDistance is close then Speed is fast
+  rule: if ObstacleDirection is not center and ObstacleDistance is extremelyclose then Speed is stop
+  rule: if ObstacleDirection is not center and ObstacleDistance is veryclose then Speed is veryslow
+  rule: if ObstacleDirection is not center and ObstacleDistance is close then Speed is slow
   rule: if ObstacleDirection is not center and ObstacleDistance is far then Speed is fast
   rule: if ObstacleDirection is not center and ObstacleDistance is veryfar then Speed is fast
 
