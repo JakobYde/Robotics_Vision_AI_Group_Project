@@ -4,7 +4,6 @@ Created on Sat Oct 13 12:54:55 2018
 
 @author: SimonLBS
 """
-import sys
 import numpy as np
 import membership
 import matplotlib.pyplot as plt

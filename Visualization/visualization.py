@@ -4,10 +4,9 @@ Created on Sat Oct 13 09:58:53 2018
 
 @author: SimonLBS
 """
-import sys
-sys.path.insert(0, r'C:\Users\SimonLBS\Desktop\Programmering\Python\FuzzyVisualization')
 import variable
 import re
+import sys
 
 def askForFile(titel):
     import tkinter as tk
@@ -18,6 +17,10 @@ def askForFile(titel):
     return askopenfilename(title = titel)
 
 filepath = askForFile("Fuzzy file") # filepath = input("Fuzzylite file: ")#filepath = "fuzzybugcontroller2.fll"
+
+if filepath == '':
+    sys.exit(1)
+    
 with open(filepath) as f:
     file = f.readlines()
 file = [re.sub(' +', ' ',x.strip()).replace("\t", "").split(" ") for x in file]

@@ -4,8 +4,6 @@ Created on Sat Oct 13 09:51:25 2018
 
 @author: SimonLBS
 """
-import os
-import sys
 import numpy as np
 import math
 
