@@ -33,7 +33,7 @@ void poseCallback(ConstPosesStampedPtr &_msg) {
     }
   }
 }
-
+cv::VideoWriter* videoW = nullptr;
 void cameraCallback(ConstImageStampedPtr &msg) {
 
   std::size_t width = msg->image().width();
@@ -44,6 +44,8 @@ void cameraCallback(ConstImageStampedPtr &msg) {
   im = im.clone();
   cv::cvtColor(im, im, CV_BGR2RGB);
 
+  if(videoW == nullptr) videoW = new cv::VideoWriter("videoOut.avi", CV_FOURCC('M','J','P','G'), 60, cv::Size(width,height));
+  videoW->write(im);
   mutex.lock();
   cv::imshow("camera", im);
   mutex.unlock();
@@ -170,6 +172,11 @@ int main(int _argc, char **_argv) {
     gazebo::msgs::Pose msg;
     gazebo::msgs::Set(&msg, pose);
     movementPublisher->Publish(msg);
+  }
+
+  if(videoW != nullptr){
+      videoW->release();
+      delete videoW;
   }
 
   // Make sure to shut everything down.
