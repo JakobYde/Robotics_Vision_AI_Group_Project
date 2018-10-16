@@ -33,8 +33,7 @@ ControlOutput FuzzyBugController::getControlOutput()
 void FuzzyBugController::buildController()
 {
     using namespace fl;
-    m_pcFLEngine = FllImporter().fromFile("../AI/"
-                                          "fuzzybugcontroller.fll");
+    m_pcFLEngine = FllImporter().fromFile("/home/simonlbs/rb-rca5-group2/robot_control/AI/fuzzybugcontroller.fll");
 
     std::string status;
     if (not m_pcFLEngine->isReady(&status))

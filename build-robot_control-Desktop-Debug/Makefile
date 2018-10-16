@@ -433,7 +433,9 @@ main.o: ../robot_control/AI/main.cpp ../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzz
 		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/term/ZShape.h \
 		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/variable/InputVariable.h \
 		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/variable/Variable.h \
-		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/variable/OutputVariable.h
+		../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite/fl/variable/OutputVariable.h \
+		../robot_control/AI/FuzzyBugController.h \
+		../robot_control/AI/LaserScanner.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o main.o ../robot_control/AI/main.cpp
 
 FuzzyBugController.o: ../robot_control/AI/FuzzyBugController.cpp ../robot_control/AI/FuzzyBugController.h \

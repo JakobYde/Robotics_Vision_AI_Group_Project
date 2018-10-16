@@ -165,7 +165,7 @@ int main(int _argc, char **_argv) {
       break;
 
     // Generate a pose
-    ignition::math::Pose3d pose(controllerOut.speed, 0, 0, 0, 0, controllerOut.direction);
+    ignition::math::Pose3d pose(controllerOut.speed*2, 0, 0, 0, 0, controllerOut.direction);
 
     // Convert to a pose message
     gazebo::msgs::Pose msg;
