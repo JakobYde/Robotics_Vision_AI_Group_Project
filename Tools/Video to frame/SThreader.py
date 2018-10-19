@@ -23,7 +23,7 @@ class SThreader:
             # gets an args from the queue
             args = self.q.get()
     
-            # Run the example job with the avail args in queue (thread)
+            # Run the job with the args in queue (thread)
             self.funktion(args)
     
             # completed with the job
@@ -32,14 +32,14 @@ class SThreader:
             
     
     def startThreda(self, numThreds):
-        # how many threads are we going to allow for
+        # Start workers
         for x in range(numThreds):
              t = threading.Thread(target=self.__threader)
         
              # classifying as a daemon, so they will die when the main dies
              t.daemon = True
         
-             # begins, must come after daemon definition
+             # Start the thred
              t.start()
              
         print(self.funktion.__name__+" threads running")
