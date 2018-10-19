@@ -26,7 +26,6 @@ else:
     
 import os
 import sys
-sys.path.insert(0, r'C:\Users\SimonLBS\Desktop\Programmering\Python\SLib')
 import cv2
 import SThreader  
 
