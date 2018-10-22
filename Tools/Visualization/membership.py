@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Sat Oct 13 09:51:25 2018
@@ -6,6 +7,8 @@ Created on Sat Oct 13 09:51:25 2018
 """
 import numpy as np
 import math
+import os
+import sys
 
 def getMember(member, args):
     if member == "Triangle":
@@ -42,6 +45,10 @@ def getMember(member, args):
         return Sigmoid(*args)
     if member == "ZShape":
         return ZShape(*args)
+    else:
+        print("Error: member={} args={}".format(member,args))
+        sys.exit(1) 
+        
 
 class _member:
     def _membership(self, x):
