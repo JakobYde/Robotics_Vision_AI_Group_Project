@@ -3,20 +3,27 @@
 /*************************************************************/
 /*************************************************************/
 
-FuzzyBugController::FuzzyBugController(LaserScanner *pc_laser_scanner) : m_pcLaserScanner(pc_laser_scanner)
+FuzzyBugController::FuzzyBugController(LaserScanner *pc_laser_scanner, float leftStartAngle_in,float leftEnsAngle_in,float rightStartAngle_in,float rightEndAngle_in,float centerStartAngle_in,float centerEndAngle_in) : m_pcLaserScanner(pc_laser_scanner)
 {
+    leftStartAngle = leftStartAngle_in;
+    leftEnsAngle = leftEnsAngle_in;
+    rightStartAngle = rightStartAngle_in;
+    rightEndAngle = rightEndAngle_in;
+    centerStartAngle = centerStartAngle_in;
+    centerEndAngle = centerEndAngle_in;
 
 }
 
 /*************************************************************/
 /*************************************************************/
 
-ControlOutput FuzzyBugController::getControlOutput()
+ControlOutput FuzzyBugController::getControlOutput(float angleError, float goalDisttanse)
 {
-    m_pflObstacleDistance->setValue(m_pcLaserScanner->getClosestDistance(-1.57, 1.57));
-    m_pflObstacleDirection->setValue(m_pcLaserScanner->getClosestDirection(-1.57, 1.57));
-
-    // std::cout << "FL - Distance " << m_pcLaserScanner->getClosestDistance(-1.57, 1.57) << ", direction " << m_pcLaserScanner->getClosestDirection(-1.57, 1.57) << std::endl;
+    m_pflSencorLeft->setValue(m_pcLaserScanner->getClosestDistance(leftStartAngle, leftEnsAngle));
+    m_pflSencorCenter->setValue(m_pcLaserScanner->getClosestDistance(centerStartAngle, centerEndAngle));
+    m_pflSencorRight->setValue(m_pcLaserScanner->getClosestDistance(rightStartAngle, rightEndAngle));
+    m_pflAngleError->setValue(angleError);
+    m_pflGoalDisttanse->setValue(goalDisttanse);
 
     m_pcFLEngine->process();
 
@@ -33,14 +40,18 @@ ControlOutput FuzzyBugController::getControlOutput()
 void FuzzyBugController::buildController()
 {
     using namespace fl;
-    m_pcFLEngine = FllImporter().fromFile("/home/simonlbs/rb-rca5-group2/robot_control/AI/fuzzybugcontroller.fll");
+    m_pcFLEngine = FllImporter().fromFile("/home/simonlbs/rb-rca5-group2/robot_control/AI/fuzzyObjAndGoalController.fll");
 
     std::string status;
     if (not m_pcFLEngine->isReady(&status))
         throw Exception("[engine error] engine is not ready:n" + status, FL_AT);
 
-    m_pflObstacleDirection = m_pcFLEngine->getInputVariable("ObstacleDirection");
-    m_pflObstacleDistance  = m_pcFLEngine->getInputVariable("ObstacleDistance");
+    m_pflSencorLeft        = m_pcFLEngine->getInputVariable("SencorLeft");
+    m_pflSencorCenter      = m_pcFLEngine->getInputVariable("SencorCenter");
+    m_pflSencorRight       = m_pcFLEngine->getInputVariable("SencorRight");
+    m_pflAngleError        = m_pcFLEngine->getInputVariable("AngleError");
+    m_pflGoalDisttanse     = m_pcFLEngine->getInputVariable("GoalDisttanse");
+
     m_pflSteerDirection    = m_pcFLEngine->getOutputVariable("SteerDirection");
     m_pflSpeed             = m_pcFLEngine->getOutputVariable("Speed");
 }

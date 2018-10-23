@@ -59,6 +59,21 @@ void cameraCallback(ConstImageStampedPtr &msg) {
   mutex.unlock();
 }
 
+float angle_min = -2.26889;
+float angle_max = 2.2689;
+float angle_step = 0.0228029648241206;
+float total_angle_range = abs(angle_min)+abs(angle_max);
+
+float rightStartAngle = angle_min;
+float rightEndAngle = angle_step*round((angle_min+2*total_angle_range/5)/angle_step);
+
+float centerStartAngle = rightEndAngle;
+float centerEndAngle = angle_step*round((centerStartAngle+total_angle_range/5)/angle_step);
+
+float leftStartAngle= centerEndAngle;
+float leftEndAngle = angle_max;
+
+
 void lidarCallbackImg(ConstLaserScanStampedPtr &msg) {
   controllerScan.parseLaserScannerMessage(msg);
   //std::cout << ">> " << msg->DebugString() << std::endl;
@@ -93,9 +108,11 @@ void lidarCallbackImg(ConstLaserScanStampedPtr &msg) {
                       200.5f - range * px_per_m * std::sin(angle));
 
     cv::Scalar collor = cv::Scalar(255, 255, 255, 255);
-
+    if(((angle >= leftStartAngle - angle_increment )and (angle <= leftStartAngle + angle_increment)) or ((angle >= leftEndAngle - angle_increment) and (angle <= leftEndAngle + angle_increment))) collor = cv::Scalar(255, 0, 0, 255);
+    else if(((angle >= centerStartAngle - angle_increment) and (angle <= centerStartAngle + angle_increment)) or ((angle >= centerEndAngle - angle_increment) and (angle <= centerEndAngle + angle_increment))) collor = cv::Scalar(255, 255, 0, 255);
+    else if(((angle >= rightStartAngle - angle_increment) and (angle <= rightStartAngle + angle_increment)) or ((angle >= rightEndAngle - angle_increment) and (angle <= rightEndAngle + angle_increment))) collor = cv::Scalar(255, 0, 255, 255);
     cv::line(im, startpt * 16, endpt * 16, collor, 1, cv::LINE_AA, 4);
-
+    std::cout << angle << " " << leftStartAngle << " " << leftEndAngle << " " << centerStartAngle << " " << centerEndAngle<< " " << rightStartAngle << " " << rightEndAngle << std::endl;
 
     //    std::cout << angle << " " << range << " " << intensity << std::endl;
   }
@@ -112,7 +129,7 @@ void lidarCallbackImg(ConstLaserScanStampedPtr &msg) {
 int main(int _argc, char **_argv) {
   //Lav controller
 
-  FuzzyBugController controller( & controllerScan);
+  FuzzyBugController controller( & controllerScan, leftStartAngle, leftEndAngle, rightStartAngle, rightEndAngle, centerStartAngle, centerEndAngle);
   controller.buildController();
 
   // Load gazebo
@@ -152,7 +169,9 @@ int main(int _argc, char **_argv) {
     gazebo::common::Time::MSleep(10);
 
     //Få control signal
-    ControlOutput controllerOut = controller.getControlOutput();
+    float angleError = 0;
+    float goalDisttanse = 10;
+    ControlOutput controllerOut = controller.getControlOutput(angleError,goalDisttanse);
 
     //FL_LOG("SenM" << Op::str(senM)<<" : "<< Op::str(sM->getValue())<< " dif: " << Op::str(senM-sM->getValue())
     //       << "; Speed.output = " << Op::str(speed->getValue()));
@@ -165,7 +184,7 @@ int main(int _argc, char **_argv) {
       break;
 
     // Generate a pose
-    ignition::math::Pose3d pose(controllerOut.speed*2, 0, 0, 0, 0, controllerOut.direction);
+    ignition::math::Pose3d pose(controllerOut.speed, 0, 0, 0, 0, controllerOut.direction);
 
     // Convert to a pose message
     gazebo::msgs::Pose msg;

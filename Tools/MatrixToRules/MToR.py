@@ -5,7 +5,10 @@ Created on Mon Oct 22 10:39:41 2018
 
 @author: simonlbs
 """
-n = input("Writ n (nxn matrix): ")
+preSteatment = ""
+if input("Pre-staetment (y/n): ") == "y":
+	preSteatment = input("""Write pre-staetment (no ending " "): """)
+
 topInputName = input("Write top input name: ")
 
 topInputVars = []
@@ -33,7 +36,7 @@ while True:
 roules = []
 for topV in topInputVars:
     for leftV in leftInputVars:
-        rule = "if {} is {} and {} is {} then ".format(topInputName, topV, leftInputName, leftV)
+        rule = "rule: "+preSteatment + " {} is {} and {} is {} then ".format(topInputName, topV, leftInputName, leftV)
         print("\n"+rule)
         outputGiven = False
         for i, outVar in enumerate(outputVars):
