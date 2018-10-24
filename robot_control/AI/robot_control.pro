@@ -18,7 +18,8 @@ INCLUDEPATH += $$PWD/../../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite
 DEPENDPATH += $$PWD/../../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite
 
 DISTFILES += \
-    fuzzybugcontroller.fll
+    fuzzybugcontroller.fll \
+    fuzzyObjAndGoalController.fll
 
 HEADERS += \
     FuzzyBugController.h \

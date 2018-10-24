@@ -1,9 +1,0 @@
-if SensorR is EXC and SensorL is EXC then  Speed is Fast and  Dir is zero
-if SensorR is EXC and SensorL is C then  Speed is Fast and  Dir is LL
-if SensorR is EXC and SensorL is F then  Speed is Fast and  Dir is L
-if SensorR is C and SensorL is EXC then  Speed is Fast and  Dir is LR
-if SensorR is C and SensorL is C then  Speed is Fast and  Dir is Z
-if SensorR is C and SensorL is F then  Speed is Fast and  Dir is LL
-if SensorR is F and SensorL is EXC then  Speed is Fast and  Dir is R
-if SensorR is F and SensorL is C then  Speed is Fast and  Dir is LR
-if SensorR is F and SensorL is F then 

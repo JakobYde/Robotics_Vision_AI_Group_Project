@@ -1,9 +1,0 @@
-  rule: if SensorCenter is close and SensorRight is extrimlyColse and SensorLeft is extrimlyColse then Speed is normal and Dir is zero
-  rule: if SensorCenter is close and SensorRight is extrimlyColse and SensorLeft is close then Speed is normal and Dir is littleLeft
-  rule: if SensorCenter is close and SensorRight is extrimlyColse and SensorLeft is far then Speed is normal and Dir is left
-  rule: if SensorCenter is close and SensorRight is close and SensorLeft is extrimlyColse then Speed is normal and Dir is littleRight
-  rule: if SensorCenter is close and SensorRight is close and SensorLeft is close then Speed is normal and Dir is right
-  rule: if SensorCenter is close and SensorRight is close and SensorLeft is far then Speed is normal and Dir is left
-  rule: if SensorCenter is close and SensorRight is far and SensorLeft is extrimlyColse then Speed is normal and Dir is right
-  rule: if SensorCenter is close and SensorRight is far and SensorLeft is close then Speed is normal and Dir is right
-  rule: if SensorCenter is close and SensorRight is far and SensorLeft is far then Speed is normal and Dir is left

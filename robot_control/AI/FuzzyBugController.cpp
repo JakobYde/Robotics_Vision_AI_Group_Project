@@ -19,9 +19,9 @@ FuzzyBugController::FuzzyBugController(LaserScanner *pc_laser_scanner, float lef
 
 ControlOutput FuzzyBugController::getControlOutput(float angleError, float goalDisttanse)
 {
-    m_pflSencorLeft->setValue(m_pcLaserScanner->getClosestDistance(leftStartAngle, leftEnsAngle));
-    m_pflSencorCenter->setValue(m_pcLaserScanner->getClosestDistance(centerStartAngle, centerEndAngle));
-    m_pflSencorRight->setValue(m_pcLaserScanner->getClosestDistance(rightStartAngle, rightEndAngle));
+    m_pflSensorLeft->setValue(m_pcLaserScanner->getClosestDistance(leftStartAngle, leftEnsAngle));
+    m_pflSensorCenter->setValue(m_pcLaserScanner->getClosestDistance(centerStartAngle, centerEndAngle));
+    m_pflSensorRight->setValue(m_pcLaserScanner->getClosestDistance(rightStartAngle, rightEndAngle));
     m_pflAngleError->setValue(angleError);
     m_pflGoalDisttanse->setValue(goalDisttanse);
 
@@ -40,15 +40,15 @@ ControlOutput FuzzyBugController::getControlOutput(float angleError, float goalD
 void FuzzyBugController::buildController()
 {
     using namespace fl;
-    m_pcFLEngine = FllImporter().fromFile("/home/simonlbs/rb-rca5-group2/robot_control/AI/fuzzyObjAndGoalController.fll");
+    m_pcFLEngine = FllImporter().fromFile("/home/mnj/rb-rca5-group2/robot_control/AI/fuzzyObjAndGoalController.fll");
 
     std::string status;
     if (not m_pcFLEngine->isReady(&status))
         throw Exception("[engine error] engine is not ready:n" + status, FL_AT);
 
-    m_pflSencorLeft        = m_pcFLEngine->getInputVariable("SencorLeft");
-    m_pflSencorCenter      = m_pcFLEngine->getInputVariable("SencorCenter");
-    m_pflSencorRight       = m_pcFLEngine->getInputVariable("SencorRight");
+    m_pflSensorLeft        = m_pcFLEngine->getInputVariable("SensorLeft");
+    m_pflSensorCenter      = m_pcFLEngine->getInputVariable("SensorCenter");
+    m_pflSensorRight       = m_pcFLEngine->getInputVariable("SensorRight");
     m_pflAngleError        = m_pcFLEngine->getInputVariable("AngleError");
     m_pflGoalDisttanse     = m_pcFLEngine->getInputVariable("GoalDisttanse");
 

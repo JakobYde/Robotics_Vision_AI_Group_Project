@@ -108,23 +108,24 @@ RuleBlock: mamdani
   rule: if SensorLeft is far and SensorCenter is far and SensorRight is far and GoalDisttanse is far then Speed is fast
 
   rule: if SensorCenter is far and SensorRight is extremelyClose and SensorLeft is extremelyClose then Speed is fast and SteerDirection is zero
-  rule: if SensorCenter is far and SensorRight is extremelyClose and SensorLeft is close then Speed is fast and SteerDirection is littleLeft
-  rule: if SensorCenter is far and SensorRight is extremelyClose and SensorLeft is far then Speed is fast and SteerDirection is left
+  rule: if SensorCenter is far and SensorRight is extremelyClose and SensorLeft is close          then Speed is fast and SteerDirection is littleLeft
+  rule: if SensorCenter is far and SensorRight is extremelyClose and SensorLeft is far            then Speed is fast and SteerDirection is left
   rule: if SensorCenter is far and SensorRight is close and SensorLeft is extremelyClose then Speed is fast and SteerDirection is littleRight
-  rule: if SensorCenter is far and SensorRight is close and SensorLeft is close then Speed is fast and SteerDirection is zero
-  rule: if SensorCenter is far and SensorRight is close and SensorLeft is far then Speed is fast and SteerDirection is littleLeft
+  rule: if SensorCenter is far and SensorRight is close and SensorLeft is close          then Speed is fast and SteerDirection is zero
+  rule: if SensorCenter is far and SensorRight is close and SensorLeft is far            then Speed is fast and SteerDirection is littleLeft
   rule: if SensorCenter is far and SensorRight is far and SensorLeft is extremelyClose then Speed is fast and SteerDirection is right
-  rule: if SensorCenter is far and SensorRight is far and SensorLeft is close then Speed is fast and SteerDirection is littleRight
+  rule: if SensorCenter is far and SensorRight is far and SensorLeft is close          then Speed is fast and SteerDirection is littleRight
 
   rule: if SensorCenter is close and SensorRight is extremelyClose and SensorLeft is extremelyClose then Speed is normal and SteerDirection is zero
-  rule: if SensorCenter is close and SensorRight is extremelyClose and SensorLeft is close then Speed is normal and SteerDirection is left
-  rule: if SensorCenter is close and SensorRight is extremelyClose and SensorLeft is far then Speed is normal and SteerDirection is left
+  rule: if SensorCenter is close and SensorRight is extremelyClose and SensorLeft is close          then Speed is normal and SteerDirection is left
+  rule: if SensorCenter is close and SensorRight is extremelyClose and SensorLeft is far            then Speed is normal and SteerDirection is left
+  
   rule: if SensorCenter is close and SensorRight is close and SensorLeft is extremelyClose then Speed is normal and SteerDirection is right
-  rule: if SensorCenter is close and SensorRight is close and SensorLeft is close then Speed is normal and SteerDirection is right
-  rule: if SensorCenter is close and SensorRight is close and SensorLeft is far then Speed is normal and SteerDirection is left
+  rule: if SensorCenter is close and SensorRight is close and SensorLeft is close          then Speed is normal and SteerDirection is right
+  rule: if SensorCenter is close and SensorRight is close and SensorLeft is far            then Speed is normal and SteerDirection is left
   rule: if SensorCenter is close and SensorRight is far and SensorLeft is extremelyClose then Speed is normal and SteerDirection is right
-  rule: if SensorCenter is close and SensorRight is far and SensorLeft is close then Speed is normal and SteerDirection is right
-  rule: if SensorCenter is close and SensorRight is far and SensorLeft is far then Speed is normal and SteerDirection is left
+  rule: if SensorCenter is close and SensorRight is far and SensorLeft is close          then Speed is normal and SteerDirection is right
+  rule: if SensorCenter is close and SensorRight is far and SensorLeft is far            then Speed is normal and SteerDirection is left
 
   rule: if SensorCenter is extremelyClose and SensorRight is extremelyClose and SensorLeft is extremelyClose then Speed is fastBack and SteerDirection is littleRight
   rule: if SensorCenter is extremelyClose and SensorRight is extremelyClose and SensorLeft is close then Speed is back and SteerDirection is sharpRight

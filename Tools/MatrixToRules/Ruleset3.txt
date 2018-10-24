@@ -1,0 +1,9 @@
+rule: if SensorCenter is extremelyClose SensorRight is extremelyClose and SensorLeft is extremelyClose then Speed is stop and SteerDirection is sharpRight
+rule: if SensorCenter is extremelyClose SensorRight is extremelyClose and SensorLeft is close then Speed is stop and SteerDirection is sharpLeft
+rule: if SensorCenter is extremelyClose SensorRight is extremelyClose and SensorLeft is far then Speed is stop and SteerDirection is sharpLeft
+rule: if SensorCenter is extremelyClose SensorRight is close and SensorLeft is extremelyClose then Speed is stop and SteerDirection is sharpRight
+rule: if SensorCenter is extremelyClose SensorRight is close and SensorLeft is close then Speed is back and SteerDirection is right
+rule: if SensorCenter is extremelyClose SensorRight is close and SensorLeft is far then Speed is back and SteerDirection is left
+rule: if SensorCenter is extremelyClose SensorRight is far and SensorLeft is extremelyClose then Speed is stop and SteerDirection is sharpRight
+rule: if SensorCenter is extremelyClose SensorRight is far and SensorLeft is close then Speed is back and SteerDirection is right
+rule: if SensorCenter is extremelyClose SensorRight is far and SensorLeft is far then Speed is back and SteerDirection is right

@@ -1,0 +1,5 @@
+rule: if SensorCenter is far SensorRight is extremelyClose and SensorLeft is extremelyClose then Speed is normal and SteerDirection is zero
+rule: if SensorCenter is far SensorRight is extremelyClose and SensorLeft is close then Speed is normal and SteerDirection is littleLeft
+rule: if SensorCenter is far SensorRight is extremelyClose and SensorLeft is far then Speed is normal and SteerDirection is left
+rule: if SensorCenter is far SensorRight is close and SensorLeft is extremelyClose then Speed is normal and SteerDirection is littleRight
+rule: if SensorCenter is far SensorRight is far and SensorLeft is extremelyClose then Speed is normal and SteerDirection is right

@@ -1,0 +1,5 @@
+rule: if SensorCenter is close SensorRight is extremelyClose and SensorLeft is extremelyClose then Speed is slow and SteerDirection is zero
+rule: if SensorCenter is close SensorRight is extremelyClose and SensorLeft is close then Speed is slow and SteerDirection is littleLeft
+rule: if SensorCenter is close SensorRight is extremelyClose and SensorLeft is far then Speed is slow and SteerDirection is left
+rule: if SensorCenter is close SensorRight is close and SensorLeft is extremelyClose then Speed is slow and SteerDirection is littleRight
+rule: if SensorCenter is close SensorRight is far and SensorLeft is extremelyClose then Speed is slow and SteerDirection is right

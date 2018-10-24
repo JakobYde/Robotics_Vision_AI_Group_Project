@@ -37,9 +37,9 @@ protected:
 
     fl::Engine*          m_pcFLEngine;
 
-    fl::InputVariable*   m_pflSencorLeft;
-    fl::InputVariable*   m_pflSencorCenter;
-    fl::InputVariable*   m_pflSencorRight;
+    fl::InputVariable*   m_pflSensorLeft;
+    fl::InputVariable*   m_pflSensorCenter;
+    fl::InputVariable*   m_pflSensorRight;
     fl::InputVariable*   m_pflAngleError;
     fl::InputVariable*   m_pflGoalDisttanse;
 

@@ -1,9 +1,0 @@
-  rule: if SencorCenter is extrimlyColse and SencorRight is extrimlyColse and SencorLeft is extrimlyColse then Speed is fastBack and Dir is littleRight
-  rule: if SencorCenter is extrimlyColse and SencorRight is extrimlyColse and SencorLeft is close then Speed is back and Dir is right
-  rule: if SencorCenter is extrimlyColse and SencorRight is extrimlyColse and SencorLeft is far then Speed is back and Dir is right
-  rule: if SencorCenter is extrimlyColse and SencorRight is close and SencorLeft is extrimlyColse then Speed is back and Dir is left
-  rule: if SencorCenter is extrimlyColse and SencorRight is close and SencorLeft is close then Speed is fastBack and Dir is right
-  rule: if SencorCenter is extrimlyColse and SencorRight is close and SencorLeft is far then Speed is back and Dir is sharpRight
-  rule: if SencorCenter is extrimlyColse and SencorRight is far and SencorLeft is extrimlyColse then Speed is back and Dir is left
-  rule: if SencorCenter is extrimlyColse and SencorRight is far and SencorLeft is close then Speed is back and Dir is sharpLeft
-  rule: if SencorCenter is extrimlyColse and SencorRight is far and SencorLeft is far then Speed is fastBack and Dir is sharpRight
