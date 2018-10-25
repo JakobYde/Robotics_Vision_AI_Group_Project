@@ -25,6 +25,16 @@ void Map::loadImage(cv::Mat img)
 		if (*p == vFree) n->type = eFree;
 		else n->type = eObstacle;
 	}
+	std::vector<Point<unsigned int>> edgePoints;
+	for (int i = 0; i < img.cols; i++) {
+		edgePoints.push_back(Point<unsigned int>(i, 0));
+		edgePoints.push_back(Point<unsigned int>(i, img.rows - 1));
+	}
+	for (int i = 1; i < img.rows - 1; i++) {
+		edgePoints.push_back(Point<unsigned int>(0, i));
+		edgePoints.push_back(Point<unsigned int>(img.cols - 1, i));
+	}
+	for (Point<unsigned int> p : edgePoints) if (map.at(p).type == eFree) recursivelyFill(p);
 }
 
 void Map::drawMap(drawType type)
@@ -41,8 +51,10 @@ void Map::drawMap(drawType type)
 		for (int i = 0; i < w * h; i++) {
 			unsigned int x = i % w, y = i / w;
 			cv::Vec3b* v = &img.at<cv::Vec3b>(cv::Point(x, y));
-			if (map.at(x, y).type == eFree) *v = vFree;
-			else *v = vObstacle;
+			nodeType type = map.at(x, y).type;
+				 if (type == eFree) *v = vFree;
+			else if (type == eOutside) *v = vOutside;
+			else if (type == eObstacle) *v = vObstacle;
 		}
 		break;
 
@@ -104,11 +116,12 @@ void Map::placePoint(Point<unsigned int> p)
 	unsigned int dX = xEnd - xStart, dY = yEnd - yStart;
 	for (int i = 0; i < dX * dY; i++) {
 		int x = i % dX + xStart, y = i / dX + yStart;
-		double dx = x - (int)p.x(), dy = y - (int)p.y();
-		double dist = sqrt(pow(dx, 2) + pow(dy, 2));
-		bool LOS = hasLineOfSight(p, Point<unsigned int>(x, y));
-		if (LOS) 
-			map.at(x, y).hmDistance = dist;
+		if (map.at(x, y).type == eFree) {
+			double dx = x - (int)p.x(), dy = y - (int)p.y();
+			double dist = sqrt(dx * dx + dy * dy);
+			bool LOS = hasLineOfSight(p, Point<unsigned int>(x, y));
+			if (LOS) map.at(x, y).hmDistance = dist;
+		}
 	}
 }
 
@@ -119,4 +132,11 @@ bool Map::hasLineOfSight(Point<unsigned int> a, Point<unsigned int> b)
 		if (map.at(p.x(), p.y()).type == eObstacle) return false;
 	}
 	return true;
+}
+
+void Map::recursivelyFill(Point<unsigned int> p)
+{
+	map.at(p).type = eOutside;
+	Point<unsigned int> dirs[] = { Point<unsigned int>(-1,0) ,Point<unsigned int>(1,0) ,Point<unsigned int>(0,-1) ,Point<unsigned int>(0,1) };
+	for (int i = 0; i < 4; i++) if (map.at(p + dirs[i]).type == eFree) recursivelyFill(p + dirs[i]);
 }

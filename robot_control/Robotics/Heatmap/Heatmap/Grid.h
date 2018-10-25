@@ -5,6 +5,7 @@
 
 
 #include <vector>
+#include "Point.h"
 
 template <class T>
 class Grid
@@ -21,6 +22,8 @@ public:
 		}	
 		return grid[y][x]; 
 	}
+
+	T& at(Point<unsigned int> p) { return at(p.x(), p.y()); }
 
 	unsigned int rows() { return grid.size(); }
 	unsigned int cols() { 

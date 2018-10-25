@@ -7,7 +7,8 @@
 
 enum nodeType {
 	eObstacle,
-	eFree
+	eFree,
+	eOutside
 };
 
 enum drawType {
@@ -33,11 +34,13 @@ private:
 	std::vector<Point<unsigned int>> getLine(Point<unsigned int> a, Point<unsigned int> b);
 	void placePoint(Point<unsigned int> p);
 	bool hasLineOfSight(Point<unsigned int> a, Point<unsigned int> b);
+	void recursivelyFill(Point<unsigned int> p);
 
 	cv::Vec3b vObstacle = cv::Vec3b(0, 0, 0);
 	cv::Vec3b vFree = cv::Vec3b(255, 255, 255);
 	cv::Vec3d vUndiscovered = cv::Vec3b(0, 0, 255);
 	cv::Vec3d vDiscovered = cv::Vec3b(255, 255, 255);
+	cv::Vec3d vOutside = cv::Vec3b(200, 35, 225);
 
 	class MapNode
 	{

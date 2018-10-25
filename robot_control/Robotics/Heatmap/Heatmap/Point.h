@@ -19,6 +19,10 @@ public:
 		return Point<T>(X - p.x(), Y - p.y());
 	}
 
+	Point<T> operator+(Point<T> p) {
+		return Point<T>(X + p.x(), Y + p.y());
+	}
+
 	bool operator!=(Point<T> p) {
 		return (X != p.x() || Y != p.y());
 	}
