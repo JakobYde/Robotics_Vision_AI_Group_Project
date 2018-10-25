@@ -1,5 +1,9 @@
 #pragma once
 
+#define MAX(a,b) (a > b) ? a : b
+#define MIN(a,b) (a < b) ? a : b
+
+
 #include <vector>
 
 template <class T>
@@ -12,14 +16,15 @@ public:
 	T& at(unsigned int x, unsigned int y) { 
 		if (!inBounds(x, y)) {
 			grid.resize(y + 1);
-			for (int i = 0; i < grid.size(); i++)  grid[i].resize(x + 1);
+			if (grid.size() > 1) grid[grid.size() - 1].resize(MAX(x + 1, grid[grid.size() - 2].size()));
+			else grid[grid.size() - 1].resize(x + 1);
 		}	
 		return grid[y][x]; 
 	}
 
 	unsigned int rows() { return grid.size(); }
 	unsigned int cols() { 
-		if (rows() < 0) return grid[0].size();
+		if (rows() > 0) return grid[0].size();
 		return 0;
 	}
 
@@ -27,7 +32,7 @@ private:
 	std::vector<std::vector<T>> grid;
 
 	bool inBounds(unsigned int x, unsigned int y) { 
-		if (y < grid.size()) if (x < grid.size()) return true;
+		if (y < grid.size()) if (x < grid[y].size()) return true;
 		return false;
 	}
 };

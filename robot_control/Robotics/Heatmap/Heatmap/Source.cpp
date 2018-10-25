@@ -1,16 +1,13 @@
 
-#include "Heatmap.h"
+#include "Map.h"
 #include <iostream>
 
-typedef Grid<int> iGrid;
-
 int main() {
-	iGrid grid;
 
-	Point<int> a(1, 1);
-	Point<int> b(-1, 2);
-
-	Point<int> ab = a - b;
+	Map m(90,150);
+	cv::Mat img = cv::imread("Map.png");
+	m.loadImage(img);
+	m.drawMap(eHeatmap);
 
 	int c;
 	std::cin >> c;
