@@ -41,6 +41,7 @@ private:
 	cv::Vec3d vUndiscovered = cv::Vec3b(0, 0, 255);
 	cv::Vec3d vDiscovered = cv::Vec3b(255, 255, 255);
 	cv::Vec3d vOutside = cv::Vec3b(200, 35, 225);
+	cv::Vec3d vPoint = cv::Vec3b(255, 0, 0);
 
 	class MapNode
 	{

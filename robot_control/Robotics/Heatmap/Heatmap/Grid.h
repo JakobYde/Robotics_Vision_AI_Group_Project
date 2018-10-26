@@ -14,8 +14,8 @@ public:
 	Grid() {}
 	~Grid() {}
 
-	T& at(unsigned int x, unsigned int y) { 
-		if (!inBounds(x, y)) {
+	T& at(unsigned int x, unsigned int y, bool secure = true) { 
+		if (secure && !inBounds(x, y)) {
 			grid.resize(y + 1);
 			if (grid.size() > 1) grid[grid.size() - 1].resize(MAX(x + 1, grid[grid.size() - 2].size()));
 			else grid[grid.size() - 1].resize(x + 1);
@@ -23,7 +23,7 @@ public:
 		return grid[y][x]; 
 	}
 
-	T& at(Point<unsigned int> p) { return at(p.x(), p.y()); }
+	T& at(Point<unsigned int> p, bool secure = true) { return at(p.x(), p.y(), secure); }
 
 	unsigned int rows() { return grid.size(); }
 	unsigned int cols() { 
@@ -31,12 +31,14 @@ public:
 		return 0;
 	}
 
-private:
-	std::vector<std::vector<T>> grid;
+	bool inBounds(Point<unsigned int> p) { return inBounds(p.x(), p.y()); }
 
-	bool inBounds(unsigned int x, unsigned int y) { 
-		if (y < grid.size()) if (x < grid[y].size()) return true;
+	bool inBounds(unsigned int x, unsigned int y) {
+		if (y < grid.size() && y >= 0) if (x < grid[y].size() && x >= 0) return true;
 		return false;
 	}
+
+private:
+	std::vector<std::vector<T>> grid;
 };
 

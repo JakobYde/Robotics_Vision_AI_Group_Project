@@ -43,7 +43,7 @@ void Map::drawMap(drawType type)
 	unsigned int w = map.cols(), h = map.rows();
 	cv::Mat img(h, w, CV_8UC3);
 
-	placePoint(Point<unsigned int>(300, 220));
+	placePoint(Point<unsigned int>(100, 40));
 
 	switch (type) {
 	case eBasic:
@@ -65,9 +65,11 @@ void Map::drawMap(drawType type)
 			cv::Vec3b* v = &img.at<cv::Vec3b>(cv::Point(x, y));
 
 			MapNode n = map.at(x, y);
-			if (n.type == eObstacle) *v = vObstacle;
-			else {
-				if (n.hmDistance == -1 || n.hmDistance > viewDistance) *v = vUndiscovered;
+				 if (n.type == eObstacle) *v = vObstacle;
+			else if (n.type == eOutside) *v = vOutside;
+			else if (n.type == eFree) {
+					 if (n.hmDistance == -1 || n.hmDistance > viewDistance) *v = vUndiscovered;
+				else if (n.hmDistance == 0) *v = vPoint;
 				else *v = (1 - n.hmDistance / viewDistance) * vDiscovered + (n.hmDistance / viewDistance) * vUndiscovered;
 			}
 
@@ -76,6 +78,7 @@ void Map::drawMap(drawType type)
 
 	}
 
+	cv::resize(img, img, img.size() * 4);
 	cv::imshow(windowName, img);
 	cv::waitKey();
 }
@@ -93,6 +96,7 @@ std::vector<Point<unsigned int>> Map::getLine(Point<unsigned int> a, Point<unsig
 		bool findingX = false;
 		if (abs(dX) > abs(dY)) l = dY, g = dX;
 		else l = dX, g = dY, findingX = true;
+		line = std::vector<Point<unsigned int>>(abs(g) + 1);
 
 		double slope = (double)l / (double)g;
 		int inc = g / abs(g);
@@ -102,7 +106,7 @@ std::vector<Point<unsigned int>> Map::getLine(Point<unsigned int> a, Point<unsig
 			if (findingX) p = Point<unsigned int>(i * slope + (int)a.x(), i + (int)a.y());
 			else p = Point<unsigned int>(i + (int)a.x(), i * slope + (int)a.y());
 
-			line.push_back(p);
+			line[abs(i)] = p;
 		}
 	}
 	return line;
@@ -111,16 +115,16 @@ std::vector<Point<unsigned int>> Map::getLine(Point<unsigned int> a, Point<unsig
 void Map::placePoint(Point<unsigned int> p)
 {
 	unsigned int w = map.cols(), h = map.rows();
-	unsigned int xStart = MAX(0, p.x() - viewDistance), xEnd = MIN(w, p.x() + viewDistance);
-	unsigned int yStart = MAX(0, p.y() - viewDistance), yEnd = MIN(w, p.y() + viewDistance);
-	unsigned int dX = xEnd - xStart, dY = yEnd - yStart;
+	unsigned int xStart = MAX(0, p.x() - viewDistance), xEnd = MIN(w - 1, p.x() + viewDistance);
+	unsigned int yStart = MAX(0, p.y() - viewDistance), yEnd = MIN(h - 1, p.y() + viewDistance);
+	int dX = xEnd - xStart, dY = yEnd - yStart;
 	for (int i = 0; i < dX * dY; i++) {
 		int x = i % dX + xStart, y = i / dX + yStart;
-		if (map.at(x, y).type == eFree) {
+		if (map.at(x, y, false).type == eFree) {
 			double dx = x - (int)p.x(), dy = y - (int)p.y();
 			double dist = sqrt(dx * dx + dy * dy);
 			bool LOS = hasLineOfSight(p, Point<unsigned int>(x, y));
-			if (LOS) map.at(x, y).hmDistance = dist;
+			if (LOS) map.at(x, y, false).hmDistance = dist;
 		}
 	}
 }
@@ -129,7 +133,7 @@ bool Map::hasLineOfSight(Point<unsigned int> a, Point<unsigned int> b)
 {
 	std::vector<Point<unsigned int>> line = getLine(a, b);
 	for (Point<unsigned int> p : line) {
-		if (map.at(p.x(), p.y()).type == eObstacle) return false;
+		if (map.at(p.x(), p.y(), false).type == eObstacle) return false;
 	}
 	return true;
 }
@@ -138,5 +142,8 @@ void Map::recursivelyFill(Point<unsigned int> p)
 {
 	map.at(p).type = eOutside;
 	Point<unsigned int> dirs[] = { Point<unsigned int>(-1,0) ,Point<unsigned int>(1,0) ,Point<unsigned int>(0,-1) ,Point<unsigned int>(0,1) };
-	for (int i = 0; i < 4; i++) if (map.at(p + dirs[i]).type == eFree) recursivelyFill(p + dirs[i]);
+	for (int i = 0; i < 4; i++) {
+		Point<unsigned int> nextPoint = p + dirs[i];
+		if (map.inBounds(nextPoint)) if (map.at(nextPoint).type == eFree) recursivelyFill(nextPoint);
+	}
 }
