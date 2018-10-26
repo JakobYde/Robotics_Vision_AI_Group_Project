@@ -8,7 +8,7 @@ int main() {
 	cv::Mat img = cv::imread("Map.png");
 	resize(img, img, cv::Size(), 2, 2, cv::INTER_NEAREST);
 	m.loadImage(img);
-	m.drawMap(eHeatmap);
+	m.drawMap(eBrushfire);
 
 	int c;
 	std::cin >> c;

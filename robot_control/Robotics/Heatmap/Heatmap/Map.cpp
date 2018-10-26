@@ -52,7 +52,7 @@ void Map::drawMap(drawType type)
 			unsigned int x = i % w, y = i / w;
 			cv::Vec3b* v = &img.at<cv::Vec3b>(cv::Point(x, y));
 			nodeType type = map.at(x, y).type;
-				 if (type == eFree) *v = vFree;
+			if (type == eFree) *v = vFree;
 			else if (type == eOutside) *v = vOutside;
 			else if (type == eObstacle) *v = vObstacle;
 		}
@@ -68,7 +68,7 @@ void Map::drawMap(drawType type)
 				 if (n.type == eObstacle) *v = vObstacle;
 			else if (n.type == eOutside) *v = vOutside;
 			else if (n.type == eFree) {
-					 if (n.hmDistance == -1 || n.hmDistance > viewDistance) *v = vUndiscovered;
+				if (n.hmDistance == -1 || n.hmDistance > viewDistance) *v = vUndiscovered;
 				else if (n.hmDistance == 0) *v = vPoint;
 				else *v = (1 - n.hmDistance / viewDistance) * vDiscovered + (n.hmDistance / viewDistance) * vUndiscovered;
 			}
@@ -76,6 +76,18 @@ void Map::drawMap(drawType type)
 		}
 		break;
 
+	case eBrushfire:
+		windowName = "Brushfire Map";
+		seperateIntoRooms();
+		for (int i = 0; i < w * h; i++) {
+			unsigned int x = i % w, y = i / w;
+			cv::Vec3b* v = &img.at<cv::Vec3b>(cv::Point(x, y));
+
+			int d = map.at(x, y).distanceFromDiscovered;
+			if (d < 1) *v = vObstacle;
+			else *v = BLEND_COLOR(vUndiscovered, cv::Vec3b(0,255,255), d / maxDist);
+		}
+		break;
 	}
 
 	cv::resize(img, img, img.size() * 4);
@@ -146,4 +158,44 @@ void Map::recursivelyFill(Point<unsigned int> p)
 		Point<unsigned int> nextPoint = p + dirs[i];
 		if (map.inBounds(nextPoint)) if (map.at(nextPoint).type == eFree) recursivelyFill(nextPoint);
 	}
+}
+
+bool Map::isDiscoverable(Point<unsigned int> p)
+{
+	nodeType t = map.at(p).type;
+	//return (t != eObstacle && t != eOutside && map.at(p).hmDistance == -1);
+	return (t != eObstacle && t != eOutside);
+}
+
+void Map::seperateIntoRooms()
+{
+	bool tilesChanged;
+	do {
+		tilesChanged = false;
+		for (int i = 0; i < map.cols() * map.rows(); i++) {
+			Point<unsigned int> p(i % map.cols(),i / map.cols());
+			if (isDiscoverable(p)) {
+				int* d = &map.at(p, false).distanceFromDiscovered;
+				int minNeighbor = getMinNeighbor(p) + 1;
+				if (*d > minNeighbor) {
+					*d = minNeighbor;
+					tilesChanged = true;
+				}
+			}
+			else (map.at(p).distanceFromDiscovered = 0);
+			maxDist = MAX(map.at(p, false).distanceFromDiscovered, maxDist);
+		}
+	} while (tilesChanged);
+}
+
+int Map::getMinNeighbor(Point<unsigned int> p)
+{
+	Point<unsigned int> dirs[] = { Point<unsigned int>(-1,0) ,Point<unsigned int>(1,0) ,Point<unsigned int>(0,-1) ,Point<unsigned int>(0,1) };
+	int minVal = INT_MAX;
+	for (int i = 0; i < 4; i++) {
+		if (!map.inBounds(p + dirs[i])) return 0;
+		if (!isDiscoverable(p + dirs[i])) return 0;
+		minVal = MIN(map.at(p + dirs[i]).distanceFromDiscovered, minVal);
+	}
+	return minVal;
 }
