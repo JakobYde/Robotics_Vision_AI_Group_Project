@@ -63,12 +63,12 @@ float angle_min = -2.26889;
 float angle_max = 2.2689;
 float angle_step = 0.0228029648241206;
 float total_angle_range = abs(angle_min)+abs(angle_max);
+float center_angle_pct = 0.1;
 
 float rightStartAngle = angle_min;
-float rightEndAngle = angle_step*round((angle_min+2*total_angle_range/5)/angle_step);
-
+float rightEndAngle = angle_step*round((angle_min+total_angle_range*(1-center_angle_pct)/2)/angle_step);
 float centerStartAngle = rightEndAngle;
-float centerEndAngle = angle_step*round((centerStartAngle+total_angle_range/5)/angle_step);
+float centerEndAngle = angle_step*round((centerStartAngle+total_angle_range*center_angle_pct)/angle_step);
 
 float leftStartAngle= centerEndAngle;
 float leftEndAngle = angle_max;
@@ -170,8 +170,8 @@ int main(int _argc, char **_argv) {
 
     //Få control signal
     float angleError = 0;
-    float goalDisttanse = 10;
-    ControlOutput controllerOut = controller.getControlOutput(angleError,goalDisttanse);
+    float goalDistance = 10;
+    ControlOutput controllerOut = controller.getControlOutput(angleError,goalDistance);
 
     //FL_LOG("SenM" << Op::str(senM)<<" : "<< Op::str(sM->getValue())<< " dif: " << Op::str(senM-sM->getValue())
     //       << "; Speed.output = " << Op::str(speed->getValue()));

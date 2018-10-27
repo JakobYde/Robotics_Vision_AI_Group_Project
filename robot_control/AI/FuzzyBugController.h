@@ -23,7 +23,7 @@ public:
     virtual ~FuzzyBugController() = default;
 
     virtual void buildController();
-    virtual ControlOutput getControlOutput(float angleError, float goalDisttanse);
+    virtual ControlOutput getControlOutput(float angleError, float goalDistance);
 
 protected:
     float leftStartAngle;
@@ -41,7 +41,7 @@ protected:
     fl::InputVariable*   m_pflSensorCenter;
     fl::InputVariable*   m_pflSensorRight;
     fl::InputVariable*   m_pflAngleError;
-    fl::InputVariable*   m_pflGoalDisttanse;
+    fl::InputVariable*   m_pflGoalDistance;
 
     fl::OutputVariable*  m_pflSteerDirection;
     fl::OutputVariable*  m_pflSpeed;
