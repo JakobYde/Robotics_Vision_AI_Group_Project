@@ -9,14 +9,21 @@
 #include <array>
 #include <iostream>
 #include <math.h>
+#include <sstream>      // std::stringstream
+#include <fstream>
 
 #include "FuzzyBugController.h"
 #include "LaserScanner.h"
 
 #define ESC_KEY 27
-
+#define PI 3.14159265
 static boost::mutex mutex;
 LaserScanner controllerScan;
+
+struct Possison{
+    float x;
+    float y;
+};
 
 void statCallback(ConstWorldStatisticsPtr &_msg) {
   (void)_msg;
@@ -25,21 +32,31 @@ void statCallback(ConstWorldStatisticsPtr &_msg) {
   //  std::cout << std::flush;
 }
 
+std::ofstream *myfile;
+Possison robotPos[2];
+
 void poseCallback(ConstPosesStampedPtr &_msg) {
   // Dump the message contents to stdout.
   //  std::cout << _msg->DebugString();
 
   for (int i = 0; i < _msg->pose_size(); i++) {
     if (_msg->pose(i).name() == "pioneer2dx") {
+      robotPos[1] = robotPos[0];
+      robotPos[0].x = _msg->pose(i).position().x();
+      robotPos[0].y = _msg->pose(i).position().y();
+      std::stringstream pos_ori_stream;
 
-      std::cout << std::setprecision(2) << std::fixed << std::setw(6)
-                << _msg->pose(i).position().x() << std::setw(6)
-                << _msg->pose(i).position().y() << std::setw(6)
-                << _msg->pose(i).position().z() << std::setw(6)
-                << _msg->pose(i).orientation().w() << std::setw(6)
-                << _msg->pose(i).orientation().x() << std::setw(6)
-                << _msg->pose(i).orientation().y() << std::setw(6)
+      pos_ori_stream << std::setprecision(2) << std::fixed << std::setw(6)
+                << _msg->pose(i).position().x() << ", " << std::setw(6)
+                << _msg->pose(i).position().y() << ", " << std::setw(6)
+                << _msg->pose(i).position().z() << ", " << std::setw(6)
+                << _msg->pose(i).orientation().w() << ", " << std::setw(6)
+                << _msg->pose(i).orientation().x() << ", " << std::setw(6)
+                << _msg->pose(i).orientation().y() << ", " << std::setw(6)
                 << _msg->pose(i).orientation().z() << std::endl;
+      std::string pos_ori_str = pos_ori_stream.str();
+      //std::cout << pos_ori_str;
+      *myfile << pos_ori_str;
     }
   }
 }
@@ -126,73 +143,119 @@ void lidarCallbackImg(ConstLaserScanStampedPtr &msg) {
   mutex.unlock();
 }
 
+float calDist(Possison pos1, Possison pos2){
+    float xDif = pos2.x - pos1.x;
+    float yDif = pos2.y - pos1.y;
+    return std::sqrt((std::pow(xDif, 2))+std::pow(yDif, 2));
+}
+
+float calDotVec(Possison vec1, Possison vec2){
+    return vec1.x*vec2.x+vec1.y*vec2.y;
+}
+
+float calCrossVec(Possison vec1, Possison vec2){
+    return vec1.x*vec2.y-vec1.y*vec2.x;
+}
+
+float angleVec(Possison vec1, Possison vec2){
+    return std::atan2(calCrossVec(vec1,vec2),calDotVec(vec1,vec2));
+}
+
+float calAngleError(Possison *posHist, Possison goal){
+    Possison headingVector;
+    headingVector.x = posHist[0].x - posHist[1].x;
+    headingVector.y = posHist[0].y - posHist[1].y;
+
+    Possison goalVector;
+    goalVector.x = goal.x - posHist[1].x;
+    goalVector.y = goal.y - posHist[1].y;
+
+    return angleVec(headingVector,goalVector);
+}
+
 int main(int _argc, char **_argv) {
-  //Lav controller
+    //Zero start pos
+    robotPos[0].x = 0.0;
+    robotPos[0].y = 0.0;
+    robotPos[1].x = 0.0;
+    robotPos[1].y = 0.0;
 
-  FuzzyBugController controller( & controllerScan, leftStartAngle, leftEndAngle, rightStartAngle, rightEndAngle, centerStartAngle, centerEndAngle);
-  controller.buildController();
+    //Lav pos log
+    myfile = new std::ofstream("pos.log");
 
-  // Load gazebo
-  gazebo::client::setup(_argc, _argv);
+    //Lav controller
 
-  // Create our node for communication
-  gazebo::transport::NodePtr node(new gazebo::transport::Node());
-  node->Init();
+    FuzzyBugController controller( & controllerScan, leftStartAngle, leftEndAngle, rightStartAngle, rightEndAngle, centerStartAngle, centerEndAngle);
+    controller.buildController();
 
-  // Listen to Gazebo topics
-  gazebo::transport::SubscriberPtr statSubscriber =
+    // Load gazebo
+    gazebo::client::setup(_argc, _argv);
+
+    // Create our node for communication
+    gazebo::transport::NodePtr node(new gazebo::transport::Node());
+    node->Init();
+
+    // Listen to Gazebo topics
+    gazebo::transport::SubscriberPtr statSubscriber =
       node->Subscribe("~/world_stats", statCallback);
 
-  //gazebo::transport::SubscriberPtr poseSubscriber =
-  //    node->Subscribe("~/pose/info", poseCallback);
+    gazebo::transport::SubscriberPtr poseSubscriber =
+      node->Subscribe("~/pose/info", poseCallback);
 
-  gazebo::transport::SubscriberPtr cameraSubscriber =
+    gazebo::transport::SubscriberPtr cameraSubscriber =
       node->Subscribe("~/pioneer2dx/camera/link/camera/image", cameraCallback);
 
-  gazebo::transport::SubscriberPtr lidarSubscriber =
+    gazebo::transport::SubscriberPtr lidarSubscriber =
       node->Subscribe("~/pioneer2dx/hokuyo/link/laser/scan", lidarCallbackImg);
 
-  // Publish to the robot velkey_esc_cmd topic
-  gazebo::transport::PublisherPtr movementPublisher =
+    // Publish to the robot velkey_esc_cmd topic
+    gazebo::transport::PublisherPtr movementPublisher =
       node->Advertise<gazebo::msgs::Pose>("~/pioneer2dx/vel_cmd");
 
-  // Publish a reset of the world
-  gazebo::transport::PublisherPtr worldPublisher =
+    // Publish a reset of the world
+    gazebo::transport::PublisherPtr worldPublisher =
       node->Advertise<gazebo::msgs::WorldControl>("~/world_control");
-  gazebo::msgs::WorldControl controlMessage;
-  controlMessage.mutable_reset()->set_all(true);
-  worldPublisher->WaitForConnection();
-  worldPublisher->Publish(controlMessage);
+    gazebo::msgs::WorldControl controlMessage;
+    controlMessage.mutable_reset()->set_all(true);
+    worldPublisher->WaitForConnection();
+    worldPublisher->Publish(controlMessage);
 
-  // Loop
-  while (true) {
-    gazebo::common::Time::MSleep(10);
+    // Loop
+    while (true) {
+        gazebo::common::Time::MSleep(10);
 
-    //Få control signal
-    float angleError = 0;
-    float goalDistance = 10;
-    ControlOutput controllerOut = controller.getControlOutput(angleError,goalDistance);
+        //Få control signal
+        Possison goal;
+        goal.x = 35;
+        goal.y = 0;
 
-    //FL_LOG("SenM" << Op::str(senM)<<" : "<< Op::str(sM->getValue())<< " dif: " << Op::str(senM-sM->getValue())
-    //       << "; Speed.output = " << Op::str(speed->getValue()));
+        float angleError = calAngleError(robotPos,goal);
+        float goalDistance = calDist(robotPos[0],goal);
+        std::cout << std::setprecision(3) << std::fixed << "Angle error: " << angleError << ", " << std::setw(6) << "goalDistance: " << goalDistance << " ::: " << std::setw(6) << "Goal: " << goal.x << ", " << goal.y << ", " << std::setw(6) << "Pos: " << robotPos[0].x << ", " << robotPos[0].y << std::endl;
+        ControlOutput controllerOut = controller.getControlOutput(angleError,goalDistance);
 
-    mutex.lock();
-    int key = cv::waitKey(1);
-    mutex.unlock();
+        //FL_LOG("SenM" << Op::str(senM)<<" : "<< Op::str(sM->getValue())<< " dif: " << Op::str(senM-sM->getValue())
+        //       << "; Speed.output = " << Op::str(speed->getValue()));
 
-    if (key == ESC_KEY)
-      break;
+        mutex.lock();
+        int key = cv::waitKey(1);
+        mutex.unlock();
 
-    // Generate a pose
-    ignition::math::Pose3d pose(controllerOut.speed, 0, 0, 0, 0, controllerOut.direction);
+        if (key == ESC_KEY)
+          break;
 
-    // Convert to a pose message
-    gazebo::msgs::Pose msg;
-    gazebo::msgs::Set(&msg, pose);
-    movementPublisher->Publish(msg);
+        // Generate a pose
+        ignition::math::Pose3d pose(controllerOut.speed, 0, 0, 0, 0, controllerOut.direction);
 
-  }
+        // Convert to a pose message
+        gazebo::msgs::Pose msg;
+        gazebo::msgs::Set(&msg, pose);
+        movementPublisher->Publish(msg);
 
-  // Make sure to shut everything down.
-  gazebo::client::shutdown();
+    }
+
+    myfile->close();
+    delete myfile;
+    // Make sure to shut everything down.
+    gazebo::client::shutdown();
 }

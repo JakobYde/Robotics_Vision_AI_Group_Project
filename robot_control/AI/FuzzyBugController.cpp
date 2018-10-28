@@ -40,7 +40,7 @@ ControlOutput FuzzyBugController::getControlOutput(float angleError, float goalD
 void FuzzyBugController::buildController()
 {
     using namespace fl;
-    m_pcFLEngine = FllImporter().fromFile("/home/mnj/rb-rca5-group2/robot_control/AI/fuzzyObjAndGoalController.fll");
+    m_pcFLEngine = FllImporter().fromFile("../AI/fuzzyObjAndGoalController.fll");
 
     std::string status;
     if (not m_pcFLEngine->isReady(&status))
