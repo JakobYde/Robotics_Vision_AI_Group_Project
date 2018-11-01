@@ -43,6 +43,7 @@ private:
 	bool isDiscoverable(Point<unsigned int> p);
 	void seperateIntoRooms();
 	int getMinNeighbor(Point<unsigned int> p);
+	std::vector<Point<unsigned int>> getPath(Point<unsigned int> A, Point<unsigned int> B);
 
 	cv::Vec3b vObstacle = cv::Vec3b(0, 0, 0);
 	cv::Vec3b vFree = cv::Vec3b(255, 255, 255);

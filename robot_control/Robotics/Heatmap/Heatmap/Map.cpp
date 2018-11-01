@@ -85,7 +85,10 @@ void Map::drawMap(drawType type)
 
 			int d = map.at(x, y).distanceFromDiscovered;
 			if (d < 1) *v = vObstacle;
-			else *v = BLEND_COLOR(vUndiscovered, cv::Vec3b(0,255,255), d / maxDist);
+			else {
+				double a = (double)d / (double)maxDist;
+				*v = vUndiscovered * (1 - a) + cv::Vec3b(0, 255, 255) * a;
+			}
 		}
 		break;
 	}
@@ -97,7 +100,7 @@ void Map::drawMap(drawType type)
 
 std::vector<Point<unsigned int>> Map::getPoints()
 {
-	return std::vector<Point<unsigned int>>();
+	return points;
 }
 
 std::vector<Point<unsigned int>> Map::getLine(Point<unsigned int> a, Point<unsigned int> b)
@@ -171,6 +174,7 @@ void Map::seperateIntoRooms()
 {
 	bool tilesChanged;
 	do {
+		maxDist = 0;
 		tilesChanged = false;
 		for (int i = 0; i < map.cols() * map.rows(); i++) {
 			Point<unsigned int> p(i % map.cols(),i / map.cols());
@@ -198,4 +202,9 @@ int Map::getMinNeighbor(Point<unsigned int> p)
 		minVal = MIN(map.at(p + dirs[i]).distanceFromDiscovered, minVal);
 	}
 	return minVal;
+}
+
+std::vector<Point<unsigned int>> Map::getPath(Point<unsigned int> A, Point<unsigned int> B)
+{
+	return std::vector<Point<unsigned int>>();
 }
