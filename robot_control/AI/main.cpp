@@ -23,6 +23,15 @@ LaserScanner controllerScan;
 struct Possison{
     float x;
     float y;
+    Possison() {
+         x = 0.0;
+         y = 0.0;
+    }
+    Possison(float xIn,float yIn) {
+         x = xIn;
+         y = yIn;
+    }
+
 };
 
 void statCallback(ConstWorldStatisticsPtr &_msg) {
@@ -173,12 +182,47 @@ float calAngleError(Possison *posHist, Possison goal){
     return angleVec(headingVector,goalVector);
 }
 
+
+struct pointManger{
+    std::vector<Possison> poss;
+    int index;
+};
+
+Possison getpoint(pointManger &pm, Possison pos, float mindist){
+    Possison goal;
+    if(pm.index < pm.poss.size()) goal = pm.poss.at(pm.index);
+    else goal = pm.poss.back();
+
+    float dist = calDist(goal,pos);
+    if(dist<=mindist) pm.index++;
+
+    Possison newGoal;
+    if(pm.index < pm.poss.size()) newGoal = pm.poss.at(pm.index);
+    else newGoal = pm.poss.back();
+    return newGoal;
+}
+
 int main(int _argc, char **_argv) {
     //Zero start pos
     robotPos[0].x = 0.0;
     robotPos[0].y = 0.0;
     robotPos[1].x = 0.0;
     robotPos[1].y = 0.0;
+
+    pointManger pm;
+    pm.index = 0;
+
+    Possison goal1(-21.23,-0.6197);
+    Possison goal2(-21.69,6.9696);
+    Possison goal3(-25.97,21.702);
+    Possison goal4(-36.45,22.449);
+
+    pm.poss.push_back(goal1);
+    pm.poss.push_back(goal2);
+
+    pm.poss.push_back(goal3);
+    pm.poss.push_back(goal4);
+
 
     //Lav pos log
     myfile = new std::ofstream("pos.log");
@@ -225,9 +269,7 @@ int main(int _argc, char **_argv) {
         gazebo::common::Time::MSleep(10);
 
         //Få control signal
-        Possison goal;
-        goal.x = 35;
-        goal.y = 0;
+        Possison goal = getpoint(pm,robotPos[0], 1.0);
 
         float angleError = calAngleError(robotPos,goal);
         float goalDistance = calDist(robotPos[0],goal);
