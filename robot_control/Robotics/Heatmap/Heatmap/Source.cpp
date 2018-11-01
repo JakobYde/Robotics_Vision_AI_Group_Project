@@ -8,6 +8,7 @@ int main() {
 	cv::Mat img = cv::imread("Map.png");
 	resize(img, img, cv::Size(), 2, 2, cv::INTER_NEAREST);
 	m.loadImage(img);
+	m.getPath(Point<unsigned int>(3,3), Point<unsigned int>(150,40));
 	m.drawMap(eBrushfire);
 
 	int c;

@@ -5,7 +5,10 @@
 
 #include <opencv2/opencv.hpp>
 
+#include <queue>
+
 #define BLEND_COLOR(a,b,alpha) (a * (1 - alpha) + b * alpha)
+#define GET_DISTANCE(a,b) (sqrt((a.x() - b.x())*(a.x() - b.x()) + sqrt((a.y() - b.y())*(a.y() - b.y()))))
 
 enum nodeType {
 	eObstacle,
@@ -22,6 +25,8 @@ enum drawType {
 
 class Map
 {
+
+private: class MapNode;
 public:
 	Map();
 	Map(double fov, double viewDistance);
@@ -30,6 +35,13 @@ public:
 	void loadImage(cv::Mat img);
 	void drawMap(drawType type);
 	std::vector<Point<unsigned int>> getPoints();
+	std::vector<Point<unsigned int>> getPath(Point<unsigned int> A, Point<unsigned int> B);
+
+	struct GreaterH {
+		constexpr bool operator()(MapNode* A, MapNode* B){
+			return (A->asH > B->asH);
+		}
+	};
 
 private:
 	double fov, viewDistance;
@@ -43,7 +55,6 @@ private:
 	bool isDiscoverable(Point<unsigned int> p);
 	void seperateIntoRooms();
 	int getMinNeighbor(Point<unsigned int> p);
-	std::vector<Point<unsigned int>> getPath(Point<unsigned int> A, Point<unsigned int> B);
 
 	cv::Vec3b vObstacle = cv::Vec3b(0, 0, 0);
 	cv::Vec3b vFree = cv::Vec3b(255, 255, 255);
@@ -55,7 +66,13 @@ private:
 	class MapNode
 	{
 	public:
+		//A* Values
+		double asH;
+		double asG;
+
+		//Base Values
 		nodeType type;
+		Point<unsigned int> position;
 
 		//Heatmap Values
 		double hmDistance = -1;
@@ -64,9 +81,6 @@ private:
 		int roomNumber = -1;
 		int distanceFromDiscovered = INT_MAX;
 
-		//A* Values
-		double asH; 
-		double asG;
 	};
 
 	Grid<MapNode> map;

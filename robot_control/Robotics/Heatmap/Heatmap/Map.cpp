@@ -24,6 +24,7 @@ void Map::loadImage(cv::Mat img)
 		MapNode* n = &(map.at(x, y));
 		if (*p == vFree) n->type = eFree;
 		else n->type = eObstacle;
+		n->position = Point<unsigned int>(x, y);
 	}
 	std::vector<Point<unsigned int>> edgePoints;
 	for (int i = 0; i < img.cols; i++) {
@@ -206,5 +207,16 @@ int Map::getMinNeighbor(Point<unsigned int> p)
 
 std::vector<Point<unsigned int>> Map::getPath(Point<unsigned int> A, Point<unsigned int> B)
 {
-	return std::vector<Point<unsigned int>>();
+	std::vector<Point<unsigned int>> path;
+	for (int i = 0; i < map.cols() * map.rows(); i++) {
+		Point<unsigned int> p(i % map.cols(), i / map.cols());
+		map.at(p).asH = GET_DISTANCE(p, B);
+		map.at(p).asG = -1;
+	}
+	std::priority_queue<MapNode*, std::vector<MapNode*>, GreaterH> queue;
+	bool pathFound = false;
+	while (!pathFound) {
+
+	}
+	return path;
 }
