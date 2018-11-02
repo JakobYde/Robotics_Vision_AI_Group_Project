@@ -21,13 +21,18 @@ enum drawType {
 	eHeatmap,
 	eBrushfire,
 	eRooms,
-	ePath
+	ePath,
+	eLargestBox
 };
 
 struct drawArguments {
 	Point<unsigned int> A;
 	Point<unsigned int> B;
 	unsigned int padding;
+};
+
+struct Box {
+	unsigned int x, y, w, h;
 };
 
 class Map
@@ -40,7 +45,7 @@ public:
 	~Map();
 
 	void loadImage(cv::Mat img);
-	void drawMap(drawType type, drawArguments args);
+	cv::Mat drawMap(drawType type, bool draw = true, drawArguments args = drawArguments());
 	std::vector<Point<unsigned int>> getPoints();
 	std::vector<Point<unsigned int>> getPath(Point<unsigned int> A, Point<unsigned int> B, unsigned int padding);
 
@@ -54,6 +59,7 @@ private:
 	double fov, viewDistance;
 	int maxDist = 0;
 	int calculatedLayers = 0;
+	int lastArea = -1;
 	std::vector<Point<unsigned int>> points;
 
 	Point<unsigned int> dirs[8] = { Point<unsigned int>(-1,0), Point<unsigned int>(-1,-1), Point<unsigned int>(0,-1), Point<unsigned int>(1,-1), Point<unsigned int>(1,0), Point<unsigned int>(1,1), Point<unsigned int>(0,1), Point<unsigned int>(-1,1) };
@@ -65,6 +71,7 @@ private:
 	bool isDiscoverable(Point<unsigned int> p);
 	void seperateIntoRooms(int layers = -1);
 	int getMinNeighbor(Point<unsigned int> p);
+	Box getLargestBox();
 
 	cv::Vec3b vObstacle = cv::Vec3b(0, 0, 0);
 	cv::Vec3b vFree = cv::Vec3b(255, 255, 255);
@@ -91,6 +98,9 @@ private:
 		//Room Values
 		int roomNumber = -1;
 		int distanceFromDiscovered = INT_MAX;
+
+		//Rectangle
+		bool isRectangle = false;
 
 	};
 

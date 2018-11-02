@@ -38,7 +38,7 @@ void Map::loadImage(cv::Mat img)
 	for (Point<unsigned int> p : edgePoints) if (map.at(p).type == eFree) recursivelyFill(p);
 }
 
-void Map::drawMap(drawType type, drawArguments args)
+cv::Mat Map::drawMap(drawType type, bool draw, drawArguments args)
 {
 	std::string windowName;
 	unsigned int w = map.cols(), h = map.rows();
@@ -93,6 +93,16 @@ void Map::drawMap(drawType type, drawArguments args)
 		}
 		break;
 
+	case eLargestBox:
+		Box box = getLargestBox();
+		windowName = "Boxplot";
+		img = drawMap(eBasic, false);
+		for (int i = 0; i < box.w * box.h; i++) {
+			unsigned int x = i % box.w + box.x, y = i / box.w + box.y;
+			img.at<cv::Vec3b>(cv::Point(x, y)) = vUndiscovered;
+		}
+		break;
+
 	case ePath:
 		std::vector<Point<unsigned int>> path = getPath(args.A, args.B, args.padding);
 		windowName = "Path";
@@ -112,11 +122,14 @@ void Map::drawMap(drawType type, drawArguments args)
 			img.at<cv::Vec3b>(cv::Point(p.x(), p.y())) = vUndiscovered;
 		}
 		break;
-	}
 
-	int scale = MIN((1080 / img.rows), (1920 / img.cols));
-	cv::resize(img, img, cv::Size(), scale, scale, cv::INTER_NEAREST);
-	cv::imshow(windowName, img);
+	}
+	if (draw) {
+		int scale = MIN((1080 / img.rows), (1920 / img.cols));
+		cv::resize(img, img, cv::Size(), scale, scale, cv::INTER_NEAREST);
+		cv::imshow(windowName, img);
+	}
+	return img;
 }
 
 std::vector<Point<unsigned int>> Map::getPoints()
@@ -186,7 +199,7 @@ void Map::recursivelyFill(Point<unsigned int> p)
 
 bool Map::isDiscoverable(Point<unsigned int> p)
 {
-	nodeType t = map.at(p).type;
+	nodeType t = map.at(p, false).type;
 	//return (t != eObstacle && t != eOutside && map.at(p).hmDistance == -1);
 	return (t != eObstacle && t != eOutside);
 }
@@ -224,6 +237,52 @@ int Map::getMinNeighbor(Point<unsigned int> p)
 		minVal = MIN(map.at(p + dirs[i]).distanceFromDiscovered, minVal);
 	}
 	return minVal;
+}
+
+Box Map::getLargestBox()
+{
+	unsigned int width = map.cols(), height = map.rows();
+	Box result;
+	bool foundRectangle = false, firstTimeWithArea = true;
+	if (lastArea == -1) lastArea = width * height / 32;
+	for (int area = lastArea; area > 0; area--) {
+		// Check if area is prime
+		for (int w = MIN(area, width); w > 0; w--) {
+			double h = (double)area / (double)w;
+			if (h == round(h)) {
+				for (int i = 0; i < (width - w) * (height - h); i++) {
+					foundRectangle = true;
+					unsigned int x = i % (width - w), y = i / (width - w);
+					for (int j = 0; j < w * h && foundRectangle; j++) {
+						unsigned int _x = x + j % w, _y = y + j / w;
+						Point<unsigned int> p(_x, _y);
+						MapNode* n = &map.at(p, false);
+						foundRectangle &= (!n->isRectangle && isDiscoverable(p));
+					}
+					if (foundRectangle) {
+						if (firstTimeWithArea) {
+							lastArea *= 2;
+							return getLargestBox();
+						}
+						for (int j = 0; j < w * h && foundRectangle; j++) {
+							unsigned int _x = x + j % w, _y = y + j / w;
+							map.at(_x, _y, false).isRectangle = true;
+						}
+						result.h = h;
+						result.w = w;
+						result.x = x;
+						result.y = y;
+						lastArea = area;
+						break;
+					}
+				}
+			}
+			if (foundRectangle) break;
+		}
+		if (foundRectangle) break;
+		firstTimeWithArea = false;
+	}
+	return result;
 }
 
 std::vector<Point<unsigned int>> Map::getPath(Point<unsigned int> A, Point<unsigned int> B, unsigned int padding)

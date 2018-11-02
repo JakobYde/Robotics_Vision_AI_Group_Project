@@ -1,26 +1,24 @@
-﻿  Grid.cpp
-  Map.cpp
+﻿  Map.cpp
 c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.cpp(52): warning C4018: '<': signed/unsigned mismatch
 c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.cpp(64): warning C4018: '<': signed/unsigned mismatch
 c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.cpp(83): warning C4018: '<': signed/unsigned mismatch
-c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.cpp(99): warning C4018: '<': signed/unsigned mismatch
-c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.cpp(142): warning C4244: 'argument': conversion from 'double' to 'unsigned int', possible loss of data
-c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.cpp(143): warning C4244: 'argument': conversion from 'double' to 'unsigned int', possible loss of data
-c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.cpp(154): warning C4244: 'initializing': conversion from 'double' to 'unsigned int', possible loss of data
-c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.cpp(155): warning C4244: 'initializing': conversion from 'double' to 'unsigned int', possible loss of data
-c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.cpp(201): warning C4018: '<': signed/unsigned mismatch
-c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.cpp(235): warning C4018: '<': signed/unsigned mismatch
-c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.cpp(239): warning C4018: '<': signed/unsigned mismatch
-c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.cpp(266): warning C4018: '>': signed/unsigned mismatch
+c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.cpp(100): warning C4018: '<': signed/unsigned mismatch
+c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.cpp(109): warning C4018: '<': signed/unsigned mismatch
+c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.cpp(155): warning C4244: 'argument': conversion from 'double' to 'unsigned int', possible loss of data
+c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.cpp(156): warning C4244: 'argument': conversion from 'double' to 'unsigned int', possible loss of data
+c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.cpp(167): warning C4244: 'initializing': conversion from 'double' to 'unsigned int', possible loss of data
+c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.cpp(168): warning C4244: 'initializing': conversion from 'double' to 'unsigned int', possible loss of data
+c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.cpp(214): warning C4018: '<': signed/unsigned mismatch
+c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.cpp(250): warning C4018: '<': signed/unsigned mismatch
+c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.cpp(271): warning C4244: '=': conversion from 'double' to 'unsigned int', possible loss of data
+c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.cpp(294): warning C4018: '<': signed/unsigned mismatch
+c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.cpp(298): warning C4018: '<': signed/unsigned mismatch
+c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.cpp(325): warning C4018: '>': signed/unsigned mismatch
 c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\grid.h(30): warning C4267: 'return': conversion from 'size_t' to 'unsigned int', possible loss of data
   c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\grid.h(29): note: while compiling class template member function 'unsigned int Grid<Map::MapNode>::cols(void)'
   c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.cpp(44): note: see reference to function template instantiation 'unsigned int Grid<Map::MapNode>::cols(void)' being compiled
-  c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.h(97): note: see reference to class template instantiation 'Grid<Map::MapNode>' being compiled
+  c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.h(107): note: see reference to class template instantiation 'Grid<Map::MapNode>' being compiled
 c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\grid.h(28): warning C4267: 'return': conversion from 'size_t' to 'unsigned int', possible loss of data
   c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\grid.h(28): note: while compiling class template member function 'unsigned int Grid<Map::MapNode>::rows(void)'
   c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.cpp(44): note: see reference to function template instantiation 'unsigned int Grid<Map::MapNode>::rows(void)' being compiled
-  Point.cpp
-c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\point.cpp(18): warning C4244: 'argument': conversion from 'double' to 'unsigned int', possible loss of data
-  Source.cpp
-  Generating Code...
   Heatmap.vcxproj -> C:\Users\Oliver\Code\repos\New folder\robot_control\Robotics\Heatmap\x64\Debug\Heatmap.exe
