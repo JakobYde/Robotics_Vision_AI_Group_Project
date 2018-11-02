@@ -38,7 +38,7 @@ void Map::loadImage(cv::Mat img)
 	for (Point<unsigned int> p : edgePoints) if (map.at(p).type == eFree) recursivelyFill(p);
 }
 
-void Map::drawMap(drawType type)
+void Map::drawMap(drawType type, drawArguments args)
 {
 	std::string windowName;
 	unsigned int w = map.cols(), h = map.rows();
@@ -92,11 +92,31 @@ void Map::drawMap(drawType type)
 			}
 		}
 		break;
+
+	case ePath:
+		std::vector<Point<unsigned int>> path = getPath(args.A, args.B, args.padding);
+		windowName = "Path";
+		for (int i = 0; i < w * h; i++) {
+			unsigned int x = i % w, y = i / w;
+			cv::Vec3b* v = &img.at<cv::Vec3b>(cv::Point(x, y));
+			nodeType type = map.at(x, y).type;
+			if (type == eFree) {
+				if (map.at(x, y).asVisited) *v = cv::Vec3b(240,60,60);
+				else if (map.at(x, y).asSeen) *v = cv::Vec3b(240,160,160);
+				else *v = vFree;
+			}
+			else if (type == eOutside) *v = vOutside;
+			else if (type == eObstacle) *v = vObstacle;
+		}
+		for (Point<unsigned int> p : path) {
+			img.at<cv::Vec3b>(cv::Point(p.x(), p.y())) = vUndiscovered;
+		}
+		break;
 	}
 
-	cv::resize(img, img, img.size() * 4);
+	int scale = MIN((1080 / img.rows), (1920 / img.cols));
+	cv::resize(img, img, cv::Size(), scale, scale, cv::INTER_NEAREST);
 	cv::imshow(windowName, img);
-	cv::waitKey();
 }
 
 std::vector<Point<unsigned int>> Map::getPoints()
@@ -171,11 +191,12 @@ bool Map::isDiscoverable(Point<unsigned int> p)
 	return (t != eObstacle && t != eOutside);
 }
 
-void Map::seperateIntoRooms()
+void Map::seperateIntoRooms(int layers)
 {
 	bool tilesChanged;
 	do {
 		maxDist = 0;
+		layers--;
 		tilesChanged = false;
 		for (int i = 0; i < map.cols() * map.rows(); i++) {
 			Point<unsigned int> p(i % map.cols(),i / map.cols());
@@ -190,14 +211,14 @@ void Map::seperateIntoRooms()
 			else (map.at(p).distanceFromDiscovered = 0);
 			maxDist = MAX(map.at(p, false).distanceFromDiscovered, maxDist);
 		}
-	} while (tilesChanged);
+	} while (tilesChanged && layers != 0);
+	calculatedLayers = layers;
 }
 
 int Map::getMinNeighbor(Point<unsigned int> p)
 {
-	Point<unsigned int> dirs[] = { Point<unsigned int>(-1,0) ,Point<unsigned int>(1,0) ,Point<unsigned int>(0,-1) ,Point<unsigned int>(0,1) };
 	int minVal = INT_MAX;
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < 8; i++) {
 		if (!map.inBounds(p + dirs[i])) return 0;
 		if (!isDiscoverable(p + dirs[i])) return 0;
 		minVal = MIN(map.at(p + dirs[i]).distanceFromDiscovered, minVal);
@@ -205,18 +226,72 @@ int Map::getMinNeighbor(Point<unsigned int> p)
 	return minVal;
 }
 
-std::vector<Point<unsigned int>> Map::getPath(Point<unsigned int> A, Point<unsigned int> B)
+std::vector<Point<unsigned int>> Map::getPath(Point<unsigned int> A, Point<unsigned int> B, unsigned int padding)
 {
+	if (!isDiscoverable(A) || !isDiscoverable(B)) throw "ASTAR - Points inside wall.";
+	if (!map.inBounds(A) || !map.inBounds(B)) throw "ASTAR - Points out of bounds.";
+
+	//A and B are swapped to create the path vector easily.
+	if (calculatedLayers < padding) seperateIntoRooms(padding);
 	std::vector<Point<unsigned int>> path;
+
+
 	for (int i = 0; i < map.cols() * map.rows(); i++) {
 		Point<unsigned int> p(i % map.cols(), i / map.cols());
-		map.at(p).asH = GET_DISTANCE(p, B);
-		map.at(p).asG = -1;
+		MapNode* n = &map.at(p);
+		n->asH = GET_DISTANCE(p, A);
+		n->asF = n->asG = INT_MAX;
+		n->asParent = NULL;
+		n->asSeen = n->asVisited = false;
+		
 	}
 	std::priority_queue<MapNode*, std::vector<MapNode*>, GreaterH> queue;
 	bool pathFound = false;
-	while (!pathFound) {
 
+	map.at(B).asSeen = map.at(B).asVisited = true;
+	map.at(B).asG = 0;
+	map.at(B).asF = map.at(B).asH;
+	queue.push(&map.at(B));
+
+	while (!pathFound && queue.size() > 0) {
+		MapNode* n = queue.top();
+		n->asVisited = true;
+		queue.pop();
+
+		for (int i = 0; i < 8; i++) {
+			Point<unsigned int> p = dirs[i] + n->position;
+			if (map.inBounds(p)) {
+				MapNode* pN = &map.at(p);
+
+				if (pN->distanceFromDiscovered > padding) {
+					double g = GET_DISTANCE(p, n->position) + n->asG, f = pN->asH + g;
+
+					if (p == A) {
+						pathFound = true;
+						pN->asParent = n;
+						break;
+					}
+
+					if (f < pN->asF) {
+						pN->asF = f;
+						pN->asG = g;
+						pN->asParent = n;
+					}
+
+					if (!pN->asSeen) {
+						pN->asSeen = true;
+						queue.push(pN);
+					}
+				}
+			}
+		}
 	}
+
+	MapNode* nextNode = &map.at(A);
+	while (nextNode != NULL) {
+		path.push_back(nextNode->position);
+		nextNode = nextNode->asParent;
+	}
+
 	return path;
 }

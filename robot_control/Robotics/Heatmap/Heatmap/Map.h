@@ -20,7 +20,14 @@ enum drawType {
 	eBasic,
 	eHeatmap,
 	eBrushfire,
-	eRooms
+	eRooms,
+	ePath
+};
+
+struct drawArguments {
+	Point<unsigned int> A;
+	Point<unsigned int> B;
+	unsigned int padding;
 };
 
 class Map
@@ -33,27 +40,30 @@ public:
 	~Map();
 
 	void loadImage(cv::Mat img);
-	void drawMap(drawType type);
+	void drawMap(drawType type, drawArguments args);
 	std::vector<Point<unsigned int>> getPoints();
-	std::vector<Point<unsigned int>> getPath(Point<unsigned int> A, Point<unsigned int> B);
+	std::vector<Point<unsigned int>> getPath(Point<unsigned int> A, Point<unsigned int> B, unsigned int padding);
 
 	struct GreaterH {
 		constexpr bool operator()(MapNode* A, MapNode* B){
-			return (A->asH > B->asH);
+			return (A->asF > B->asF);
 		}
 	};
 
 private:
 	double fov, viewDistance;
 	int maxDist = 0;
+	int calculatedLayers = 0;
 	std::vector<Point<unsigned int>> points;
+
+	Point<unsigned int> dirs[8] = { Point<unsigned int>(-1,0), Point<unsigned int>(-1,-1), Point<unsigned int>(0,-1), Point<unsigned int>(1,-1), Point<unsigned int>(1,0), Point<unsigned int>(1,1), Point<unsigned int>(0,1), Point<unsigned int>(-1,1) };
 
 	std::vector<Point<unsigned int>> getLine(Point<unsigned int> a, Point<unsigned int> b);
 	void placePoint(Point<unsigned int> p);
 	bool hasLineOfSight(Point<unsigned int> a, Point<unsigned int> b);
 	void recursivelyFill(Point<unsigned int> p);
 	bool isDiscoverable(Point<unsigned int> p);
-	void seperateIntoRooms();
+	void seperateIntoRooms(int layers = -1);
 	int getMinNeighbor(Point<unsigned int> p);
 
 	cv::Vec3b vObstacle = cv::Vec3b(0, 0, 0);
@@ -67,8 +77,9 @@ private:
 	{
 	public:
 		//A* Values
-		double asH;
-		double asG;
+		double asH, asG, asF;
+		MapNode* asParent;
+		bool asSeen, asVisited;
 
 		//Base Values
 		nodeType type;
