@@ -188,17 +188,19 @@ struct pointManger{
     int index;
 };
 
+bool getPointI = true;
 Possison getpoint(pointManger &pm, Possison pos, float mindist){
-    Possison goal;
-    if(pm.index < pm.poss.size()) goal = pm.poss.at(pm.index);
-    else goal = pm.poss.back();
+    Possison goal = pm.poss.at(pm.index);
 
     float dist = calDist(goal,pos);
-    if(dist<=mindist) pm.index++;
+    if(dist<=mindist){
+        if(getPointI) pm.index++;
+        else pm.index--;
 
-    Possison newGoal;
-    if(pm.index < pm.poss.size()) newGoal = pm.poss.at(pm.index);
-    else newGoal = pm.poss.back();
+        if(pm.index==pm.poss.size()-1) getPointI=false;
+        else if (pm.index==0) getPointI=true;
+    }
+    Possison newGoal = pm.poss.at(pm.index);
     return newGoal;
 }
 
@@ -212,17 +214,36 @@ int main(int _argc, char **_argv) {
     pointManger pm;
     pm.index = 0;
 
-    Possison goal1(-21.23,-0.6197);
-    Possison goal2(-21.69,6.9696);
-    Possison goal3(-25.97,21.702);
-    Possison goal4(-36.45,22.449);
 
+    Possison goal0(0,0);
+    Possison goal1(23.2,4);
+    Possison goal2(29.5,20.7);
+    Possison goal3(37,6);
+    Possison goal4(34.1,-20.6);
+    Possison goal5(12,-19.5);
+    Possison goal6(3.9,-24.5);
+    Possison goal7(-6.9,-21);
+    Possison goal8(3.9,-24.5);
+    Possison goal9(12,-19.5);
+    Possison goal10(34.1,-20.6);
+    Possison goal11(29.8,-12.2);
+    Possison goal12(26.9,3.9);
+    Possison goal13(-37.2,-0.42);
+
+    pm.poss.push_back(goal0);
     pm.poss.push_back(goal1);
     pm.poss.push_back(goal2);
-
     pm.poss.push_back(goal3);
     pm.poss.push_back(goal4);
-
+    pm.poss.push_back(goal5);
+    pm.poss.push_back(goal6);
+    pm.poss.push_back(goal7);
+    pm.poss.push_back(goal8);
+    pm.poss.push_back(goal9);
+    pm.poss.push_back(goal10);
+    pm.poss.push_back(goal11);
+    pm.poss.push_back(goal12);
+    pm.poss.push_back(goal13);
 
     //Lav pos log
     myfile = new std::ofstream("pos.log");
