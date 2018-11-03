@@ -35,7 +35,7 @@ InputVariable: AngleError
   term: largsRight Ramp 		-0.3927 -0.7854
   term: right Triangle 		-0.7854 -0.3927 -0.1963
   term: littleRight Triangle 	-0.3927 -0.1963 0
-  term: zero Triangle 		-0.3927 0 0.3927
+  term: zero Triangle 		-0.1963 0 0.1963
   term: littleLeft Triangle 	0 0.1963 0.3927
   term: left Triangle 		0.1963 0.3927 0.7854
   term: largsLeft Ramp 	0.3927 0.7854
