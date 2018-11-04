@@ -7,6 +7,8 @@
 #include <vector>
 #include "Point.h"
 
+typedef double GridCoordinateType;
+
 template <class T>
 class Grid
 {
@@ -14,7 +16,7 @@ public:
 	Grid() {}
 	~Grid() {}
 
-	T& at(unsigned int x, unsigned int y, bool secure = true) { 
+	T& at(GridCoordinateType x, GridCoordinateType y, bool secure = true) {
 		if (secure && !inBounds(x, y)) {
 			grid.resize(y + 1);
 			if (grid.size() > 1) grid[grid.size() - 1].resize(MAX(x + 1, grid[grid.size() - 2].size()));
@@ -23,7 +25,7 @@ public:
 		return grid[y][x]; 
 	}
 
-	T& at(Point<unsigned int> p, bool secure = true) { return at(p.x(), p.y(), secure); }
+	T& at(Point<GridCoordinateType> p, bool secure = true) { return at(p.x(), p.y(), secure); }
 
 	unsigned int rows() { return grid.size(); }
 	unsigned int cols() { 
@@ -31,9 +33,9 @@ public:
 		return 0;
 	}
 
-	bool inBounds(Point<unsigned int> p) { return inBounds(p.x(), p.y()); }
+	bool inBounds(Point<GridCoordinateType> p) { return inBounds(p.x(), p.y()); }
 
-	bool inBounds(unsigned int x, unsigned int y) {
+	bool inBounds(GridCoordinateType x, GridCoordinateType y) {
 		if (y < grid.size() && y >= 0) if (x < grid[y].size() && x >= 0) return true;
 		return false;
 	}

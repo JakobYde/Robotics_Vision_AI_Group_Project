@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <opencv2\opencv.hpp>
 
 template <typename T>
 class Point;
@@ -54,6 +55,10 @@ public:
 
 	PolarPoint asPolar() {
 		return PolarPoint(sqrt(X*X+Y*Y), atan((double)Y / (double)X));
+	}
+
+	cv::Point getCVPoint() {
+		return cv::Point(X,Y);
 	}
 };
 

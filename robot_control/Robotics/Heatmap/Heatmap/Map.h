@@ -6,9 +6,12 @@
 #include <opencv2/opencv.hpp>
 
 #include <queue>
+#include <unordered_set>
 
 #define BLEND_COLOR(a,b,alpha) (a * (1 - alpha) + b * alpha)
 #define GET_DISTANCE(a,b) (sqrt((a.x() - b.x())*(a.x() - b.x()) + sqrt((a.y() - b.y())*(a.y() - b.y()))))
+
+typedef Point<GridCoordinateType> MapPoint;
 
 enum nodeType {
 	eObstacle,
@@ -20,14 +23,14 @@ enum drawType {
 	eBasic,
 	eHeatmap,
 	eBrushfire,
-	eRooms,
+	eCells,
 	ePath,
-	eLargestBox
+	eGeometry
 };
 
 struct drawArguments {
-	Point<unsigned int> A;
-	Point<unsigned int> B;
+	MapPoint A;
+	MapPoint B;
 	unsigned int padding;
 };
 
@@ -37,7 +40,6 @@ struct Box {
 
 class Map
 {
-
 private: class MapNode;
 public:
 	Map();
@@ -46,8 +48,8 @@ public:
 
 	void loadImage(cv::Mat img);
 	cv::Mat drawMap(drawType type, bool draw = true, drawArguments args = drawArguments());
-	std::vector<Point<unsigned int>> getPoints();
-	std::vector<Point<unsigned int>> getPath(Point<unsigned int> A, Point<unsigned int> B, unsigned int padding);
+	std::vector<MapPoint> getPoints();
+	std::vector<MapPoint> getPath(MapPoint A, MapPoint B, unsigned int padding);
 
 	struct GreaterH {
 		constexpr bool operator()(MapNode* A, MapNode* B){
@@ -55,52 +57,66 @@ public:
 		}
 	};
 
+	struct Edge {
+		MapPoint A, B;
+	};
+
 private:
 	double fov, viewDistance;
 	int maxDist = 0;
 	int calculatedLayers = 0;
 	int lastArea = -1;
-	std::vector<Point<unsigned int>> points;
+	std::vector<MapPoint> points;
+	std::vector<MapPoint> vertices;
+	std::vector<Edge> edges;
 
-	Point<unsigned int> dirs[8] = { Point<unsigned int>(-1,0), Point<unsigned int>(-1,-1), Point<unsigned int>(0,-1), Point<unsigned int>(1,-1), Point<unsigned int>(1,0), Point<unsigned int>(1,1), Point<unsigned int>(0,1), Point<unsigned int>(-1,1) };
+	MapPoint dirs[8] = { 
+		MapPoint(-1,0), 
+		MapPoint(-1,-1),
+		MapPoint(0,-1), 
+		MapPoint(1,-1), 
+		MapPoint(1,0),
+		MapPoint(1,1), 
+		MapPoint(0,1), 
+		MapPoint(-1,1) };
 
-	std::vector<Point<unsigned int>> getLine(Point<unsigned int> a, Point<unsigned int> b);
-	void placePoint(Point<unsigned int> p);
-	bool hasLineOfSight(Point<unsigned int> a, Point<unsigned int> b);
-	void recursivelyFill(Point<unsigned int> p);
-	bool isDiscoverable(Point<unsigned int> p);
-	void seperateIntoRooms(int layers = -1);
-	int getMinNeighbor(Point<unsigned int> p);
+	std::vector<MapPoint> getLine(MapPoint a, MapPoint b);
+	void placePoint(MapPoint p);
+	bool hasLineOfSight(MapPoint a, MapPoint b);
+	void recursivelyFill(MapPoint p);
+	bool isDiscoverable(MapPoint p);
+	void calculateBrushfire(int layers = -1);
+	int getMinNeighbor(MapPoint p);
 	Box getLargestBox();
+	MapPoint getPointFromIndex(unsigned int i, unsigned int w = 0);
+	std::vector<MapPoint> getVertices();
+	std::vector<Edge> getEdges();
 
 	cv::Vec3b vObstacle = cv::Vec3b(0, 0, 0);
 	cv::Vec3b vFree = cv::Vec3b(255, 255, 255);
 	cv::Vec3b vUndiscovered = cv::Vec3b(0, 0, 255);
 	cv::Vec3b vDiscovered = cv::Vec3b(255, 255, 255);
-	cv::Vec3b vOutside = cv::Vec3b(200, 35, 225);
+	cv::Vec3b vOutside = cv::Vec3b(80, 80, 80);
 	cv::Vec3b vPoint = cv::Vec3b(255, 0, 0);
 
 	class MapNode
 	{
 	public:
+		//Base Values
+		nodeType type;
+		MapPoint position;
+
+		//Room Values
+		int wallDistance = 0;
+
+		//Heatmap Values
+		double hmDistance = -1;
+
 		//A* Values
 		double asH, asG, asF;
 		MapNode* asParent;
 		bool asSeen, asVisited;
 
-		//Base Values
-		nodeType type;
-		Point<unsigned int> position;
-
-		//Heatmap Values
-		double hmDistance = -1;
-
-		//Room Values
-		int roomNumber = -1;
-		int distanceFromDiscovered = INT_MAX;
-
-		//Rectangle
-		bool isRectangle = false;
 
 	};
 

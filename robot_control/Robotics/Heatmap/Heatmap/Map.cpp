@@ -24,18 +24,30 @@ void Map::loadImage(cv::Mat img)
 		MapNode* n = &(map.at(x, y));
 		if (*p == vFree) n->type = eFree;
 		else n->type = eObstacle;
-		n->position = Point<unsigned int>(x, y);
+		n->position = MapPoint(x, y);
 	}
-	std::vector<Point<unsigned int>> edgePoints;
+	std::vector<MapPoint> edgePoints;
 	for (int i = 0; i < img.cols; i++) {
-		edgePoints.push_back(Point<unsigned int>(i, 0));
-		edgePoints.push_back(Point<unsigned int>(i, img.rows - 1));
+		edgePoints.push_back(MapPoint(i, 0));
+		edgePoints.push_back(MapPoint(i, img.rows - 1));
 	}
 	for (int i = 1; i < img.rows - 1; i++) {
-		edgePoints.push_back(Point<unsigned int>(0, i));
-		edgePoints.push_back(Point<unsigned int>(img.cols - 1, i));
+		edgePoints.push_back(MapPoint(0, i));
+		edgePoints.push_back(MapPoint(img.cols - 1, i));
 	}
-	for (Point<unsigned int> p : edgePoints) if (map.at(p).type == eFree) recursivelyFill(p);
+	for (MapPoint p : edgePoints) if (map.at(p).type == eFree) recursivelyFill(p);
+	std::vector<MapPoint> surroundedPoints;
+	for (int i = 0; i < map.cols() * map.rows(); i++) {
+		MapPoint p = getPointFromIndex(i);
+		if (map.at(p, false).type == eObstacle) {
+			bool surroundedByWalls = true;
+			for (int i = 0; i < 8 && surroundedByWalls; i++) {
+				MapPoint _p = p + dirs[i];
+				if (map.inBounds(_p)) surroundedByWalls &= map.at(_p, false).type == eObstacle || map.at(_p, false).type == eOutside;
+			}
+			if (surroundedByWalls) map.at(p).type = eOutside;
+		}
+	}
 }
 
 cv::Mat Map::drawMap(drawType type, bool draw, drawArguments args)
@@ -44,7 +56,10 @@ cv::Mat Map::drawMap(drawType type, bool draw, drawArguments args)
 	unsigned int w = map.cols(), h = map.rows();
 	cv::Mat img(h, w, CV_8UC3);
 
-	placePoint(Point<unsigned int>(100, 40));
+	placePoint(MapPoint(100, 40));
+
+	std::vector<MapPoint> vertices;
+	std::vector<MapPoint> path;
 
 	switch (type) {
 	case eBasic:
@@ -79,12 +94,12 @@ cv::Mat Map::drawMap(drawType type, bool draw, drawArguments args)
 
 	case eBrushfire:
 		windowName = "Brushfire Map";
-		seperateIntoRooms();
+		calculateBrushfire();
 		for (int i = 0; i < w * h; i++) {
 			unsigned int x = i % w, y = i / w;
 			cv::Vec3b* v = &img.at<cv::Vec3b>(cv::Point(x, y));
 
-			int d = map.at(x, y).distanceFromDiscovered;
+			int d = map.at(x, y).wallDistance;
 			if (d < 1) *v = vObstacle;
 			else {
 				double a = (double)d / (double)maxDist;
@@ -93,67 +108,58 @@ cv::Mat Map::drawMap(drawType type, bool draw, drawArguments args)
 		}
 		break;
 
-	case eLargestBox:
-		Box box = getLargestBox();
-		windowName = "Boxplot";
+	case eGeometry:
+		windowName = "Geometry";
 		img = drawMap(eBasic, false);
-		for (int i = 0; i < box.w * box.h; i++) {
-			unsigned int x = i % box.w + box.x, y = i / box.w + box.y;
-			img.at<cv::Vec3b>(cv::Point(x, y)) = vUndiscovered;
+		vertices = getVertices();
+		edges = getEdges();
+		for (Edge e : edges) {
+			std::vector<MapPoint> line = getLine(e.A, e.B);
+			for (MapPoint p : line) img.at<cv::Vec3b>(p.getCVPoint()) = vUndiscovered;
 		}
+		for (MapPoint p : vertices) img.at<cv::Vec3b>(p.getCVPoint()) = vPoint;
 		break;
 
 	case ePath:
-		std::vector<Point<unsigned int>> path = getPath(args.A, args.B, args.padding);
+		path = getPath(args.A, args.B, args.padding);
 		windowName = "Path";
-		for (int i = 0; i < w * h; i++) {
-			unsigned int x = i % w, y = i / w;
-			cv::Vec3b* v = &img.at<cv::Vec3b>(cv::Point(x, y));
-			nodeType type = map.at(x, y).type;
-			if (type == eFree) {
-				if (map.at(x, y).asVisited) *v = cv::Vec3b(240,60,60);
-				else if (map.at(x, y).asSeen) *v = cv::Vec3b(240,160,160);
-				else *v = vFree;
-			}
-			else if (type == eOutside) *v = vOutside;
-			else if (type == eObstacle) *v = vObstacle;
-		}
-		for (Point<unsigned int> p : path) {
-			img.at<cv::Vec3b>(cv::Point(p.x(), p.y())) = vUndiscovered;
-		}
+		img = drawMap(eBasic, false);
+		for (MapPoint p : path) img.at<cv::Vec3b>(p.getCVPoint()) = vUndiscovered;
 		break;
-
 	}
+
 	if (draw) {
-		int scale = MIN((1080 / img.rows), (1920 / img.cols));
+		int scale = MIN((980 / img.rows), (1720 / img.cols));
 		cv::resize(img, img, cv::Size(), scale, scale, cv::INTER_NEAREST);
+		cv::namedWindow(windowName, CV_WINDOW_AUTOSIZE);
 		cv::imshow(windowName, img);
+		cv::waitKey();
 	}
 	return img;
 }
 
-std::vector<Point<unsigned int>> Map::getPoints()
+std::vector<MapPoint> Map::getPoints()
 {
 	return points;
 }
 
-std::vector<Point<unsigned int>> Map::getLine(Point<unsigned int> a, Point<unsigned int> b)
+std::vector<MapPoint> Map::getLine(MapPoint a, MapPoint b)
 {
-	std::vector<Point<unsigned int>> line;
+	std::vector<MapPoint> line;
 	if (a != b) {
 		int dX = (int)b.x() - (int)a.x(), dY = (int)b.y() - (int)a.y(), l, g;
 		bool findingX = false;
 		if (abs(dX) > abs(dY)) l = dY, g = dX;
 		else l = dX, g = dY, findingX = true;
-		line = std::vector<Point<unsigned int>>(abs(g) + 1);
+		line = std::vector<MapPoint>(abs(g) + 1);
 
 		double slope = (double)l / (double)g;
 		int inc = g / abs(g);
 
 		for (int i = 0; abs(i) < abs(g) + 1; i += inc) {
-			Point<unsigned int> p;
-			if (findingX) p = Point<unsigned int>(i * slope + (int)a.x(), i + (int)a.y());
-			else p = Point<unsigned int>(i + (int)a.x(), i * slope + (int)a.y());
+			MapPoint p;
+			if (findingX) p = MapPoint(i * slope + (int)a.x(), i + (int)a.y());
+			else p = MapPoint(i + (int)a.x(), i * slope + (int)a.y());
 
 			line[abs(i)] = p;
 		}
@@ -161,7 +167,7 @@ std::vector<Point<unsigned int>> Map::getLine(Point<unsigned int> a, Point<unsig
 	return line;
 }
 
-void Map::placePoint(Point<unsigned int> p)
+void Map::placePoint(MapPoint p)
 {
 	unsigned int w = map.cols(), h = map.rows();
 	unsigned int xStart = MAX(0, p.x() - viewDistance), xEnd = MIN(w - 1, p.x() + viewDistance);
@@ -172,131 +178,157 @@ void Map::placePoint(Point<unsigned int> p)
 		if (map.at(x, y, false).type == eFree) {
 			double dx = x - (int)p.x(), dy = y - (int)p.y();
 			double dist = sqrt(dx * dx + dy * dy);
-			bool LOS = hasLineOfSight(p, Point<unsigned int>(x, y));
+			bool LOS = hasLineOfSight(p, MapPoint(x, y));
 			if (LOS) map.at(x, y, false).hmDistance = dist;
 		}
 	}
 }
 
-bool Map::hasLineOfSight(Point<unsigned int> a, Point<unsigned int> b)
+bool Map::hasLineOfSight(MapPoint a, MapPoint b)
 {
-	std::vector<Point<unsigned int>> line = getLine(a, b);
-	for (Point<unsigned int> p : line) {
+	std::vector<MapPoint> line = getLine(a, b);
+	for (MapPoint p : line) {
 		if (map.at(p.x(), p.y(), false).type == eObstacle) return false;
 	}
 	return true;
 }
 
-void Map::recursivelyFill(Point<unsigned int> p)
+void Map::recursivelyFill(MapPoint p)
 {
 	map.at(p).type = eOutside;
-	Point<unsigned int> dirs[] = { Point<unsigned int>(-1,0) ,Point<unsigned int>(1,0) ,Point<unsigned int>(0,-1) ,Point<unsigned int>(0,1) };
+	MapPoint dirs[] = { MapPoint(-1,0) ,MapPoint(1,0) ,MapPoint(0,-1) ,MapPoint(0,1) };
 	for (int i = 0; i < 4; i++) {
-		Point<unsigned int> nextPoint = p + dirs[i];
+		MapPoint nextPoint = p + dirs[i];
 		if (map.inBounds(nextPoint)) if (map.at(nextPoint).type == eFree) recursivelyFill(nextPoint);
 	}
 }
 
-bool Map::isDiscoverable(Point<unsigned int> p)
+bool Map::isDiscoverable(MapPoint p)
 {
 	nodeType t = map.at(p, false).type;
-	//return (t != eObstacle && t != eOutside && map.at(p).hmDistance == -1);
 	return (t != eObstacle && t != eOutside);
 }
 
-void Map::seperateIntoRooms(int layers)
+void Map::calculateBrushfire(int layers)
 {
-	bool tilesChanged;
-	do {
-		maxDist = 0;
-		layers--;
-		tilesChanged = false;
-		for (int i = 0; i < map.cols() * map.rows(); i++) {
-			Point<unsigned int> p(i % map.cols(),i / map.cols());
-			if (isDiscoverable(p)) {
-				int* d = &map.at(p, false).distanceFromDiscovered;
-				int minNeighbor = getMinNeighbor(p) + 1;
-				if (*d > minNeighbor) {
-					*d = minNeighbor;
-					tilesChanged = true;
+	std::unordered_set<MapNode*> nodesToCheck;
+	for (int i = 0; i < map.cols() * map.rows(); i++) {
+		MapPoint p = getPointFromIndex(i);
+		MapNode* n = &map.at(p, false);
+		if (n->type == eObstacle) {
+			n->wallDistance = 1;
+			for (int i = 0; i < 8; i++) {
+				MapPoint _p = p + dirs[i];
+				if (map.inBounds(_p)) {
+					MapNode* _n = &map.at(_p, false);
+					if (_n->type == eFree && (nodesToCheck.find(_n) == nodesToCheck.end())) nodesToCheck.insert(_n);
 				}
 			}
-			else (map.at(p).distanceFromDiscovered = 0);
-			maxDist = MAX(map.at(p, false).distanceFromDiscovered, maxDist);
 		}
-	} while (tilesChanged && layers != 0);
-	calculatedLayers = layers;
+	}
+	while (!nodesToCheck.empty() && layers-- != 0) {
+		std::unordered_set<MapNode*> tempSet;
+		for (auto i = nodesToCheck.begin(); i != nodesToCheck.end();) {
+			(*i)->wallDistance = getMinNeighbor((*i)->position) + 1;
+			if (maxDist < (*i)->wallDistance) maxDist = (*i)->wallDistance;
+			for (int j = 0; j < 8; j++) {
+				MapPoint p = (*i)->position + dirs[j];
+				MapNode* n = &map.at(p, false);
+				if (n->type == eFree && 
+					(n->wallDistance > (*i)->wallDistance + 1 || n->wallDistance == 0) &&
+					(nodesToCheck.find(n) == nodesToCheck.end())) 
+					tempSet.insert(n);
+			}
+			auto oldIterator = i++;
+			nodesToCheck.erase(oldIterator);
+		}
+		nodesToCheck = tempSet;
+	}
 }
 
-int Map::getMinNeighbor(Point<unsigned int> p)
+int Map::getMinNeighbor(MapPoint p)
 {
 	int minVal = INT_MAX;
 	for (int i = 0; i < 8; i++) {
-		if (!map.inBounds(p + dirs[i])) return 0;
-		if (!isDiscoverable(p + dirs[i])) return 0;
-		minVal = MIN(map.at(p + dirs[i]).distanceFromDiscovered, minVal);
+		if (!map.inBounds(p + dirs[i])) return 1;
+		if (!isDiscoverable(p + dirs[i])) return 1;
+		if (map.at(p + dirs[i], false).wallDistance > 0) minVal = MIN(map.at(p + dirs[i]).wallDistance, minVal);
 	}
 	return minVal;
 }
 
-Box Map::getLargestBox()
+MapPoint Map::getPointFromIndex(unsigned int i, unsigned int w)
 {
-	unsigned int width = map.cols(), height = map.rows();
-	Box result;
-	bool foundRectangle = false, firstTimeWithArea = true;
-	if (lastArea == -1) lastArea = width * height / 32;
-	for (int area = lastArea; area > 0; area--) {
-		// Check if area is prime
-		for (int w = MIN(area, width); w > 0; w--) {
-			double h = (double)area / (double)w;
-			if (h == round(h)) {
-				for (int i = 0; i < (width - w) * (height - h); i++) {
-					foundRectangle = true;
-					unsigned int x = i % (width - w), y = i / (width - w);
-					for (int j = 0; j < w * h && foundRectangle; j++) {
-						unsigned int _x = x + j % w, _y = y + j / w;
-						Point<unsigned int> p(_x, _y);
-						MapNode* n = &map.at(p, false);
-						foundRectangle &= (!n->isRectangle && isDiscoverable(p));
-					}
-					if (foundRectangle) {
-						if (firstTimeWithArea) {
-							lastArea *= 2;
-							return getLargestBox();
-						}
-						for (int j = 0; j < w * h && foundRectangle; j++) {
-							unsigned int _x = x + j % w, _y = y + j / w;
-							map.at(_x, _y, false).isRectangle = true;
-						}
-						result.h = h;
-						result.w = w;
-						result.x = x;
-						result.y = y;
-						lastArea = area;
-						break;
-					}
-				}
-			}
-			if (foundRectangle) break;
-		}
-		if (foundRectangle) break;
-		firstTimeWithArea = false;
-	}
-	return result;
+	if (w == 0) w = map.cols();
+	return MapPoint(i % w, i / w);
 }
 
-std::vector<Point<unsigned int>> Map::getPath(Point<unsigned int> A, Point<unsigned int> B, unsigned int padding)
+std::vector<MapPoint> Map::getVertices()
+{
+	if (vertices.size() != 0) return vertices;
+	std::vector<MapPoint> _vertices;
+	nodeType vertexTest[2][3] = {
+		{ eObstacle, eFree, eObstacle },
+		{ eFree, eFree, eFree } };
+	for (int i = 0; i < map.cols() * map.rows(); i++) {
+		MapPoint p = getPointFromIndex(i);
+		if (map.at(p, false).type == eObstacle) {
+			for (int j = 0; j < 2; j++) {
+				bool vertex = false;
+				for (int i = 0; i < 4 && !vertex; i++) {
+					bool _vertex = true;
+					for (int k = 0; k < 3 && _vertex; k++) {
+						MapPoint _p = p + dirs[(i * 2 + k) % 8];
+						if (map.inBounds(_p)) _vertex &= (map.at(_p).type == vertexTest[j][k]);
+						else _vertex = false;
+					}
+					vertex |= _vertex;
+				}
+				if (vertex) {
+					_vertices.push_back(p);
+					break;
+				}
+			}
+		}
+	}
+	vertices = _vertices;
+	return _vertices;
+}
+
+std::vector<Map::Edge> Map::getEdges()
+{
+	if (edges.size() != 0) return edges;
+	std::vector<Edge> _edges;
+	if (vertices.size() == 0) getVertices();
+	nodeType edgeTest[] = { eObstacle, eFree, eFree, eFree, eObstacle };
+	for (int i = 0; i < vertices.size(); i++) {
+		for (int j = i + 1; j < vertices.size(); j++) {
+			std::vector<MapPoint> line = getLine(vertices[i], vertices[j]);
+			line.erase(line.begin());
+			line.erase(line.end() - 1);
+			bool isEdge = true;
+			for (MapPoint p : line) {
+				isEdge &= map.at(p, false).type == eObstacle;
+			}
+			if (isEdge) _edges.push_back(Edge{ vertices[i], vertices[j] });
+		}
+	}
+	edges = _edges;
+	return _edges;
+}
+
+std::vector<MapPoint> Map::getPath(MapPoint A, MapPoint B, unsigned int padding)
 {
 	if (!isDiscoverable(A) || !isDiscoverable(B)) throw "ASTAR - Points inside wall.";
 	if (!map.inBounds(A) || !map.inBounds(B)) throw "ASTAR - Points out of bounds.";
 
 	//A and B are swapped to create the path vector easily.
-	if (calculatedLayers < padding) seperateIntoRooms(padding);
-	std::vector<Point<unsigned int>> path;
+	if (calculatedLayers < padding) calculateBrushfire(padding);
+	std::vector<MapPoint> path;
 
 
 	for (int i = 0; i < map.cols() * map.rows(); i++) {
-		Point<unsigned int> p(i % map.cols(), i / map.cols());
+		MapPoint p = getPointFromIndex(i);
 		MapNode* n = &map.at(p);
 		n->asH = GET_DISTANCE(p, A);
 		n->asF = n->asG = INT_MAX;
@@ -318,11 +350,11 @@ std::vector<Point<unsigned int>> Map::getPath(Point<unsigned int> A, Point<unsig
 		queue.pop();
 
 		for (int i = 0; i < 8; i++) {
-			Point<unsigned int> p = dirs[i] + n->position;
+			MapPoint p = dirs[i] + n->position;
 			if (map.inBounds(p)) {
 				MapNode* pN = &map.at(p);
 
-				if (pN->distanceFromDiscovered > padding) {
+				if (pN->wallDistance > padding) {
 					double g = GET_DISTANCE(p, n->position) + n->asG, f = pN->asH + g;
 
 					if (p == A) {
