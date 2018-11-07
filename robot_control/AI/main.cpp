@@ -11,9 +11,11 @@
 #include <math.h>
 #include <sstream>      // std::stringstream
 #include <fstream>
+#include <vector>
 
 #include "FuzzyBugController.h"
 #include "LaserScanner.h"
+#include "json.h"
 
 #define ESC_KEY 27
 #define PI 3.14159265
@@ -44,12 +46,18 @@ void statCallback(ConstWorldStatisticsPtr &_msg) {
 std::ofstream *myfile;
 Possison robotPos[2];
 
+std::vector<float> robot_xvalues;
+std::vector<float> robot_yvalues;
+
 void poseCallback(ConstPosesStampedPtr &_msg) {
   // Dump the message contents to stdout.
   //  std::cout << _msg->DebugString();
 
   for (int i = 0; i < _msg->pose_size(); i++) {
     if (_msg->pose(i).name() == "pioneer2dx") {
+      robot_xvalues.push_back(_msg->pose(i).position().x());
+      robot_yvalues.push_back(_msg->pose(i).position().y());
+
       robotPos[1] = robotPos[0];
       robotPos[0].x = _msg->pose(i).position().x();
       robotPos[0].y = _msg->pose(i).position().y();
@@ -319,6 +327,7 @@ int main(int _argc, char **_argv) {
 
     myfile->close();
     delete myfile;
+    makeJOSNPlotData("Robot parth","x","y",robot_xvalues,robot_yvalues);
     // Make sure to shut everything down.
     gazebo::client::shutdown();
 }
