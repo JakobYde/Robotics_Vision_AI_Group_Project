@@ -1,0 +1,139 @@
+#File: fuzzybugcontroller.fll
+#Input ---------------------------
+Engine: ObstacleAvoidance
+InputVariable: SencorLeft 
+  enabled: true
+  range: 0 10
+  lock-range: false
+  term: extrimlyColse Ramp 5 2
+  term: close Triangle 2 5 8  
+  term: far Ramp 5 8 
+
+InputVariable: SencorCenter 
+  enabled: true
+  range: 0 10
+  lock-range: false
+  term: extrimlyColse Ramp 5 2
+  term: close Triangle 2 5 8  
+  term: far Ramp 5 8
+
+InputVariable: SencorRight 
+  enabled: true
+  range: 0 10
+  lock-range: false
+  term: extrimlyColse Ramp 5 2
+  term: close Triangle 2 5 8  
+  term: far Ramp 5 8
+
+#pi/4=0.7854
+#pi/8=0.3927
+#pi/16=0.1963
+InputVariable: AngleError
+  enabled: true
+  range: -0.7854 0.7854
+  lock-range: false
+  term: largsLeft Ramp 		-0.3927 -0.7854
+  term: left Triangle 		-0.7854 -0.3927 -0.1963
+  term: littleLeft Triangle 	-0.3927 -0.1963 0
+  term: zero Spike 		0 0.3927
+  term: littleRight Triangle 	0 0.1963 0.3927
+  term: right Triangle 		0.1963 0.3927 0.7854
+  term: largsRight Ramp 	0.3927 0.7854
+
+InputVariable: GoalDisttanse
+  enabled: true
+  range: 0 3
+  lock-range: false
+  term: extrimlyColse Spike 	0 1
+  term: close Triangle 		0 0.5 3
+  term: far Ramp 		0.5 3
+#Output----------------------------------
+OutputVariable: Speed
+  enabled: true
+  range: -4 4
+  lock-range: false
+  aggregation: Maximum
+  defuzzifier: Centroid 100
+  default: 0
+  lock-previous: false
+  term: fastBack Triangle 	-4 -3 -2
+  term: back Triangle 		-2 -1 0
+  term: stop Spike 		0 0.1
+  term: slow Triangle 		0 0.5 1
+  term: normal Triangle  	1 2 3
+  tern: fast Triangle 		3 3.5 4
+
+OutputVariable: Dir
+  enabled: true
+  range: -1.25 1.25
+  lock-range: false
+  aggregation: Maximum
+  defuzzifier: Centroid 100
+  default: 0
+  lock-previous: false 
+  term: sharpLeft Triangle  	-1.25 -1.17 -0.78
+  term: left Triangle  		-0.78 -0.54 -0.31
+  term: littleLeft Triangle 	-0.31 -0.15 0.01
+  term: zero Spike 		0 0.02
+  term: littleRight Triangle 	0.01 0.15 0.31
+  term: right Triangle  	0.31 0.54 0.78
+  term: sharpRight Triangle 	0.78 1.17 1.25
+#Rules----------------------------------------------------
+RuleBlock: mamdani
+  enabled: true
+  conjunction: Minimum
+  disjunction: Maximum
+  implication: Minimum
+  activation: General
+  # Input---
+  # SencorLeft,Center,Right: extrimlyClose, close, far
+  # AngleError: largsLeft, left, littleLeft, zero, littleRight, right, largsRight
+  # GoalDisttanse: extrimlyClose, close, far
+  #
+  # Output---
+  # Speed fastBack, back, stop, slow, normal, fast
+  # Dir sharpLeft, left, littleLeft, zero, littleRight, right, shaprRight
+  
+  #None object closer than far 
+  rule: if SencorLeft is far and SencorCenter is Far and SencorRight is Far and AngleError is largsLeft then Dir is sharpRight
+  rule: if SencorLeft is far and SencorCenter is Far and SencorRight is Far and AngleError is left then Dir is right
+  rule: if SencorLeft is far and SencorCenter is Far and SencorRight is Far and AngleError is littleLeft then Dir is littleRight
+  rule: if SencorLeft is far and SencorCenter is Far and SencorRight is Far and AngleError is zero then Dir is zero
+  rule: if SencorLeft is far and SencorCenter is Far and SencorRight is Far and AngleError is littleRight then Dir is littleLeft
+  rule: if SencorLeft is far and SencorCenter is Far and SencorRight is Far and AngleError is right then Dir is left
+  rule: if SencorLeft is far and SencorCenter is Far and SencorRight is Far and AngleError is largsRight then Dir is sharpLeft
+ 
+  rule: if SencorLeft is far and SencorCenter is Far and SencorRight is Far and GoalDisttans is  extrimlyClose then Speed is stop 
+  rule: if SencorLeft is far and SencorCenter is Far and SencorRight is Far and GoalDisttans is close then Speed is slow 
+  rule: if SencorLeft is far and SencorCenter is Far and SencorRight is Far and GoalDisttans is far then Speed is fast
+
+  rule: if SensorCenter is far and SensorRight is extrimlyColse and SensorLeft is extrimlyColse then Speed is fast and Dir is zero
+  rule: if SensorCenter is far and SensorRight is extrimlyColse and SensorLeft is close then Speed is fast and Dir is littleLeft
+  rule: if SensorCenter is far and SensorRight is extrimlyColse and SensorLeft is far then Speed is fast and Dir is left
+  rule: if SensorCenter is far and SensorRight is close and SensorLeft is extrimlyColse then Speed is fast and Dir is littleRight
+  rule: if SensorCenter is far and SensorRight is close and SensorLeft is close then Speed is fast and Dir is zero
+  rule: if SensorCenter is far and SensorRight is close and SensorLeft is far then Speed is fast and Dir is littleLeft
+  rule: if SensorCenter is far and SensorRight is far and SensorLeft is extrimlyColse then Speed is fast and Dir is right
+  rule: if SensorCenter is far and SensorRight is far and SensorLeft is close then Speed is fast and Dir is littleRight
+
+  rule: if SensorCenter is close and SensorRight is extrimlyColse and SensorLeft is extrimlyColse then Speed is normal and Dir is zero
+  rule: if SensorCenter is close and SensorRight is extrimlyColse and SensorLeft is close then Speed is normal and Dir is littleLeft
+  rule: if SensorCenter is close and SensorRight is extrimlyColse and SensorLeft is far then Speed is normal and Dir is left
+  rule: if SensorCenter is close and SensorRight is close and SensorLeft is extrimlyColse then Speed is normal and Dir is littleRight
+  rule: if SensorCenter is close and SensorRight is close and SensorLeft is close then Speed is normal and Dir is right
+  rule: if SensorCenter is close and SensorRight is close and SensorLeft is far then Speed is normal and Dir is left
+  rule: if SensorCenter is close and SensorRight is far and SensorLeft is extrimlyColse then Speed is normal and Dir is right
+  rule: if SensorCenter is close and SensorRight is far and SensorLeft is close then Speed is normal and Dir is right
+  rule: if SensorCenter is close and SensorRight is far and SensorLeft is far then Speed is normal and Dir is left
+
+  rule: if SencorCenter is extrimlyColse and SencorRight is extrimlyColse and SencorLeft is extrimlyColse then Speed is fastBack and Dir is littleRight
+  rule: if SencorCenter is extrimlyColse and SencorRight is extrimlyColse and SencorLeft is close then Speed is back and Dir is right
+  rule: if SencorCenter is extrimlyColse and SencorRight is extrimlyColse and SencorLeft is far then Speed is back and Dir is right
+  rule: if SencorCenter is extrimlyColse and SencorRight is close and SencorLeft is extrimlyColse then Speed is back and Dir is left
+  rule: if SencorCenter is extrimlyColse and SencorRight is close and SencorLeft is close then Speed is fastBack and Dir is right
+  rule: if SencorCenter is extrimlyColse and SencorRight is close and SencorLeft is far then Speed is back and Dir is sharpRight
+  rule: if SencorCenter is extrimlyColse and SencorRight is far and SencorLeft is extrimlyColse then Speed is back and Dir is left
+  rule: if SencorCenter is extrimlyColse and SencorRight is far and SencorLeft is close then Speed is back and Dir is sharpLeft
+  rule: if SencorCenter is extrimlyColse and SencorRight is far and SencorLeft is far then Speed is fastBack and Dir is sharpRight
+
+ 
