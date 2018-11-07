@@ -250,7 +250,7 @@ int main(int _argc, char **_argv) {
 
     //Lav controller
 
-    FuzzyBugController controller( & controllerScan, leftStartAngle, leftEndAngle, rightStartAngle, rightEndAngle, centerStartAngle, centerEndAngle);
+    FuzzyBugController controller( & controllerScan);
     controller.buildController();
 
     // Load gazebo
@@ -295,7 +295,7 @@ int main(int _argc, char **_argv) {
         float angleError = calAngleError(robotPos,goal);
         float goalDistance = calDist(robotPos[0],goal);
         std::cout << std::setprecision(3) << std::fixed << "Angle error: " << angleError << ", " << std::setw(6) << "goalDistance: " << goalDistance << " ::: " << std::setw(6) << "Goal: " << goal.x << ", " << goal.y << ", " << std::setw(6) << "Pos: " << robotPos[0].x << ", " << robotPos[0].y << std::endl;
-        ControlOutput controllerOut = controller.getControlOutput(angleError,goalDistance);
+        ControlOutput controllerOut = controller.getControlOutput(angleError,goalDistance, center_angle_pct);
 
         //FL_LOG("SenM" << Op::str(senM)<<" : "<< Op::str(sM->getValue())<< " dif: " << Op::str(senM-sM->getValue())
         //       << "; Speed.output = " << Op::str(speed->getValue()));

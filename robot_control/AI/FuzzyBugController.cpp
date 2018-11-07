@@ -3,23 +3,29 @@
 /*************************************************************/
 /*************************************************************/
 
-FuzzyBugController::FuzzyBugController(LaserScanner *pc_laser_scanner, float leftStartAngle_in,float leftEnsAngle_in,float rightStartAngle_in,float rightEndAngle_in,float centerStartAngle_in,float centerEndAngle_in) : m_pcLaserScanner(pc_laser_scanner)
+FuzzyBugController::FuzzyBugController(LaserScanner *pc_laser_scanner) : m_pcLaserScanner(pc_laser_scanner)
 {
-    leftStartAngle = leftStartAngle_in;
-    leftEnsAngle = leftEnsAngle_in;
-    rightStartAngle = rightStartAngle_in;
-    rightEndAngle = rightEndAngle_in;
-    centerStartAngle = centerStartAngle_in;
-    centerEndAngle = centerEndAngle_in;
-
 }
 
 /*************************************************************/
 /*************************************************************/
 
-ControlOutput FuzzyBugController::getControlOutput(float angleError, float goalDistance)
+ControlOutput FuzzyBugController::getControlOutput(float angleError, float goalDistance, float center_angle_pct)
 {
-    m_pflSensorLeft->setValue(m_pcLaserScanner->getClosestDistance(leftStartAngle, leftEnsAngle));
+    float angle_min = -2.26889;
+    float angle_max = 2.2689;
+    float angle_step = 0.0228029648241206;
+    float total_angle_range = abs(angle_min)+abs(angle_max);
+
+    float rightStartAngle = angle_min;
+    float rightEndAngle = angle_step*round((angle_min+total_angle_range*(1-center_angle_pct)/2)/angle_step);
+    float centerStartAngle = rightEndAngle;
+    float centerEndAngle = angle_step*round((centerStartAngle+total_angle_range*center_angle_pct)/angle_step);
+
+    float leftStartAngle= centerEndAngle;
+    float leftEndAngle = angle_max;
+
+    m_pflSensorLeft->setValue(m_pcLaserScanner->getClosestDistance(leftStartAngle, leftEndAngle));
     m_pflSensorCenter->setValue(m_pcLaserScanner->getClosestDistance(centerStartAngle, centerEndAngle));
     m_pflSensorRight->setValue(m_pcLaserScanner->getClosestDistance(rightStartAngle, rightEndAngle));
     m_pflAngleError->setValue(angleError);

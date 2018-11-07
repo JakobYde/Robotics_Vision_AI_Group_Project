@@ -19,20 +19,13 @@ struct ControlOutput
 class FuzzyBugController
 {
 public:
-    FuzzyBugController(LaserScanner* pc_laser_scanner, float leftStartAngle,float leftEnsAngle,float rightStartAngle,float rightEndAngle,float centerStartAngle,float centerEndAngle);
+    FuzzyBugController(LaserScanner* pc_laser_scanner);
     virtual ~FuzzyBugController() = default;
 
     virtual void buildController();
-    virtual ControlOutput getControlOutput(float angleError, float goalDistance);
+    virtual ControlOutput getControlOutput(float angleError, float goalDistance, float center_angle_pct);
 
 protected:
-    float leftStartAngle;
-    float leftEnsAngle;
-    float rightStartAngle;
-    float rightEndAngle;
-    float centerStartAngle;
-    float centerEndAngle;
-
     LaserScanner*        m_pcLaserScanner;
 
     fl::Engine*          m_pcFLEngine;
