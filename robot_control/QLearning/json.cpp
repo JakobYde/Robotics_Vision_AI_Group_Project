@@ -11,21 +11,39 @@ Json::~Json()
 
 void Json::add(std::string name, std::string value)
 {
-    jsonValue val(name, '"'+value+'"');
-    addJsonValue(val);
+	jsonValue val(name, '"'+value+'"');
+	addJsonValue(val);
 }
-
-void Json::add(std::string name, std::vector<float> value)
+template<typename T>
+void Json::add(std::string name, T value)
 {
-    std::string valueString = "[ ";
+	jsonValue val(name, std::to_string(value));
+	addJsonValue(val);
+}
+template<typename T>
+void Json::add(std::string name, std::vector<T> value)
+{
+	std::string valueString = "[ ";
 
-    for (int i = 0; i < value.size()-1; i++) {
-        valueString += std::to_string(value.at(i)) + ", ";
-    }
-    valueString += std::to_string(value.back()) + " ]";
+	for (int i = 0; i < value.size()-1; i++) {
+		valueString += std::to_string(value.at(i)) + ", ";
+	}
+	valueString += std::to_string(value.back()) + " ]";
 
-    jsonValue val(name, valueString);
-    addJsonValue(val);
+	jsonValue val(name, valueString);
+	addJsonValue(val);
+}
+void Json::add(std::string name, std::vector<std::string> value)
+{
+	std::string valueString = "[ ";
+
+	for (int i = 0; i < value.size() - 1; i++) {
+		valueString += '"' + value.at(i) + '"' + ", ";
+	}
+	valueString += '"' + value.back() + '"' + " ]";
+
+	jsonValue val(name, valueString);
+	addJsonValue(val);
 }
 
 void Json::write(std::string filename)
