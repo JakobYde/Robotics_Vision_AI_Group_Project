@@ -1,6 +1,7 @@
 #ifndef QLEARNING_H
 #define QLEARNING_H
 #include <vector>
+#include <random>
 
 class QLearning
 {
@@ -19,7 +20,7 @@ public:
     };
     QLearning();
     state* getNewState();
-    void giveReword(float r);
+    void giveReward(float r);
 
 
 protected:
@@ -27,11 +28,11 @@ protected:
     std::vector<state> states;
 
     float getMaxQ(state* newState);
-    float getReword(state* newSate);
-    state* policy();//Retunere den nye state som også er den action man tager
+    float getReward(state* newState);
+    state* policy();//Returnerer den nye state som også er den action man tager
 
 
-    bool actionGiven;//Sikere at getNewState og giveReword køres skiftevis
+    bool actionGiven;//Sikrer at getNewState og giveReward køres skiftevis
 
     float learningRate;
     float stepSize;
