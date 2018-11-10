@@ -7,7 +7,10 @@
 #include <fstream>
 #include <unordered_map>
 #include <locale>
-#include <random>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
 #define STATE_NAME_INDEX 0
 #define STATE_X_INDEX 1
 #define STATE_Y_INDEX 2
@@ -37,31 +40,35 @@ public:
         float mean;
     };
 
-    QLearning(std::string filename, float qInitValue);
+    QLearning(std::string filename, std::string startState, float learningRate, float stepSize, float greedy, float qInitValue);
+
     state* getNewState();
     void giveReward(float r);
-
     void print_stats();
+    void simulateActionReward();
+
 protected:
     std::default_random_engine generator;
-
+    std::unordered_map<std::string, int> nameToIndexMap;
     std::vector<std::vector<std::vector<std::string>>> stringFromFile(std::string filename);
     std::vector<state> states;
 
-public://Midlatidig offlig
     float runNormal_distribution(float neam, float stddev);
-protected:
+
     float getMaxQ(state* newState);
     float getReward(state* newState);
-    state* policy();//Returnerer den nye state som også er den action man tager
+    int policy();//Returnerer det nye state index som også er den action man tager
 
     void stripWhitespace(std::string& s);
 
-    bool actionGiven;//Sikrer at getNewState og giveReward køres skiftevis
+    int getMaxactionIndex();
+    int getRandomactionIndex();
 
     float learningRate;
     float stepSize;
+    float greedy;
     state* currentState;
+    int nextStateActionIndex;
 };
 
 #endif // QLEARNING_H

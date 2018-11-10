@@ -1,10 +1,15 @@
 #include "qlearning.h"
 
-QLearning::QLearning(std::string filename, float qInitValue)
+QLearning::QLearning(std::string filename, std::string startState, float learningRate, float stepSize, float greedy, float qInitValue)
 {
+    srand (time(NULL));
+    QLearning::learningRate = learningRate;
+    QLearning::stepSize = stepSize;
+    QLearning::greedy = greedy;
+
     std::vector<std::vector<std::vector<std::string>>> stringvecsFromFile = stringFromFile(filename);
 
-    std::unordered_map<std::string, int> pointMap;
+
     for(std::vector<std::vector<std::string>> stateLine : stringvecsFromFile){
         state newstate;
 
@@ -23,21 +28,22 @@ QLearning::QLearning(std::string filename, float qInitValue)
         newstate.stddev = stddev;
 
         states.push_back(newstate);
-        pointMap[stateName] = states.size()-1;
+        nameToIndexMap[stateName] = states.size()-1;
     }
 
     for(std::vector<std::vector<std::string>> stateLine : stringvecsFromFile){
         std::string stateName = stateLine.at(STATE_NAME_INDEX).front();
-        int stateIndex = pointMap[stateName];
+        int stateIndex = nameToIndexMap[stateName];
 
         std::vector<state*> connection;
         for(std::string connName : stateLine.at(STATE_CONN_INDEX)){
-            connection.push_back(&states.at(pointMap[connName]));
+            connection.push_back(&states.at(nameToIndexMap[connName]));
             states.at(stateIndex).qValues.push_back(qInitValue);
 
         }
         states.at(stateIndex).actionStates = connection;
     }
+    currentState = &states.at(nameToIndexMap[startState]);
 
 }
 
@@ -103,7 +109,7 @@ std::vector<std::vector<std::vector<std::string>>> QLearning::stringFromFile(std
 float QLearning::getMaxQ(state* newstate)  //Returns the higest value in the qValues vector for a given state.
 {
     float max_q = newstate->qValues[0];
-    for(int i= 1; i < newstate->qValues.size ; i++)
+    for(int i= 1; i < newstate->qValues.size() ; i++)
     {
         if(newstate->qValues[i] > max_q)
         {
@@ -118,8 +124,56 @@ float QLearning::runNormal_distribution(float neam, float stddev){
     return distribution(generator);
 }
 
-float QLearning::getReward(state* newstate) //should return reward of given state.
+float QLearning::getReward(state* newstate) //should return reward of given state but return reward simulated by runNormal_distribution
 {
     return runNormal_distribution(newstate->mean,newstate->stddev);
 }
 
+int QLearning::getRandomactionIndex(){
+    return rand()%currentState->actionStates.size();
+}
+
+int QLearning::getMaxactionIndex(){
+    int index = 0;
+    float max_q = currentState->qValues.at(0);
+    for(int i = 1; i < currentState->qValues.size(); i++){
+        if(currentState->qValues.at(i) > max_q){
+            index = i;
+            max_q = currentState->qValues.at(i);
+        }
+    }
+    return index;
+}
+
+// e-ereedy
+int QLearning::policy(){
+    float chance = (rand()%10000)/10000.0;
+    int actionIndex;
+    if((1-greedy) <= chance) actionIndex = getMaxactionIndex();
+    else actionIndex = getRandomactionIndex();
+
+    return actionIndex;
+}
+
+//Choose A from S using policy derived from Q (e.g., e-ereedy
+QLearning::state* QLearning::getNewState(){
+    nextStateActionIndex = policy();
+    return currentState->actionStates.at(nextStateActionIndex);
+}
+
+//Take action A, observe R, S'
+void QLearning::giveReward(float r){
+    state* newState = currentState->actionStates.at(nextStateActionIndex);
+
+    float qNow = currentState->qValues.at(nextStateActionIndex);
+    float maxQ = getMaxQ(newState);
+    currentState->qValues.at(nextStateActionIndex) = qNow + stepSize*(r + learningRate*maxQ-qNow);
+
+    currentState = newState;
+}
+
+void QLearning::simulateActionReward(){
+    state* action = getNewState();
+    float reward = runNormal_distribution(action->mean, action->stddev);
+    giveReward(reward);
+}
