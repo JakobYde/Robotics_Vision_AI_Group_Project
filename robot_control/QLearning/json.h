@@ -3,39 +3,38 @@
 #include <string>
 #include <vector>
 #include <fstream>
+using namespace std;
 
-void makeJOSNPlotData(std::string titel, std::string xlabel, std::string ylabel, std::vector<float> xdata, std::vector<float> ydata, std::string plotType = "plot");
+void makeJOSNPlotData(string titel, string xlabel, string ylabel, vector<float> xdata, vector<float> ydata, string plotType = "plot");
 
 class Json
 {
 public:
     Json();
     ~Json();
-    
-    void add(std::string name, std::string value);
-	template<typename T>
-	void add(std::string name, T value);
-	template<typename T>
-	void add(std::string name, std::vector<T> value);
-	void add(std::string name, std::vector<std::string> value);
-    
-    void write(std::string filename);
-    std::string to_string();
+
+    void add(string name, string value);
+    void add(string name, vector<float> value);
+    void add(string name, vector<string> value);
+    void add(string name, int value);
+    void add(string name, float value);
+    void write(string filename);
+    string to_string();
 
 protected:
 
     struct jsonValue
     {
-        std::string name;
-        std::string value;
+        string name;
+        string value;
 
-        jsonValue(std::string namein, std::string valuein) {
+        jsonValue(string namein, string valuein) {
             name = namein;
             value = valuein;
         }
     };
     void addJsonValue(jsonValue val);
-    std::vector<jsonValue> valuse;
+    vector<jsonValue> valuse;
 };
 
 #endif // JSON_H

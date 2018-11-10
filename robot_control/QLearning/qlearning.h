@@ -7,7 +7,7 @@
 #include <fstream>
 #include <unordered_map>
 #include <locale>
-
+#include <random>
 #define STATE_NAME_INDEX 0
 #define STATE_X_INDEX 1
 #define STATE_Y_INDEX 2
@@ -25,24 +25,32 @@ public:
             actionStates = std::vector<state*>();
             qValues = std::vector<float>();
         }
+        ~state(){}
+
         std::string name;
         std::vector<state*> actionStates;
         std::vector<float> qValues;
 
         float x, y;
 
-        float stdDiv;
+        float stddev;
         float mean;
     };
-    QLearning(std::string filename);
+
+    QLearning(std::string filename, float qInitValue);
     state* getNewState();
     void giveReward(float r);
 
     void print_stats();
 protected:
+    std::default_random_engine generator;
+
     std::vector<std::vector<std::vector<std::string>>> stringFromFile(std::string filename);
     std::vector<state> states;
 
+public://Midlatidig offlig
+    float runNormal_distribution(float neam, float stddev);
+protected:
     float getMaxQ(state* newState);
     float getReward(state* newState);
     state* policy();//Returnerer den nye state som også er den action man tager

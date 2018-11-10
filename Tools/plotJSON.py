@@ -16,9 +16,30 @@ file = askopenfilename(title = "JSON file")
 with open(file) as f:
     data = json.load(f)
 
+legend = []
+plotString = "("
+count = 0
+if data["plotType"] == "hist":
+    plotString+="""data["data"]"""
+    if "bins" in data:
+        plotString+=""", data["bins"]"""
+else:
+    while True:
+        if "xdata_{}".format(count) in data:
+            if count != 0:
+                plotString+=", "
+            plotString+="""data["xdata_{}"], data["ydata_{}"]""".format(count,count)
+            if "legend_{}".format(count) in data: legend.append(data["legend_{}".format(count)])
+            count += 1
+        else:
+            break
+plotString += ")"
+    
+print(plotString)
 plt.figure()
-exec("plt."+data["plotType"]+"""(data["xdata"], data["ydata"])""")
-plt.xlabel(data["xlabel"])
-plt.ylabel(data["ylabel"])
+exec("plt."+data["plotType"]+plotString)
+if "xlabel" in data: plt.xlabel(data["xlabel"])
+if "ylabel" in data: plt.ylabel(data["ylabel"])
+if len(legend): plt.legend(legend)
 plt.title(data["titel"])
 plt.show()

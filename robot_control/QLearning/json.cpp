@@ -8,55 +8,57 @@ Json::Json()
 Json::~Json()
 {
 }
-
-void Json::add(std::string name, std::string value)
+void Json::add(string name, float value)
 {
-	jsonValue val(name, '"'+value+'"');
-	addJsonValue(val);
+    jsonValue val(name, std::to_string(value));
+    addJsonValue(val);
 }
-template<typename T>
-void Json::add(std::string name, T value)
+void Json::add(string name, int value)
 {
-	jsonValue val(name, std::to_string(value));
-	addJsonValue(val);
+    jsonValue val(name, std::to_string(value));
+    addJsonValue(val);
 }
-template<typename T>
-void Json::add(std::string name, std::vector<T> value)
+void Json::add(string name, string value)
 {
-	std::string valueString = "[ ";
-
-	for (int i = 0; i < value.size()-1; i++) {
-		valueString += std::to_string(value.at(i)) + ", ";
-	}
-	valueString += std::to_string(value.back()) + " ]";
-
-	jsonValue val(name, valueString);
-	addJsonValue(val);
+    jsonValue val(name, '"'+value+'"');
+    addJsonValue(val);
 }
-void Json::add(std::string name, std::vector<std::string> value)
+void Json::add(string name, vector<float> value)
 {
-	std::string valueString = "[ ";
+    string valueString = "[ ";
 
-	for (int i = 0; i < value.size() - 1; i++) {
-		valueString += '"' + value.at(i) + '"' + ", ";
-	}
-	valueString += '"' + value.back() + '"' + " ]";
+    for (int i = 0; i < value.size()-1; i++) {
+        valueString += std::to_string(value.at(i)) + ", ";
+    }
+    valueString += std::to_string(value.back()) + " ]";
 
-	jsonValue val(name, valueString);
-	addJsonValue(val);
+    jsonValue val(name, valueString);
+    addJsonValue(val);
+}
+void Json::add(string name, vector<string> value)
+{
+    string valueString = "[ ";
+
+    for (int i = 0; i < value.size() - 1; i++) {
+        valueString += '"' + value.at(i) + '"' + ", ";
+    }
+    valueString += '"' + value.back() + '"' + " ]";
+
+    jsonValue val(name, valueString);
+    addJsonValue(val);
 }
 
-void Json::write(std::string filename)
+void Json::write(string filename)
 {
-    std::ofstream jsonfile;
+    ofstream jsonfile;
     jsonfile.open(filename);
     jsonfile << to_string();
     jsonfile.close();
 }
 
-std::string Json::to_string()
+string Json::to_string()
 {
-    std::string jsonString = "{";
+    string jsonString = "{";
     for(int i = 0; i < valuse.size()-1; i++)
     {
         jsonString += '"' + valuse.at(i).name + '"' + ": " + valuse.at(i).value + ", \n";
@@ -78,7 +80,7 @@ void Json::addJsonValue(jsonValue val)
     valuse.push_back(val);
 }
 
-void makeJOSNPlotData(std::string titel, std::string xlabel, std::string ylabel, std::vector<float> xdata, std::vector<float> ydata, std::string plotType)
+void makeJOSNPlotData(string titel, string xlabel, string ylabel, vector<float> xdata, vector<float> ydata, string plotType)
 {
     Json j;
 

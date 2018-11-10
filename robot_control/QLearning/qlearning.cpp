@@ -1,49 +1,54 @@
 #include "qlearning.h"
 
-QLearning::QLearning(std::string filename)
+QLearning::QLearning(std::string filename, float qInitValue)
 {
     std::vector<std::vector<std::vector<std::string>>> stringvecsFromFile = stringFromFile(filename);
 
-    std::unordered_map<std::string, state*> pointMap;
+    std::unordered_map<std::string, int> pointMap;
     for(std::vector<std::vector<std::string>> stateLine : stringvecsFromFile){
         state newstate;
-        states.push_back(newstate);
-        state* statePnt = &states.back();
 
         std::string stateName = stateLine.at(STATE_NAME_INDEX).front();
-        statePnt->name = stateName;
-        pointMap[stateName] = statePnt;
+        newstate.name = stateName;
+
 
         float x = std::stof(stateLine.at(STATE_X_INDEX).front());
-        statePnt->x = x;
+        newstate.x = x;
         float y = std::stof(stateLine.at(STATE_Y_INDEX).front());
-        statePnt->y = y;
+        newstate.y = y;
 
         float mean = std::stof(stateLine.at(STATE_MEAN_INDEX).front());
-        statePnt->mean = mean;
-        float stdDiv = std::stof(stateLine.at(STATE_STDDIV_INDEX).front());
-        statePnt->stdDiv = stdDiv;
+        float stddev = std::stof(stateLine.at(STATE_STDDIV_INDEX).front());
+        newstate.mean = mean;
+        newstate.stddev = stddev;
+
+        states.push_back(newstate);
+        pointMap[stateName] = states.size()-1;
     }
 
     for(std::vector<std::vector<std::string>> stateLine : stringvecsFromFile){
         std::string stateName = stateLine.at(STATE_NAME_INDEX).front();
-        state* statePnt = pointMap[stateName];
+        int stateIndex = pointMap[stateName];
 
         std::vector<state*> connection;
-        for(std::string connName : stateLine.at(3)){
-            connection.push_back(pointMap[connName]);
+        for(std::string connName : stateLine.at(STATE_CONN_INDEX)){
+            connection.push_back(&states.at(pointMap[connName]));
+            states.at(stateIndex).qValues.push_back(qInitValue);
+
         }
-        statePnt->actionStates = connection;
+        states.at(stateIndex).actionStates = connection;
     }
 
 }
 
 void QLearning::print_stats(){
     for(state st : states){
-        std::cout << st.name << " | " << "(" << st.x << ", " << st.y << ") | " << "mean:" <<st.mean << ", stdDiv:" << st.stdDiv << " | Conection: ";
+        std::cout << st.name << " | " << "(" << st.x << ", " << st.y << ") | " << "mean:" <<st.mean << ", stdDiv:" << st.stddev << " | Conection: ";
         for(state* actPnt : st.actionStates) std::cout << actPnt->name << " ";
         std::cout << "| QValues: ";
-        for(float qval : st.qValues) std::cout << qval << " ";
+        for(int i = 0; i < st.qValues.size(); i++){
+            std::cout << st.actionStates.at(i)->name << " = " << st.qValues.at(i) << " ";
+        }
         std::cout << std::endl;
     }
 }
@@ -94,13 +99,13 @@ std::vector<std::vector<std::vector<std::string>>> QLearning::stringFromFile(std
     return stringvecsFromFile;
 }
 
-/*
+
 float QLearning::getMaxQ(state* newstate)  //Returns the higest value in the qValues vector for a given state.
 {
-    float max_q =newstate->qValues[0];
+    float max_q = newstate->qValues[0];
     for(int i= 1; i < newstate->qValues.size ; i++)
     {
-        if(newstate->qValues[i]>max_q)
+        if(newstate->qValues[i] > max_q)
         {
             max_q = newstate->qValues[i];
         }
@@ -108,11 +113,13 @@ float QLearning::getMaxQ(state* newstate)  //Returns the higest value in the qVa
     return max_q;
 }
 
+float QLearning::runNormal_distribution(float neam, float stddev){
+    std::normal_distribution<float> distribution(neam,stddev);
+    return distribution(generator);
+}
 
 float QLearning::getReward(state* newstate) //should return reward of given state.
 {
-    normal_distribution<float> distribution(newstate->mean,newstate->stdDiv);
-
-    return 0
+    return runNormal_distribution(newstate->mean,newstate->stddev);
 }
-*/
+
