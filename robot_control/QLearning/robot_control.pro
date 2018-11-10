@@ -22,7 +22,8 @@ DEPENDPATH += $$PWD/../../fuzzylite-6.0-linux64/fuzzylite-6.0/fuzzylite
 
 DISTFILES += \
     fuzzybugcontroller.fll \
-    fuzzyObjAndGoalController.fll
+    fuzzyObjAndGoalController.fll \
+    ../build-robot_control-Desktop-Debug/stats.txt
 
 HEADERS += \
     FuzzyBugController.h \

@@ -8,7 +8,7 @@
 int main()
 {
     //std::string filename, float learningRate, float stepSize, float greedy, float qInitValue
-    QLearning q("stats.txt","S0",0.7,0.4,0.7,0.0);
+    QLearning q("stats.txt","S0",0,0.4,0.7,0.0);
     std::cout << "Start: " << std::endl;
     q.print_stats();
 
@@ -23,5 +23,6 @@ int main()
     }
     std::cout << "Run: 99" << std::endl;
     q.print_stats();
+    q.wirteJSON("statsjson.json");
     return 0;
 }

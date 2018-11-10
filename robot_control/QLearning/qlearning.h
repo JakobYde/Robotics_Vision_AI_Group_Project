@@ -11,6 +11,8 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include "json.h"
+
 #define STATE_NAME_INDEX 0
 #define STATE_X_INDEX 1
 #define STATE_Y_INDEX 2
@@ -46,6 +48,7 @@ public:
     void giveReward(float r);
     void print_stats();
     void simulateActionReward();
+    void wirteJSON(std::string filename);
 
 protected:
     std::default_random_engine generator;

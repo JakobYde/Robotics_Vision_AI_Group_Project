@@ -18,6 +18,8 @@ public:
     void add(string name, vector<string> value);
     void add(string name, int value);
     void add(string name, float value);
+    void add(string name,  vector<Json> value);
+    void add(string name, Json value);
     void write(string filename);
     string to_string();
 

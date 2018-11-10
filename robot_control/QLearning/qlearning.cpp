@@ -177,3 +177,23 @@ void QLearning::simulateActionReward(){
     float reward = runNormal_distribution(action->mean, action->stddev);
     giveReward(reward);
 }
+
+void QLearning::wirteJSON(std::string filename){
+    std::vector<Json> jsons;
+    for(state st : states){
+        Json jst;
+
+        jst.add("name",st.name);
+        jst.add("xy",std::vector<float>({st.x,st.y}));
+
+        Json conn;
+        for(int i = 0; i < st.actionStates.size(); i++){
+            conn.add(st.actionStates.at(i)->name,st.qValues.at(i));
+        }
+        jst.add("conn", conn);
+        jsons.push_back(jst);
+    }
+    Json j;
+    j.add("stats",jsons);
+    j.write(filename);
+}

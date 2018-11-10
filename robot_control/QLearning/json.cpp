@@ -48,25 +48,30 @@ void Json::add(string name, vector<string> value)
     addJsonValue(val);
 }
 
+void Json::add(string name, Json value){
+    std::string jsonValueString = value.to_string();
+    jsonValue val(name, jsonValueString);
+    addJsonValue(val);
+}
+
+void Json::add(string name,  vector<Json> value){
+    string valueString = "[ ";
+
+    for (int i = 0; i < value.size()-1; i++) {
+        valueString += value.at(i).to_string() + ", ";
+    }
+    valueString += value.back().to_string() + " ]";
+
+    jsonValue val(name, valueString);
+    addJsonValue(val);
+}
+
 void Json::write(string filename)
 {
     ofstream jsonfile;
     jsonfile.open(filename);
     jsonfile << to_string();
     jsonfile.close();
-}
-
-string Json::to_string()
-{
-    string jsonString = "{";
-    for(int i = 0; i < valuse.size()-1; i++)
-    {
-        jsonString += '"' + valuse.at(i).name + '"' + ": " + valuse.at(i).value + ", \n";
-    }
-    jsonString += '"' + valuse.back().name + '"' + ": " + valuse.back().value + "\n";
-
-    jsonString += "}";
-    return jsonString;
 }
 
 void Json::addJsonValue(jsonValue val)
@@ -78,6 +83,19 @@ void Json::addJsonValue(jsonValue val)
         }
     }
     valuse.push_back(val);
+}
+
+string Json::to_string()
+{
+    string jsonString = "{";
+    for(int i = 0; i < valuse.size()-1; i++)
+    {
+        jsonString += '"' + valuse.at(i).name + '"' + ": " + valuse.at(i).value + ", \n";
+    }
+    jsonString += '"' + valuse.back().name + '"' + ": " + valuse.back().value;
+
+    jsonString += "}";
+    return jsonString;
 }
 
 void makeJOSNPlotData(string titel, string xlabel, string ylabel, vector<float> xdata, vector<float> ydata, string plotType)
