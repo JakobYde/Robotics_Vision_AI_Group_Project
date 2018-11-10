@@ -49,14 +49,14 @@ public:
     void print_stats();
     void simulateActionReward();
     void wirteJSON(std::string filename);
-
+    float runNormal_distribution(float neam, float stddev);
 protected:
     std::default_random_engine generator;
     std::unordered_map<std::string, int> nameToIndexMap;
     std::vector<std::vector<std::vector<std::string>>> stringFromFile(std::string filename);
     std::vector<state> states;
 
-    float runNormal_distribution(float neam, float stddev);
+
 
     float getMaxQ(state* newState);
     float getReward(state* newState);

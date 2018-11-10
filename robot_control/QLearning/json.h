@@ -3,9 +3,8 @@
 #include <string>
 #include <vector>
 #include <fstream>
-using namespace std;
 
-void makeJOSNPlotData(string titel, string xlabel, string ylabel, vector<float> xdata, vector<float> ydata, string plotType = "plot");
+void makeJOSNPlotData(std::string titel, std::string xlabel, std::string ylabel, std::vector<float> xdata, std::vector<float> ydata, std::string plotType = "plot");
 
 class Json
 {
@@ -13,30 +12,30 @@ public:
     Json();
     ~Json();
 
-    void add(string name, string value);
-    void add(string name, vector<float> value);
-    void add(string name, vector<string> value);
-    void add(string name, int value);
-    void add(string name, float value);
-    void add(string name,  vector<Json> value);
-    void add(string name, Json value);
-    void write(string filename);
-    string to_string();
+    void add(std::string name, std::string value);
+    void add(std::string name, std::vector<float> value);
+    void add(std::string name, std::vector<std::string> value);
+    void add(std::string name, int value);
+    void add(std::string name, float value);
+    void add(std::string name, std::vector<Json> value);
+    void add(std::string name, Json value);
+    void write(std::string filename);
+    std::string to_string();
 
 protected:
 
     struct jsonValue
     {
-        string name;
-        string value;
+        std::string name;
+        std::string value;
 
-        jsonValue(string namein, string valuein) {
+        jsonValue(std::string namein, std::string valuein) {
             name = namein;
             value = valuein;
         }
     };
     void addJsonValue(jsonValue val);
-    vector<jsonValue> valuse;
+    std::vector<jsonValue> valuse;
 };
 
 #endif // JSON_H
