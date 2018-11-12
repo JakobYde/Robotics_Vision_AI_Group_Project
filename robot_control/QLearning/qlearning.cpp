@@ -185,7 +185,8 @@ void QLearning::wirteJSON(std::string filename){
 
         jst.add("name",st.name);
         jst.add("xy",std::vector<float>({st.x,st.y}));
-
+        jst.add("mean",st.mean);
+        jst.add("stddev",st.stddev);
         Json conn;
         for(int i = 0; i < st.actionStates.size(); i++){
             conn.add(st.actionStates.at(i)->name,st.qValues.at(i));

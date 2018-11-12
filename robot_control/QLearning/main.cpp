@@ -325,7 +325,7 @@ int main(int _argc, char **_argv) {
         movementPublisher->Publish(msg);
 
     }
-
+    q.wirteJSON("stats.json");
     myfile->close();
     delete myfile;
     makeJOSNPlotData("Robot parth","x","y",robot_xvalues,robot_yvalues);
