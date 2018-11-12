@@ -42,7 +42,7 @@ public:
         float mean;
     };
 
-    QLearning(std::string filename, std::string startState, float learningRate, float stepSize, float greedy, float qInitValue);
+    QLearning(std::string filename, std::string startState, float discount_rate, float stepSize, float greedy, float qInitValue, bool debug=false);
 
     state* getNewState();
     void giveReward(float r);
@@ -66,8 +66,8 @@ protected:
 
     int getMaxactionIndex();
     int getRandomactionIndex();
-
-    float learningRate;
+    bool debug;
+    float discount_rate;
     float stepSize;
     float greedy;
     state* currentState;

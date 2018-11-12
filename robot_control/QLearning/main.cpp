@@ -271,8 +271,8 @@ int main(int _argc, char **_argv) {
     worldPublisher->WaitForConnection();
     worldPublisher->Publish(controlMessage);
 
-    //QLearning
-    QLearning q("stats.txt","S0",0.7,0.4,0.7,20.0);
+    //QLearning std::string filename, std::string startState, float discount_rate, float stepSize, float greedy, float qInitValue
+    QLearning q("stats.txt","S0",0.7,0.4,0.6,0.0, true);
     enum statsStateMachine {onTheWay, atState_};
 
     statsStateMachine statemc = onTheWay;
@@ -280,6 +280,7 @@ int main(int _argc, char **_argv) {
     Possison goal = Possison(currentstate->x,currentstate->y);
     ControlOutput controllerOut;
     // Loop
+    int run = 0;
     while (true) {
         gazebo::common::Time::MSleep(10);
 
@@ -289,6 +290,7 @@ int main(int _argc, char **_argv) {
                 break;
 
             case atState_:
+                std::cout << "Run : " << run++ << " at state: " << currentstate->name << std::endl;
                 float r = q.runNormal_distribution(currentstate->mean,currentstate->stddev);
                 q.giveReward(r);
                 currentstate = q.getNewState();

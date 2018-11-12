@@ -1,11 +1,12 @@
 #include "qlearning.h"
 
-QLearning::QLearning(std::string filename, std::string startState, float learningRate, float stepSize, float greedy, float qInitValue)
+QLearning::QLearning(std::string filename, std::string startState, float learningRate, float stepSize, float greedy, float qInitValue, bool debug)
 {
     srand (time(NULL));
-    QLearning::learningRate = learningRate;
+    QLearning::discount_rate = learningRate;
     QLearning::stepSize = stepSize;
     QLearning::greedy = greedy;
+    QLearning::debug = debug;
 
     std::vector<std::vector<std::vector<std::string>>> stringvecsFromFile = stringFromFile(filename);
 
@@ -149,9 +150,15 @@ int QLearning::getMaxactionIndex(){
 int QLearning::policy(){
     float chance = (rand()%10000)/10000.0;
     int actionIndex;
-    if((1-greedy) <= chance) actionIndex = getMaxactionIndex();
-    else actionIndex = getRandomactionIndex();
-
+    if(greedy >= chance){
+        if(debug) std::cout << "QDEBUG :::: Taking greedy action.";
+        actionIndex = getMaxactionIndex();
+    }
+    else{
+        if(debug) std::cout << "QDEBUG :::: Taking random action.";
+        actionIndex = getRandomactionIndex();
+    }
+    if(debug) std::cout << " Greedy is: " << greedy << " Chanse was: " << chance << std::endl;
     return actionIndex;
 }
 
@@ -167,7 +174,7 @@ void QLearning::giveReward(float r){
 
     float qNow = currentState->qValues.at(nextStateActionIndex);
     float maxQ = getMaxQ(newState);
-    currentState->qValues.at(nextStateActionIndex) = qNow + stepSize*(r + learningRate*maxQ-qNow);
+    currentState->qValues.at(nextStateActionIndex) = qNow + stepSize*(r + discount_rate*maxQ - qNow);
 
     currentState = newState;
 }
