@@ -61,8 +61,8 @@ void poseCallback(ConstPosesStampedPtr &_msg) {
 
   for (int i = 0; i < _msg->pose_size(); i++) {
     if (_msg->pose(i).name() == "pioneer2dx") {
-      robot_xvalues.push_back(_msg->pose(i).position().x());
-      robot_yvalues.push_back(_msg->pose(i).position().y());
+      //robot_xvalues.push_back(_msg->pose(i).position().x());
+      //robot_yvalues.push_back(_msg->pose(i).position().y());
 
       robotPos[1] = robotPos[0];
       robotPos[0].x = _msg->pose(i).position().x();
@@ -272,7 +272,7 @@ int main(int _argc, char **_argv) {
     worldPublisher->Publish(controlMessage);
 
     //QLearning std::string filename, std::string startState, float discount_rate, float stepSize, float greedy, float qInitValue
-    QLearning q("stats.txt","S0",0.7,0.4,0.6,0.0, true);
+    QLearning q("stats.txt","S0",0.7,0.4,0.2,0.0, true);
     enum statsStateMachine {onTheWay, atState_};
 
     statsStateMachine statemc = onTheWay;
@@ -286,7 +286,7 @@ int main(int _argc, char **_argv) {
 
         switch (statemc) {
             case onTheWay:
-                if(atState(goal,robotPos[0],1)) statemc = atState_;
+                if(atState(goal,robotPos[0],0.5)) statemc = atState_;
                 break;
 
             case atState_:
@@ -330,7 +330,7 @@ int main(int _argc, char **_argv) {
     q.wirteJSON("stats.json");
     myfile->close();
     delete myfile;
-    makeJOSNPlotData("Robot parth","x","y",robot_xvalues,robot_yvalues);
+    //makeJOSNPlotData("Robot parth","x","y",robot_xvalues,robot_yvalues);
     // Make sure to shut everything down.
     gazebo::client::shutdown();
 }
