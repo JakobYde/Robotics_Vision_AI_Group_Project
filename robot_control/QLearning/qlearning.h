@@ -57,7 +57,7 @@ protected:
     std::unordered_map<std::string,int> stateNameIndex;
     std::vector<std::vector<std::vector<std::string>>> stringFromFile(std::string filename);
 
-    std::vector<state> states;
+    std::vector<std::vector<state>> states;
 
 
     //[0,0,0,0,0,0]; std::vector<std::vector<state>> states;
@@ -77,7 +77,7 @@ protected:
     float greedy;
     int nextStateActionIndex;
     int currentStateIndex;
-    long long int calIndex();
+    unsigned long long int calIndex();
 
     std::vector<bool> visest;
 
