@@ -1,0 +1,94 @@
+digraph {
+	S0 [label="S0 
+mean=0.0, stddev=1.0"]
+	S1 [label="S1 
+mean=7.0, stddev=0.5"]
+	S2 [label="S2 
+mean=0.0, stddev=4.0"]
+	S3 [label="S3 
+mean=-5.0, stddev=1.0"]
+	S4 [label="S4 
+mean=3.0, stddev=1.0"]
+	S5 [label="S5 
+mean=0.0, stddev=1.0"]
+	S6 [label="S6 
+mean=-6.0, stddev=3.0"]
+	S7 [label="S7 
+mean=1.0, stddev=0.0"]
+	S8 [label="S8 
+mean=-8.0, stddev=1.0"]
+	S9 [label="S9 
+mean=-1.0, stddev=4.0"]
+	S10 [label="S10 
+mean=2.0, stddev=1.0"]
+	S11 [label="S11 
+mean=3.0, stddev=9.0"]
+	S12 [label="S12 
+mean=0.0, stddev=1.0"]
+	S13 [label="S13 
+mean=2.0, stddev=9.0"]
+	S14 [label="S14 
+mean=0.0, stddev=1.0"]
+	S15 [label="S15 
+mean=8.0, stddev=1.0"]
+	S16 [label="S16 
+mean=-3.0, stddev=7.0"]
+	S17 [label="S17 
+mean=200.0, stddev=8.0"]
+	S18 [label="S18 
+mean=-6.0, stddev=1.0"]
+	S19 [label="S19 
+mean=10.0, stddev=2.0"]
+	S20 [label="S20 
+mean=0.0, stddev=1.0"]
+	S0 -> S1 [label=6.194566]
+	S0 -> S8 [label=90.266106]
+	S0 -> S18 [label=6.823736]
+	S1 -> S0 [label=25.512379]
+	S1 -> S2 [label=0.0]
+	S1 -> S4 [label=2.330129]
+	S1 -> S18 [label=4.635988]
+	S2 -> S1 [label=10.105662]
+	S2 -> S3 [label=-3.600676]
+	S3 -> S2 [label=-1.571632]
+	S3 -> S4 [label=1.822066]
+	S4 -> S3 [label=-1.800528]
+	S4 -> S1 [label=9.673696]
+	S4 -> S5 [label=0.0]
+	S4 -> S20 [label=-0.172009]
+	S4 -> S7 [label=-0.944292]
+	S5 -> S4 [label=0.0]
+	S5 -> S20 [label=0.0]
+	S6 -> S4 [label=2.178347]
+	S6 -> S7 [label=-2.338563]
+	S7 -> S6 [label=-5.894365]
+	S8 -> S0 [label=35.966461]
+	S8 -> S9 [label=46.95071]
+	S8 -> S13 [label=82.154678]
+	S8 -> S17 [label=224.369827]
+	S8 -> S18 [label=-2.123223]
+	S9 -> S8 [label=122.579124]
+	S9 -> S10 [label=21.380598]
+	S9 -> S11 [label=26.705858]
+	S9 -> S13 [label=64.824097]
+	S10 -> S9 [label=45.549103]
+	S11 -> S9 [label=46.669128]
+	S11 -> S12 [label=19.389458]
+	S12 -> S11 [label=23.061207]
+	S13 -> S9 [label=41.512444]
+	S13 -> S8 [label=138.873062]
+	S13 -> S14 [label=18.463863]
+	S13 -> S15 [label=30.188314]
+	S14 -> S13 [label=70.93]
+	S15 -> S13 [label=61.557041]
+	S15 -> S16 [label=7.782352]
+	S16 -> S15 [label=20.869473]
+	S17 -> S8 [label=115.828728]
+	S18 -> S8 [label=-2.91874]
+	S18 -> S0 [label=32.335106]
+	S18 -> S1 [label=11.611046]
+	S18 -> S19 [label=3.490995]
+	S19 -> S18 [label=-0.730016]
+	S20 -> S5 [label=0.0]
+	S20 -> S4 [label=1.597434]
+}

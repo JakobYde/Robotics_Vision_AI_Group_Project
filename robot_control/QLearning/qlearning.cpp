@@ -1,9 +1,9 @@
 #include "qlearning.h"
 
-QLearning::QLearning(std::string filename, std::string startState, float learningRate, float stepSize, float greedy, float qInitValue, bool debug)
+QLearning::QLearning(std::string filename, std::string startState, float discount_rate, float stepSize, float greedy, float qInitValue, bool debug)
 {
     srand (time(NULL));
-    QLearning::discount_rate = learningRate;
+    QLearning::discount_rate = discount_rate;
     QLearning::stepSize = stepSize;
     QLearning::greedy = greedy;
     QLearning::debug = debug;
@@ -77,7 +77,7 @@ std::vector<std::vector<std::vector<std::string>>> QLearning::stringFromFile(std
             if(line == "" or line[0] == '#') continue;
             stripWhitespace(line);
 
-            std::cout << "Line: " << line << std::endl;
+            if(debug) std::cout << "Line: " << line << std::endl;
             std::vector<std::vector<std::string>> vecStringsInLine;
             std::vector<std::string> stringsInSubLine;
             std::string tmp = "";
@@ -150,13 +150,17 @@ int QLearning::getMaxactionIndex(){
 int QLearning::policy(){
     float chance = (rand()%10000)/10000.0;
     int actionIndex;
+    int actionIndexMax = getMaxactionIndex();
     if(greedy >= chance){
         if(debug) std::cout << "QDEBUG :::: Taking greedy action.";
-        actionIndex = getMaxactionIndex();
+        actionIndex = actionIndexMax;
     }
     else{
         if(debug) std::cout << "QDEBUG :::: Taking random action.";
         actionIndex = getRandomactionIndex();
+        //while (currentState->actionStates.size() > 1 and actionIndex == actionIndexMax) {
+           //actionIndex = getRandomactionIndex();
+        //}
     }
     if(debug) std::cout << " Greedy is: " << greedy << " Chanse was: " << chance << std::endl;
     return actionIndex;

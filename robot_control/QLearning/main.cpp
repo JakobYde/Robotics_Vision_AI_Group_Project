@@ -271,8 +271,8 @@ int main(int _argc, char **_argv) {
     worldPublisher->WaitForConnection();
     worldPublisher->Publish(controlMessage);
 
-    //QLearning std::string filename, std::string startState, float discount_rate, float stepSize, float greedy, float qInitValue
-    QLearning q("stats.txt","S0",0.7,0.4,0.2,0.0, true);
+    //filename, startState, discount_rate, stepSize, greedy, qInitValue
+    QLearning q("../QLearning/stats.txt","S0",0.7,0.4,0.0,0.0, true);
     enum statsStateMachine {onTheWay, atState_};
 
     statsStateMachine statemc = onTheWay;
