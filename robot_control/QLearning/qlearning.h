@@ -54,6 +54,7 @@ public:
 protected:
     std::default_random_engine generator;
     std::unordered_map<std::string, int> nameToIndexMap;
+    std::unordered_map<std::string,int> stateNameIndex;
     std::vector<std::vector<std::vector<std::string>>> stringFromFile(std::string filename);
 
     std::vector<state> states;
@@ -74,8 +75,12 @@ protected:
     float discount_rate;
     float stepSize;
     float greedy;
-    state* currentState;
     int nextStateActionIndex;
+    int currentStateIndex;
+    long long int calIndex();
+
+    std::vector<bool> visest;
+
 };
 
 #endif // QLEARNING_H

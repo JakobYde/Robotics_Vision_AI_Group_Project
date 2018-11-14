@@ -281,6 +281,7 @@ int main(int _argc, char **_argv) {
     ControlOutput controllerOut;
     // Loop
     int run = 0;
+    std::cout << "Run : " << run++ << " at state: " << currentstate->name << std::endl;
     while (true) {
         gazebo::common::Time::MSleep(10);
 
