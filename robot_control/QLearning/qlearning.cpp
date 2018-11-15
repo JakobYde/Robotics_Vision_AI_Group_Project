@@ -2,6 +2,7 @@
 
 QLearning::QLearning(std::string filename, std::string startState, float discount_rate, float stepSize, float greedy, float qInitValue, bool debug)
 {
+    std::cout << startState << std::endl;
     std::vector<state> statesTemp;
     srand (time(NULL));
     QLearning::discount_rate = discount_rate;
@@ -11,16 +12,18 @@ QLearning::QLearning(std::string filename, std::string startState, float discoun
 
     std::vector<std::vector<std::vector<std::string>>> stringvecsFromFile = stringFromFile(filename);
 
-    if(stringvecsFromFile.size() > sizeof(unsigned long long int)){
-        std::cout << "ERROR :::: To many states. Max number of stats is: " << sizeof(unsigned long long int) << std::endl;
+    if(stringvecsFromFile.size() > sizeof(unsigned long long int)*8){
+        std::cout << "ERROR :::: To many states. Max number of stats is: " << sizeof(unsigned long long int)*8 << std::endl;
         std::exit(1);
     }
 
     for(int i = 0; i < stringvecsFromFile.size(); i++){
-        for(int j = 0; j < std::pow(2,stringvecsFromFile.size()); i++){
+        states.push_back(std::vector<state>());
+        for(int j = 0; j < std::pow(2,stringvecsFromFile.size()); j++){
             states.at(i).push_back(state());
         }
         stateNameIndex[stringvecsFromFile.at(i).at(STATE_NAME_INDEX).front()] = i;
+        visest.push_back(false);
     }
 
     for(std::vector<std::vector<std::string>> stateLine : stringvecsFromFile){
@@ -41,14 +44,18 @@ QLearning::QLearning(std::string filename, std::string startState, float discoun
         newstate.stddev = stddev;
 
         statesTemp.push_back(newstate);
-        nameToIndexMap[stateName] = states.size()-1;
-        visest.push_back(false);
     }
 
+    if(debug) std::cout << "Compling stats :::::" << std::endl;
     for(int i = 0; i < stringvecsFromFile.size(); i++){
-        for(int j = 0; j < std::pow(2,stringvecsFromFile.size()); i++){
+        std::string stateName = stringvecsFromFile.at(i).at(STATE_NAME_INDEX).front();
+        if(debug) std::cout << "\t state name: " << stateName << " and i is: " << i << " nameToIndexMap is: " << stateNameIndex[stateName] <<  std::endl;
+
+        for(int j = 0; j < std::pow(2,stringvecsFromFile.size()); j++){
+            states.at(i).at(j) = statesTemp.at(stateNameIndex[stateName]);
+
             for(std::string connName : stringvecsFromFile.at(i).at(STATE_CONN_INDEX)){
-                connBaseIndex = nameToIndexMap[connName];
+                int connBaseIndex = stateNameIndex[connName];
                 state * connState = &states.at(connBaseIndex).at(j);
                 states.at(i).at(j).actionStates.push_back(connState);
                 states.at(i).at(j).qValues.push_back(qInitValue);
@@ -57,17 +64,39 @@ QLearning::QLearning(std::string filename, std::string startState, float discoun
     }
 
     currentStateIndex = stateNameIndex[startState];
+    std::cout << currentStateIndex << std::endl;
 }
 
-void QLearning::print_stats(){//TODO
-    for(state st : states){
-        std::cout << st.name << " | " << "(" << st.x << ", " << st.y << ") | " << "mean:" <<st.mean << ", stdDiv:" << st.stddev << " | Conection: ";
-        for(state* actPnt : st.actionStates) std::cout << actPnt->name << " ";
-        std::cout << "| QValues: ";
-        for(int i = 0; i < st.qValues.size(); i++){
-            std::cout << st.actionStates.at(i)->name << " = " << st.qValues.at(i) << " ";
+std::string QLearning::toBits(int n) {
+    std::bitset<64> bit(n);
+    std::string bits = bit.to_string();
+    std::string bitstring = "[ ";
+    for(int i = 0; i < states.size(); i++){
+        bitstring += states.at(i).at(0).name + " = " + bits[64-i-1] + ", ";
+    }
+    return bitstring + "]";
+}
+
+void QLearning::print_stats(){
+    std::cout << "[ ";
+    for(int g = 0; g < visest.size()-1; g++){
+        std::cout << states.at(g).at(0).name << " = " << visest.at(g) << ", ";
+    }
+    std::cout << states.back().at(0).name << " = " << visest.back() << " ]";
+    for(int i = 0; i < states.size(); i++){
+        std::cout << states.at(i).at(0).name << " | " << "(" << states.at(i).at(0).x << ", " << states.at(i).at(0).y << ") | " << "mean:" << states.at(i).at(0).mean << ", stdDiv:" << states.at(i).at(0).stddev << std::endl;
+        for(int j = 0; j < states.at(i).size(); j++){
+            state * st = & states.at(i).at(j);
+            std::cout << "\t ";
+            for(state* actPnt : st->actionStates) std::cout << actPnt->name << " ";
+            std::cout << "| QValues: ";
+            for(int k = 0; k < st->qValues.size(); k++){
+                std::cout << st->actionStates.at(k)->name << " = " << st->qValues.at(k) << " ";
+            }
+
+            std::cout << toBits(j, states.size());
+            std::cout << std::endl;
         }
-        std::cout << std::endl;
     }
 }
 
@@ -141,17 +170,22 @@ float QLearning::getReward(state* newstate) //should return reward of given stat
     return runNormal_distribution(newstate->mean,newstate->stddev);
 }
 
+QLearning::state QLearning::getCurrentStarte(){
+    if(debug) std::cout << "currentStateIndex: " << currentStateIndex << " calIndex(visest): " << calIndex(visest) << " State name is: " << states.at(currentStateIndex).at(calIndex(visest)).name << std::endl;
+    return states.at(currentStateIndex).at(calIndex(visest));
+}
+
 int QLearning::getRandomactionIndex(){
-    return rand()%states.at(currentStateIndex).at(calIndex()).actionStates.size();
+    return rand()%states.at(currentStateIndex).at(calIndex(visest)).actionStates.size();
 }
 
 int QLearning::getMaxactionIndex(){
     int index = 0;
-    float max_q = states.at(currentStateIndex).at(calIndex()).qValues.at(0);
-    for(int i = 1; i < states.at(currentStateIndex).at(calIndex()).qValues.size(); i++){
-        if(states.at(currentStateIndex).at(calIndex()).qValues.at(i) > max_q){
+    float max_q = states.at(currentStateIndex).at(calIndex(visest)).qValues.at(0);
+    for(int i = 1; i < states.at(currentStateIndex).at(calIndex(visest)).qValues.size(); i++){
+        if(states.at(currentStateIndex).at(calIndex(visest)).qValues.at(i) > max_q){
             index = i;
-            max_q = states.at(currentStateIndex).at(calIndex()).qValues.at(i);
+            max_q = states.at(currentStateIndex).at(calIndex(visest)).qValues.at(i);
         }
     }
     return index;
@@ -173,7 +207,7 @@ int QLearning::policy(){
            //actionIndex = getRandomactionIndex();
         //}
     }
-    if(debug) std::cout << " Greedy is: " << greedy << " Chanse was: " << chance << std::endl;
+    if(debug) std::cout << " Greedy is: " << greedy << " Chanse was: " << chance << ". From state: " << states.at(currentStateIndex).at(calIndex(visest)).name << " to state: " << states.at(currentStateIndex).at(calIndex(visest)).actionStates.at(actionIndex)->name << std::endl;
     return actionIndex;
 }
 
@@ -204,22 +238,27 @@ void QLearning::simulateActionReward(){
     giveReward(reward);
 }
 
-void QLearning::wirteJSON(std::string filename){//TODO
+void QLearning::wirteJSON(std::string filename){
     std::vector<Json> jsons;
-    for(state st : states){
-        Json jst;
 
-        jst.add("name",st.name);
-        jst.add("xy",std::vector<float>({st.x,st.y}));
-        jst.add("mean",st.mean);
-        jst.add("stddev",st.stddev);
-        Json conn;
-        for(int i = 0; i < st.actionStates.size(); i++){
-            conn.add(st.actionStates.at(i)->name,st.qValues.at(i));
+    for(int i = 0; i < states.size(); i++){
+        for(int j = 0; i < states.at(i).size(); j++){
+            state * st = & states.at(i).at(j);
+            Json jst;
+
+            jst.add("name",st->name);
+            jst.add("xy",std::vector<float>({st->x,st->y}));
+            jst.add("mean",st->mean);
+            jst.add("stddev",st->stddev);
+            Json conn;
+            for(int k = 0; k < st->actionStates.size(); k++){
+                conn.add(st->actionStates.at(k)->name,st->qValues.at(k));
+            }
+            jst.add("conn", conn);
+            jsons.push_back(jst);
         }
-        jst.add("conn", conn);
-        jsons.push_back(jst);
     }
+
     Json j;
     j.add("stats",jsons);
     j.write(filename);

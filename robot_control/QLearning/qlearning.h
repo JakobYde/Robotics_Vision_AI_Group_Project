@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-
+#include <bitset>
 #include "json.h"
 
 #define STATE_NAME_INDEX 0
@@ -51,17 +51,19 @@ public:
     void simulateActionReward();
     void wirteJSON(std::string filename);
     float runNormal_distribution(float neam, float stddev);
+
+    state getCurrentStarte();
+
 protected:
     std::default_random_engine generator;
-    std::unordered_map<std::string, int> nameToIndexMap;
-    std::unordered_map<std::string,int> stateNameIndex;
+    std::unordered_map<std::string, int> stateNameIndex;
     std::vector<std::vector<std::vector<std::string>>> stringFromFile(std::string filename);
 
     std::vector<std::vector<state>> states;
 
 
     //[0,0,0,0,0,0]; std::vector<std::vector<state>> states;
-
+    std::string toBits(int n);
 
     float getMaxQ(state* newState);
     float getReward(state* newState);

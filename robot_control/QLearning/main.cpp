@@ -271,17 +271,21 @@ int main(int _argc, char **_argv) {
     worldPublisher->WaitForConnection();
     worldPublisher->Publish(controlMessage);
 
-    //filename, startState, discount_rate, stepSize, greedy, qInitValue
-    QLearning q("../QLearning/stats.txt","S0",0.7,0.4,0.0,0.0, true);
+
     enum statsStateMachine {onTheWay, atState_};
 
     statsStateMachine statemc = onTheWay;
+
+    //filename, startState, discount_rate, stepSize, greedy, qInitValue
+    QLearning q("../QLearning/stats.txt","S0",0.7,0.4,0.0,0.0, true);
     QLearning::state* currentstate = q.getNewState();
+    q.print_stats();
     Possison goal = Possison(currentstate->x,currentstate->y);
+
     ControlOutput controllerOut;
+
     // Loop
     int run = 0;
-    std::cout << "Run : " << run++ << " at state: " << currentstate->name << std::endl;
     while (true) {
         gazebo::common::Time::MSleep(10);
 
@@ -291,25 +295,24 @@ int main(int _argc, char **_argv) {
             case onTheWay:
                 if(atState(goal,robotPos[0],0.5)) statemc = atState_;
 
-                float angleError = calAngleError(robotPos,goal);
-                float goalDistance = calDist(robotPos[0],goal);
-                controllerOut = controller.getControlOutput(angleError,goalDistance, center_angle_pct);
+                controllerOut = controller.getControlOutput(calAngleError(robotPos,goal),calDist(robotPos[0],goal), center_angle_pct);
 
-            break;
+                break;
 
             case atState_:
                 controllerOut.direction = 0;
                 controllerOut.speed = 0;
 
                 std::cout << "Run : " << run++ << " at state: " << currentstate->name << std::endl;
-                float r = q.runNormal_distribution(currentstate->mean,currentstate->stddev);
-                q.giveReward(r);
+                q.giveReward(q.runNormal_distribution(currentstate->mean,currentstate->stddev));
+
                 currentstate = q.getNewState();
+
                 goal = Possison(currentstate->x,currentstate->y);
                 statemc = onTheWay;
                 q.print_stats();
 
-            break;
+                break;
         }
 
         //Få control signal
