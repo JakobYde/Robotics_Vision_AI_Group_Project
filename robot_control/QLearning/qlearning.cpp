@@ -180,18 +180,22 @@ int QLearning::policy(){
 //Choose A from S using policy derived from Q (e.g., e-ereedy
 QLearning::state* QLearning::getNewState(){
     nextStateActionIndex = policy();
-    return states.at(currentStateIndex).at(calIndex()).actionStates.at(nextStateActionIndex);
+    return states.at(currentStateIndex).at(calIndex(visest)).actionStates.at(nextStateActionIndex);
 }
 
 //Take action A, observe R, S'
-void QLearning::giveReward(float r){//TODO
-    state* newState = states.at(currentStateIndex).actionStates.at(nextStateActionIndex);
+void QLearning::giveReward(float r){
+    std::vector<bool> visests = visest;
+    visests.at(currentStateIndex) = true;
 
-    float qNow = states.at(currentStateIndex).qValues.at(nextStateActionIndex);
+    state* newState = states.at(currentStateIndex).at(calIndex(visests)).actionStates.at(nextStateActionIndex);
+
+    float qNow = states.at(currentStateIndex).at(calIndex(visest)).qValues.at(nextStateActionIndex);
     float maxQ = getMaxQ(newState);
-    states.at(currentStateIndex).qValues.at(nextStateActionIndex) = qNow + stepSize*(r + discount_rate*maxQ - qNow);
+    states.at(currentStateIndex).at(calIndex(visest)).qValues.at(nextStateActionIndex) = qNow + stepSize*(r + discount_rate*maxQ - qNow);
 
     currentStateIndex = stateNameIndex[newState->name];
+    visest = visests;
 }
 
 void QLearning::simulateActionReward(){
@@ -221,8 +225,8 @@ void QLearning::wirteJSON(std::string filename){//TODO
     j.write(filename);
 }
 
-unsigned long long int QLearning::calIndex(){
+unsigned long long int QLearning::calIndex(std::vector<bool> visests){
     unsigned long long int index = 0;
-    for(int i = 0; i < visest.size(); i++) if(visest.at(i)) index += std::pow(2,i);
+    for(int i = 0; i < visests.size(); i++) if(visests.at(i)) index += std::pow(2,i);
     return index;
 }

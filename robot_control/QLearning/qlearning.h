@@ -77,7 +77,7 @@ protected:
     float greedy;
     int nextStateActionIndex;
     int currentStateIndex;
-    unsigned long long int calIndex();
+    unsigned long long int calIndex(std::vector<bool> visests);
 
     std::vector<bool> visest;
 

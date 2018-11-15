@@ -285,12 +285,22 @@ int main(int _argc, char **_argv) {
     while (true) {
         gazebo::common::Time::MSleep(10);
 
+
+
         switch (statemc) {
             case onTheWay:
                 if(atState(goal,robotPos[0],0.5)) statemc = atState_;
-                break;
+
+                float angleError = calAngleError(robotPos,goal);
+                float goalDistance = calDist(robotPos[0],goal);
+                controllerOut = controller.getControlOutput(angleError,goalDistance, center_angle_pct);
+
+            break;
 
             case atState_:
+                controllerOut.direction = 0;
+                controllerOut.speed = 0;
+
                 std::cout << "Run : " << run++ << " at state: " << currentstate->name << std::endl;
                 float r = q.runNormal_distribution(currentstate->mean,currentstate->stddev);
                 q.giveReward(r);
@@ -298,19 +308,15 @@ int main(int _argc, char **_argv) {
                 goal = Possison(currentstate->x,currentstate->y);
                 statemc = onTheWay;
                 q.print_stats();
-                break;
+
+            break;
         }
 
         //Få control signal
 
 
-        float angleError = calAngleError(robotPos,goal);
-        float goalDistance = calDist(robotPos[0],goal);
-        //std::cout << std::setprecision(3) << std::fixed << "Angle error: " << angleError << ", " << std::setw(6) << "goalDistance: " << goalDistance << " ::: " << std::setw(6) << "Goal: " << goal.x << ", " << goal.y << ", " << std::setw(6) << "Pos: " << robotPos[0].x << ", " << robotPos[0].y << std::endl;
-        controllerOut = controller.getControlOutput(angleError,goalDistance, center_angle_pct);
 
-        //FL_LOG("SenM" << Op::str(senM)<<" : "<< Op::str(sM->getValue())<< " dif: " << Op::str(senM-sM->getValue())
-        //       << "; Speed.output = " << Op::str(speed->getValue()));
+
 
         mutex.lock();
         int key = cv::waitKey(1);
