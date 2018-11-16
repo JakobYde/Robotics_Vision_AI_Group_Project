@@ -18,10 +18,15 @@
 #include <sstream>      // std::stringstream
 #include <fstream>
 #include <vector>
+#include <thread>
+#include <mutex>
+#include <queue>
+#include <boost/thread/thread.hpp>
 
 #include "FuzzyBugController.h"
 #include "LaserScanner.h"
 #include "json.h"
+#include "jsonplot.h"
 
 #define ESC_KEY 27
 #define PI 3.14159265
@@ -199,7 +204,7 @@ float calAngleError(Possison *posHist, Possison goal){
 
 struct pointManger{
     std::vector<Possison> poss;
-    int index;
+    unsigned int index;
 };
 
 bool getPointI = true;
@@ -224,6 +229,7 @@ bool atState(Possison goal, Possison pos, float mindist){
     return false;
 }
 
+/*
 int main(int _argc, char **_argv) {
     //Zero start pos
     robotPos[0].x = 0.0;
@@ -344,28 +350,221 @@ int main(int _argc, char **_argv) {
     // Make sure to shut everything down.
     gazebo::client::shutdown();
 }
+*/
+
+std::string getRandomState(QLearning & q){
+    std::vector<std::string> stats = q.getStats();
+    return stats.at(rand()%stats.size());
+}
+
+std::vector<float> getAvg(std::vector <std::vector<float>> vec) {
+    std::vector<float> sum;
+    for (size_t i = 0; i < vec.size(); i++) {
+        sum.push_back(0.0);
+        for (size_t j = 0; j < vec.at(i).size(); j++)
+        {
+            sum.at(i) += vec.at(i).at(j);
+        }
+        sum.at(i) /= vec.at(i).size();
+    }
+    return sum;
+}
+
+std::vector<float> getMovingAvg(std::vector<float> vec, float alfa = 0.6) {
+    std::vector<float> avg;
+    float s = vec.at(0);
+    avg.push_back(s);
+
+    for(unsigned int i = 1; i < vec.size(); i++){
+        s = alfa*vec.at(i) + (1-alfa)*s;
+        avg.push_back(s);
+    }
+    return avg;
+}
+
+std::string fts(float f, int dec){
+    std::string floatstring = std::to_string(f);
+    std::string res = "";
+    unsigned int i;
+    for(i = 0; i < floatstring.length(); i++) {
+        if(floatstring[i] != '.') res += floatstring[i];
+        else break;
+    }
+    for(unsigned int j = i+dec; i <= j and i < floatstring.length(); i++) {
+        res += floatstring[i];
+    }
+    return res;
+}
+
+std::string getProcessbar(int n, int maxn, int len = 10){
+    char rn[8] = {'|', '/', '-', '\\', '|', '/', '-', '\\'};
+    static int c = 0;
+
+    std::string bar = "[";
+
+    float pro = (n)/float(maxn)*100;
+    int barNumber = std::floor(pro/100*len);
+
+    for(int i = 0; i < barNumber; i++) bar += '#';
+
+    if(barNumber+1 < len) bar += rn[c++%8];
+
+    for(int i = barNumber+1; i < len; i++) bar += ' ';
+    bar += "]";
+
+    bar += fts(std::roundf(pro * 100) / 100,2) + "%";
+
+    return bar;
+}
+
+struct qTestPra
+{
+    qTestPra() {}
+    int epsiodes;
+    int maxStepsInEpsiode;
+    int avgOver;
+    float mvAvgAlfa;
+
+    std::string filename;
+    std::string startState;
+    float discount_rate;
+    float stepSize;
+    float greedy;
+    float qInitValue;
+};
+
+struct data{
+    std::vector<int> xdata;
+    std::vector<float> ydata;
+    qTestPra prameters;
+};
 
 
-/*
+data testQ(QLearning &q, int epsiodes = 2000, int maxStepsInEpsiode = 20, int avgOver = 10, float mvAvgAlfa = 0.01, bool print = false, std::string preSet = ""){
+    data dataset;
+    std::vector<std::vector<float>> ydata;
+    for(int i = 0; i < epsiodes; i++){
+        if(print) printf("\033c");
+        if(print) std::cout << preSet << "Epsiode " << i+1 << "/" << epsiodes << " --- " << getProcessbar(i, epsiodes, 30);
+        dataset.xdata.push_back(i);
+        ydata.push_back(std::vector<float>());
+        QLearning copi = q;
+
+        for(int k = 0; k < avgOver; k++){
+            q = copi;
+            int step = 0;
+
+            q.setState("S0");//getRandomState
+
+            while(not q.allVisest() and step < maxStepsInEpsiode){
+                q.simulateActionReward();
+                step++;
+            }
+            ydata.at(i).push_back(q.getAvgReward());
+            q.clearRewardHistroic();
+        }
+        boost::this_thread::sleep( boost::posix_time::microseconds(10) );
+    }
+    dataset.ydata = getMovingAvg(getAvg(ydata),mvAvgAlfa);
+
+    return dataset;
+}
+
+struct workerParameter
+{
+    workerParameter() {}
+    std::queue<qTestPra> *qqueue;
+    std::mutex *mux_qqueue;
+    std::queue<data> *dataqueue;
+    std::mutex *mux_dataqueue;
+};
+
+void worker(workerParameter wp){
+    qTestPra qp;
+    while(true){
+        wp.mux_qqueue->lock();
+        if(wp.qqueue->empty()){
+            wp.mux_qqueue->unlock();
+            break;
+        }
+        qp = wp.qqueue->front();
+        wp.qqueue->pop();
+        wp.mux_qqueue->unlock();
+
+        QLearning q(qp.filename,qp.startState,qp.discount_rate,qp.stepSize,qp.greedy,qp.qInitValue);
+
+        data testdata = testQ(q,qp.epsiodes,qp.maxStepsInEpsiode,qp.avgOver,qp.mvAvgAlfa,false,"");
+        testdata.prameters = qp;
+
+        wp.mux_dataqueue->lock();
+        wp.dataqueue->push(testdata);
+        wp.mux_dataqueue->unlock();
+    }
+}
+
 int main()
 {
-    //std::string filename, float learningRate, float stepSize, float greedy, float qInitValue
-    QLearning q("stats.txt","S0",0.7,0.4,0.7,1.0);
-    std::cout << "Start: " << std::endl;
-    q.print_stats();
+    const int thredsN = 5;
 
-    for(int i=0;i<5;i++){
-        std::cout << "Run: " << i << std::endl;
-        q.simulateActionReward();
-        q.print_stats();
+    qTestPra gound;
+    gound.epsiodes = 2000;
+    gound.maxStepsInEpsiode = 20;
+    gound.avgOver = 10;
+    gound.mvAvgAlfa = 0.01;
+
+    gound.filename = "../QLearning/stats.txt";
+    gound.startState = "S0";
+    gound.discount_rate = 0.9;
+    gound.stepSize = 0.1;
+    gound.greedy = 0.05;
+    gound.qInitValue = 0.0;
+
+    JSONPlot j("Q-learning. Discount_rate: "+std::to_string(gound.discount_rate) +", stepSize: "+std::to_string(gound.stepSize)+", greedy: "+std::to_string(gound.greedy)+", qInitValue: "+std::to_string(gound.qInitValue) , "Steps", "movingAvg reward (alfa = 0.01)");
+
+    std::vector<float> testVar = {0.0, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+
+    std::queue<data> dataqueue;
+    std::mutex mux_dataqueue;
+    std::queue<qTestPra> qqueue;
+    std::mutex mux_qqueue;
+
+    for(unsigned int i = 0; i < testVar.size(); i++){
+        qTestPra test = gound;
+        test.greedy = testVar.at(i);
+
+        qqueue.push(test);
     }
-    std::cout << "Run 5 to 98: " << std::endl;
-    for(int i=5;i<100;i++){
-        q.simulateActionReward();
+
+    std::thread threads[thredsN];
+    workerParameter wp;
+    wp.dataqueue = &dataqueue;
+    wp.mux_dataqueue = &mux_dataqueue;
+    wp.qqueue = &qqueue;
+    wp.mux_qqueue = &mux_qqueue;
+
+    for(int i = 0; i < thredsN; i++) threads[i] = std::thread(worker,wp);
+
+    while(not qqueue.empty()){
+        printf("\033c");
+        std::cout << "Running test: " << getProcessbar(dataqueue.size(),testVar.size(),testVar.size()) << std::endl;
+
+        boost::this_thread::sleep( boost::posix_time::seconds(0.5) );
+
     }
-    std::cout << "Run: 99" << std::endl;
-    q.print_stats();
-    q.wirteJSON("statsjson.json");
+
+    for(int i = 0; i < thredsN; i++) threads[i].join();
+
+    int dataSice = dataqueue.size();
+    while(not dataqueue.empty()){
+        printf("\033c");
+        std::cout << "Wirting JSON: " << getProcessbar(dataSice-dataqueue.size(),dataSice,dataSice) << std::endl;
+
+        data dt = dataqueue.front();
+        dataqueue.pop();
+
+        j.addData("Discount_rate: "+fts(dt.prameters.discount_rate,2),dt.xdata,dt.ydata);
+    }
+    j.write();
+
     return 0;
 }
-*/

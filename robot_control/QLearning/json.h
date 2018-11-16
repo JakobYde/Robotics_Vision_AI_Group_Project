@@ -14,6 +14,7 @@ public:
 
     void add(std::string name, std::string value);
     void add(std::string name, std::vector<float> value);
+    void add(std::string name, std::vector<int> value);
     void add(std::string name, std::vector<std::string> value);
     void add(std::string name, int value);
     void add(std::string name, float value);

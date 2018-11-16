@@ -47,10 +47,17 @@ public:
     state* getNewState();
     void giveReward(float r);
     void print_stats();
-
+    void setState(std::string state);
+    std::vector<std::string> getStats();
+    std::vector<bool> getVisest();
+    bool allVisest();
     void simulateActionReward();
     void wirteJSON(std::string filename);
     float runNormal_distribution(float neam, float stddev);
+
+    std::vector<float> rewardHistroic;
+    float getAvgReward();
+    void clearRewardHistroic();
 
     state getCurrentStarte();
 
@@ -63,7 +70,7 @@ protected:
 
 
     //[0,0,0,0,0,0]; std::vector<std::vector<state>> states;
-    std::string toBits(int n);
+    std::string toBits(unsigned int n);
 
     float getMaxQ(state* newState);
     float getReward(state* newState);
@@ -77,8 +84,8 @@ protected:
     float discount_rate;
     float stepSize;
     float greedy;
-    int nextStateActionIndex;
-    int currentStateIndex;
+    unsigned int nextStateActionIndex;
+    unsigned int currentStateIndex;
     unsigned long long int calIndex(std::vector<bool> visests);
 
     std::vector<bool> visest;

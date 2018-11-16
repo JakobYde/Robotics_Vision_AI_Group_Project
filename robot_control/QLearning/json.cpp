@@ -35,6 +35,18 @@ void Json::add(std::string name, std::vector<float> value)
     jsonValue val(name, valueString);
     addJsonValue(val);
 }
+void Json::add(std::string name, std::vector<int> value)
+{
+    std::string valueString = "[ ";
+
+    for (int i = 0; i < value.size()-1; i++) {
+        valueString += std::to_string(value.at(i)) + ", ";
+    }
+    valueString += std::to_string(value.back()) + " ]";
+
+    jsonValue val(name, valueString);
+    addJsonValue(val);
+}
 void Json::add(std::string name, std::vector<std::string> value)
 {
     std::string valueString = "[ ";
