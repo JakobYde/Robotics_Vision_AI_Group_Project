@@ -2,13 +2,14 @@
 
 QLearning::QLearning(std::string filename, std::string startState, float discount_rate, float stepSize, float greedy, float qInitValue, bool debug)
 {
-    std::cout << startState << std::endl;
     std::vector<state> statesTemp;
     srand (time(NULL));
     QLearning::discount_rate = discount_rate;
     QLearning::stepSize = stepSize;
     QLearning::greedy = greedy;
     QLearning::debug = debug;
+    QLearning::ininQValue = qInitValue;
+    QLearning::startState = startState;
 
     std::vector<std::vector<std::vector<std::string>>> stringvecsFromFile = stringFromFile(filename);
 
@@ -117,6 +118,20 @@ std::vector<bool> QLearning::getVisest(){
 bool QLearning::allVisest(){
     for(bool vi : visest) if(not vi) return false;
     return true;
+}
+
+void QLearning::clear(std::string state){
+    for(unsigned int i = 0; i < states.size(); i++){
+        for(unsigned int j = 0; j < states.at(i).size(); j++){
+            for(unsigned int k = 0; k < states.at(i).at(j).qValues.size(); k++) states.at(i).at(j).qValues.at(k) = ininQValue;
+        }
+    }
+    setState(state);
+    clearRewardHistroic();
+}
+
+void QLearning::clear(){
+    QLearning::clear(startState);
 }
 
 float QLearning::getAvgReward(){

@@ -357,15 +357,27 @@ std::string getRandomState(QLearning & q){
     return stats.at(rand()%stats.size());
 }
 
-std::vector<float> getAvg(std::vector <std::vector<float>> vec) {
+std::vector<float> getAvg(std::vector <std::vector<float>> vec, int axle = 0) {
     std::vector<float> sum;
-    for (size_t i = 0; i < vec.size(); i++) {
-        sum.push_back(0.0);
-        for (size_t j = 0; j < vec.at(i).size(); j++)
-        {
-            sum.at(i) += vec.at(i).at(j);
+    if (axle == 0){
+        for (size_t i = 0; i < vec.size(); i++) {
+            sum.push_back(0.0);
+            for (size_t j = 0; j < vec.at(i).size(); j++)
+            {
+                sum.at(i) += vec.at(i).at(j);
+            }
+            sum.at(i) /= vec.at(i).size();
         }
-        sum.at(i) /= vec.at(i).size();
+    }
+    else{
+        for (size_t i = 0; i < vec.size(); i++) {
+            for (size_t j = 0; j < vec.at(i).size(); j++)
+            {
+                if(i == 0) sum.push_back(0.0);
+                sum.at(j) += vec.at(i).at(j);
+            }
+        }
+        for(size_t i = 0; i < sum.size(); i++) sum.at(i)/=vec.size();
     }
     return sum;
 }
@@ -443,29 +455,30 @@ struct data{
 data testQ(QLearning &q, int epsiodes = 2000, int maxStepsInEpsiode = 20, int avgOver = 10, float mvAvgAlfa = 0.01, bool print = false, std::string preSet = ""){
     data dataset;
     std::vector<std::vector<float>> ydata;
-    for(int i = 0; i < epsiodes; i++){
-        if(print) printf("\033c");
-        if(print) std::cout << preSet << "Epsiode " << i+1 << "/" << epsiodes << " --- " << getProcessbar(i, epsiodes, 30);
-        dataset.xdata.push_back(i);
+    for(int k = 0; k < avgOver; k++){
+        q.clear();//"S0"; getRandomState(q)
         ydata.push_back(std::vector<float>());
-        QLearning copi = q;
 
-        for(int k = 0; k < avgOver; k++){
-            q = copi;
+        for(int i = 0; i < epsiodes; i++){
+            q.setState("S0");//getRandomState(q)
+
+            if(print) printf("\033c");
+            if(print) std::cout << preSet << "Epsiode " << i+1 << "/" << epsiodes << " --- " << getProcessbar(i, epsiodes, 30);
+
+            if(k==0) dataset.xdata.push_back(i);
+
+
             int step = 0;
-
-            q.setState("S0");//getRandomState
 
             while(not q.allVisest() and step < maxStepsInEpsiode){
                 q.simulateActionReward();
                 step++;
             }
-            ydata.at(i).push_back(q.getAvgReward());
+            ydata.at(k).push_back(q.getAvgReward());
             q.clearRewardHistroic();
         }
-        boost::this_thread::sleep( boost::posix_time::microseconds(10) );
     }
-    dataset.ydata = getMovingAvg(getAvg(ydata),mvAvgAlfa);
+    dataset.ydata = getMovingAvg(getAvg(ydata,1),mvAvgAlfa);
 
     return dataset;
 }
@@ -499,6 +512,7 @@ void worker(workerParameter wp){
         wp.mux_dataqueue->lock();
         wp.dataqueue->push(testdata);
         wp.mux_dataqueue->unlock();
+        boost::this_thread::sleep( boost::posix_time::microseconds(10) );
     }
 }
 
@@ -517,11 +531,13 @@ int main()
     gound.discount_rate = 0.9;
     gound.stepSize = 0.1;
     gound.greedy = 0.05;
-    gound.qInitValue = 0.0;
+    gound.qInitValue = 1;
 
-    JSONPlot j("Q-learning. Discount_rate: "+std::to_string(gound.discount_rate) +", stepSize: "+std::to_string(gound.stepSize)+", greedy: "+std::to_string(gound.greedy)+", qInitValue: "+std::to_string(gound.qInitValue) , "Steps", "movingAvg reward (alfa = 0.01)");
+    JSONPlot j("Q-learning. Discount_rate: "+fts(gound.discount_rate,3) +", stepSize: "+fts(gound.stepSize,3)+", greedy: test"/*+fts(gound.greedy,3)*/+", qInitValue: "+fts(gound.qInitValue,3) , "Steps", "movingAvg reward (alfa = 0.01)");
 
-    std::vector<float> testVar = {0.0, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+    std::vector<float> testVar= {0.0, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+    //for(float var = 0.0; var <= 1.0; var+=0.05) testVar.push_back(var);
+
 
     std::queue<data> dataqueue;
     std::mutex mux_dataqueue;
@@ -544,7 +560,7 @@ int main()
 
     for(int i = 0; i < thredsN; i++) threads[i] = std::thread(worker,wp);
 
-    while(not qqueue.empty()){
+    while(dataqueue.size() != testVar.size()){
         printf("\033c");
         std::cout << "Running test: " << getProcessbar(dataqueue.size(),testVar.size(),testVar.size()) << std::endl;
 
@@ -552,7 +568,7 @@ int main()
 
     }
 
-    for(int i = 0; i < thredsN; i++) threads[i].join();
+    for(unsigned int i = 0; i < thredsN; i++) threads[i].join();
 
     int dataSice = dataqueue.size();
     while(not dataqueue.empty()){
@@ -562,7 +578,7 @@ int main()
         data dt = dataqueue.front();
         dataqueue.pop();
 
-        j.addData("Discount_rate: "+fts(dt.prameters.discount_rate,2),dt.xdata,dt.ydata);
+        j.addData("Greedy: "+fts(dt.prameters.greedy,2),dt.xdata,dt.ydata);
     }
     j.write();
 

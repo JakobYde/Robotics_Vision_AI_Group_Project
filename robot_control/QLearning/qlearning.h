@@ -58,6 +58,8 @@ public:
     std::vector<float> rewardHistroic;
     float getAvgReward();
     void clearRewardHistroic();
+    void clear();
+    void clear(std::string startState);
 
     state getCurrentStarte();
 
@@ -84,6 +86,8 @@ protected:
     float discount_rate;
     float stepSize;
     float greedy;
+    float ininQValue;
+    std::string startState;
     unsigned int nextStateActionIndex;
     unsigned int currentStateIndex;
     unsigned long long int calIndex(std::vector<bool> visests);
