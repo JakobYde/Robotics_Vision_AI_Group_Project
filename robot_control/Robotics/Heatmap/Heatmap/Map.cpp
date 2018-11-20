@@ -14,8 +14,18 @@ Map::~Map()
 {
 }
 
-void Map::loadImage(cv::Mat img)
+void Map::loadImage(cv::Mat img, int upscaling)
 {
+
+	//PRE-SCALING PREPROCESSING
+
+	//UPSCALING (1ms)
+	if (upscaling > 1) {
+		resize(img, img, img.size() * upscaling, 0, 0, cv::INTER_NEAREST);
+		scale = 1 / (double)upscaling;
+	}
+
+	//CREATION OF MAP OBJECT (14ms)
 	int i = 0;
 	for (cv::MatIterator_<cv::Vec3b> p = img.begin<cv::Vec3b>(); p < img.end<cv::Vec3b>(); p++, i++) {
 		unsigned int x, y;
@@ -26,6 +36,8 @@ void Map::loadImage(cv::Mat img)
 		else n->type = eObstacle;
 		n->position = MapPoint(x, y);
 	}
+
+	//WALL/OUTSIDE CATEGORISATION (17ms)
 	std::vector<MapPoint> edgePoints;
 	for (int i = 0; i < img.cols; i++) {
 		edgePoints.push_back(MapPoint(i, 0));
@@ -48,6 +60,11 @@ void Map::loadImage(cv::Mat img)
 			if (surroundedByWalls) map.at(p).type = eOutside;
 		}
 	}
+
+	//POST-SCALING PREPROCESSING 
+	vertices = getVertices(); //(28ms)
+	edges = getEdges(); //(223ms)
+	calculateBrushfire(); //(437ms)
 }
 
 cv::Mat Map::drawMap(drawType type, bool draw, drawArguments args)
@@ -58,7 +75,6 @@ cv::Mat Map::drawMap(drawType type, bool draw, drawArguments args)
 
 	placePoint(MapPoint(100, 40));
 
-	std::vector<MapPoint> vertices;
 	std::vector<MapPoint> path;
 
 	switch (type) {
@@ -88,19 +104,16 @@ cv::Mat Map::drawMap(drawType type, bool draw, drawArguments args)
 				else if (n.hmDistance == 0) *v = vPoint;
 				else *v = (1 - n.hmDistance / viewDistance) * vDiscovered + (n.hmDistance / viewDistance) * vUndiscovered;
 			}
-
 		}
 		break;
 
 	case eBrushfire:
 		windowName = "Brushfire Map";
-		calculateBrushfire();
 		for (int i = 0; i < w * h; i++) {
 			unsigned int x = i % w, y = i / w;
 			cv::Vec3b* v = &img.at<cv::Vec3b>(cv::Point(x, y));
-
 			int d = map.at(x, y).wallDistance;
-			if (d < 1) *v = vObstacle;
+			if (d <= 0) *v = vObstacle;
 			else {
 				double a = (double)d / (double)maxDist;
 				*v = vUndiscovered * (1 - a) + cv::Vec3b(0, 255, 255) * a;
@@ -109,22 +122,22 @@ cv::Mat Map::drawMap(drawType type, bool draw, drawArguments args)
 		break;
 
 	case eGeometry:
-		windowName = "Geometry";
+  		windowName = "Geometry";
 		img = drawMap(eBasic, false);
-		vertices = getVertices();
-		edges = getEdges();
 		for (Edge e : edges) {
-			std::vector<MapPoint> line = getLine(e.A, e.B);
+			std::vector<MapPoint> line = e.getPoints();
 			for (MapPoint p : line) img.at<cv::Vec3b>(p.getCVPoint()) = vUndiscovered;
 		}
 		for (MapPoint p : vertices) img.at<cv::Vec3b>(p.getCVPoint()) = vPoint;
 		break;
 
 	case ePath:
-		path = getPath(args.A, args.B, args.padding);
+		path = getPath(args.A / scale, args.B / scale);
 		windowName = "Path";
 		img = drawMap(eBasic, false);
 		for (MapPoint p : path) img.at<cv::Vec3b>(p.getCVPoint()) = vUndiscovered;
+		path = simplifyPath(path);
+		for (MapPoint p : path) img.at<cv::Vec3b>(p.getCVPoint()) = vPoint;
 		break;
 	}
 
@@ -141,30 +154,6 @@ cv::Mat Map::drawMap(drawType type, bool draw, drawArguments args)
 std::vector<MapPoint> Map::getPoints()
 {
 	return points;
-}
-
-std::vector<MapPoint> Map::getLine(MapPoint a, MapPoint b)
-{
-	std::vector<MapPoint> line;
-	if (a != b) {
-		int dX = (int)b.x() - (int)a.x(), dY = (int)b.y() - (int)a.y(), l, g;
-		bool findingX = false;
-		if (abs(dX) > abs(dY)) l = dY, g = dX;
-		else l = dX, g = dY, findingX = true;
-		line = std::vector<MapPoint>(abs(g) + 1);
-
-		double slope = (double)l / (double)g;
-		int inc = g / abs(g);
-
-		for (int i = 0; abs(i) < abs(g) + 1; i += inc) {
-			MapPoint p;
-			if (findingX) p = MapPoint(i * slope + (int)a.x(), i + (int)a.y());
-			else p = MapPoint(i + (int)a.x(), i * slope + (int)a.y());
-
-			line[abs(i)] = p;
-		}
-	}
-	return line;
 }
 
 void Map::placePoint(MapPoint p)
@@ -184,19 +173,17 @@ void Map::placePoint(MapPoint p)
 	}
 }
 
-bool Map::hasLineOfSight(MapPoint a, MapPoint b)
+bool Map::hasLineOfSight(MapPoint a, MapPoint b, double wallDistanceThreshold)
 {
-	std::vector<MapPoint> line = getLine(a, b);
-	for (MapPoint p : line) {
-		if (map.at(p.x(), p.y(), false).type == eObstacle) return false;
-	}
+	std::vector<MapPoint> line = Edge(a,b).getPoints();
+	for (MapPoint p : line) if (map.at(p.x(), p.y(), false).wallDistance <= wallDistanceThreshold) return false;
 	return true;
 }
 
 void Map::recursivelyFill(MapPoint p)
 {
 	map.at(p).type = eOutside;
-	MapPoint dirs[] = { MapPoint(-1,0) ,MapPoint(1,0) ,MapPoint(0,-1) ,MapPoint(0,1) };
+	MapPoint dirs[] = { MapPoint(-1,0), MapPoint(1,0), MapPoint(0,-1), MapPoint(0,1) };
 	for (int i = 0; i < 4; i++) {
 		MapPoint nextPoint = p + dirs[i];
 		if (map.inBounds(nextPoint)) if (map.at(nextPoint).type == eFree) recursivelyFill(nextPoint);
@@ -209,14 +196,14 @@ bool Map::isDiscoverable(MapPoint p)
 	return (t != eObstacle && t != eOutside);
 }
 
-void Map::calculateBrushfire(int layers)
+void Map::calculateBrushfire()
 {
 	std::unordered_set<MapNode*> nodesToCheck;
 	for (int i = 0; i < map.cols() * map.rows(); i++) {
 		MapPoint p = getPointFromIndex(i);
 		MapNode* n = &map.at(p, false);
 		if (n->type == eObstacle) {
-			n->wallDistance = 1;
+			n->wallDistance = 0;
 			for (int i = 0; i < 8; i++) {
 				MapPoint _p = p + dirs[i];
 				if (map.inBounds(_p)) {
@@ -226,16 +213,16 @@ void Map::calculateBrushfire(int layers)
 			}
 		}
 	}
-	while (!nodesToCheck.empty() && layers-- != 0) {
+	while (!nodesToCheck.empty()) {
 		std::unordered_set<MapNode*> tempSet;
 		for (auto i = nodesToCheck.begin(); i != nodesToCheck.end();) {
-			(*i)->wallDistance = getMinNeighbor((*i)->position) + 1;
+			(*i)->wallDistance = getMinNeighbor((*i)->position) + scale;
 			if (maxDist < (*i)->wallDistance) maxDist = (*i)->wallDistance;
 			for (int j = 0; j < 8; j++) {
 				MapPoint p = (*i)->position + dirs[j];
 				MapNode* n = &map.at(p, false);
 				if (n->type == eFree && 
-					(n->wallDistance > (*i)->wallDistance + 1 || n->wallDistance == 0) &&
+					(n->wallDistance > (*i)->wallDistance + scale || n->wallDistance == -1) &&
 					(nodesToCheck.find(n) == nodesToCheck.end())) 
 					tempSet.insert(n);
 			}
@@ -246,12 +233,12 @@ void Map::calculateBrushfire(int layers)
 	}
 }
 
-int Map::getMinNeighbor(MapPoint p)
+double Map::getMinNeighbor(MapPoint p)
 {
-	int minVal = INT_MAX;
+	double minVal = INT_MAX;
 	for (int i = 0; i < 8; i++) {
-		if (!map.inBounds(p + dirs[i])) return 1;
-		if (!isDiscoverable(p + dirs[i])) return 1;
+		if (!map.inBounds(p + dirs[i])) return scale / 2.0;
+		if (!isDiscoverable(p + dirs[i])) return scale / 2.0;
 		if (map.at(p + dirs[i], false).wallDistance > 0) minVal = MIN(map.at(p + dirs[i]).wallDistance, minVal);
 	}
 	return minVal;
@@ -295,7 +282,7 @@ std::vector<MapPoint> Map::getVertices()
 	return _vertices;
 }
 
-std::vector<Map::Edge> Map::getEdges()
+std::vector<Edge> Map::getEdges()
 {
 	if (edges.size() != 0) return edges;
 	std::vector<Edge> _edges;
@@ -303,30 +290,30 @@ std::vector<Map::Edge> Map::getEdges()
 	nodeType edgeTest[] = { eObstacle, eFree, eFree, eFree, eObstacle };
 	for (int i = 0; i < vertices.size(); i++) {
 		for (int j = i + 1; j < vertices.size(); j++) {
-			std::vector<MapPoint> line = getLine(vertices[i], vertices[j]);
+			Edge edge(vertices[i], vertices[j]);
+			std::vector<MapPoint> line = edge.getPoints();
 			line.erase(line.begin());
 			line.erase(line.end() - 1);
 			bool isEdge = true;
 			for (MapPoint p : line) {
 				isEdge &= map.at(p, false).type == eObstacle;
 			}
-			if (isEdge) _edges.push_back(Edge{ vertices[i], vertices[j] });
+			if (isEdge) _edges.push_back(edge);
 		}
 	}
 	edges = _edges;
 	return _edges;
 }
 
-std::vector<MapPoint> Map::getPath(MapPoint A, MapPoint B, unsigned int padding)
+std::vector<MapPoint> Map::getPath(MapPoint A, MapPoint B, double padding)
 {
 	if (!isDiscoverable(A) || !isDiscoverable(B)) throw "ASTAR - Points inside wall.";
 	if (!map.inBounds(A) || !map.inBounds(B)) throw "ASTAR - Points out of bounds.";
 
 	//A and B are swapped to create the path vector easily.
-	if (calculatedLayers < padding) calculateBrushfire(padding);
 	std::vector<MapPoint> path;
 
-
+	// Preprocessing
 	for (int i = 0; i < map.cols() * map.rows(); i++) {
 		MapPoint p = getPointFromIndex(i);
 		MapNode* n = &map.at(p);
@@ -334,8 +321,9 @@ std::vector<MapPoint> Map::getPath(MapPoint A, MapPoint B, unsigned int padding)
 		n->asF = n->asG = INT_MAX;
 		n->asParent = NULL;
 		n->asSeen = n->asVisited = false;
-		
 	}
+
+	// Setup for algorithm
 	std::priority_queue<MapNode*, std::vector<MapNode*>, GreaterH> queue;
 	bool pathFound = false;
 
@@ -378,11 +366,29 @@ std::vector<MapPoint> Map::getPath(MapPoint A, MapPoint B, unsigned int padding)
 		}
 	}
 
+	// Extracting path
 	MapNode* nextNode = &map.at(A);
 	while (nextNode != NULL) {
 		path.push_back(nextNode->position);
 		nextNode = nextNode->asParent;
 	}
 
+	return path;
+}
+
+std::vector<MapPoint> Map::simplifyPath(std::vector<MapPoint> path)
+{
+	bool changedPath;
+	do {
+		changedPath = false;
+		int i = 0;
+		while (i < path.size() - 2 && !changedPath) {
+			if (path[i + 1] + (path[i + 1] - path[i]).normalized() == path[i + 2]) {
+				changedPath = true;
+				path.erase(path.begin() + i + 1);
+			}
+			i++;
+		}
+	} while (changedPath);
 	return path;
 }

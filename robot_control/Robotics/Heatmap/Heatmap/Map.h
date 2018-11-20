@@ -2,6 +2,7 @@
 
 #include "Grid.h"
 #include "Point.h"
+#include "Edge.h"
 
 #include <opencv2/opencv.hpp>
 
@@ -10,6 +11,9 @@
 
 #define BLEND_COLOR(a,b,alpha) (a * (1 - alpha) + b * alpha)
 #define GET_DISTANCE(a,b) (sqrt((a.x() - b.x())*(a.x() - b.x()) + sqrt((a.y() - b.y())*(a.y() - b.y()))))
+
+#define ROBOT_WIDTH 0.5
+#define BALL_WIDTH 1
 
 typedef Point<GridCoordinateType> MapPoint;
 
@@ -46,10 +50,9 @@ public:
 	Map(double fov, double viewDistance);
 	~Map();
 
-	void loadImage(cv::Mat img);
+	void loadImage(cv::Mat img, int upscaling = 1);
 	cv::Mat drawMap(drawType type, bool draw = true, drawArguments args = drawArguments());
 	std::vector<MapPoint> getPoints();
-	std::vector<MapPoint> getPath(MapPoint A, MapPoint B, unsigned int padding);
 
 	struct GreaterH {
 		constexpr bool operator()(MapNode* A, MapNode* B){
@@ -57,18 +60,9 @@ public:
 		}
 	};
 
-	struct Edge {
-		MapPoint A, B;
-	};
-
 private:
-	double fov, viewDistance;
-	int maxDist = 0;
-	int calculatedLayers = 0;
-	int lastArea = -1;
+	double fov, viewDistance, scale = 1;
 	std::vector<MapPoint> points;
-	std::vector<MapPoint> vertices;
-	std::vector<Edge> edges;
 
 	MapPoint dirs[8] = { 
 		MapPoint(-1,0), 
@@ -80,17 +74,32 @@ private:
 		MapPoint(0,1), 
 		MapPoint(-1,1) };
 
-	std::vector<MapPoint> getLine(MapPoint a, MapPoint b);
-	void placePoint(MapPoint p);
-	bool hasLineOfSight(MapPoint a, MapPoint b);
+	//  -- UTILITY --
+	bool hasLineOfSight(MapPoint a, MapPoint b, double wallDistanceThreshold = 0);
 	void recursivelyFill(MapPoint p);
 	bool isDiscoverable(MapPoint p);
-	void calculateBrushfire(int layers = -1);
-	int getMinNeighbor(MapPoint p);
-	Box getLargestBox();
 	MapPoint getPointFromIndex(unsigned int i, unsigned int w = 0);
+
+	//  -- HEATMAP --
+	void placePoint(MapPoint p);
+
+	//  -- GEOMETRY --
+	std::vector<MapPoint> vertices;
+	std::vector<Edge> edges;
+
 	std::vector<MapPoint> getVertices();
 	std::vector<Edge> getEdges();
+
+	//  -- BRUSHFIRE --
+	double maxDist = 0;
+
+	void calculateBrushfire();
+	double getMinNeighbor(MapPoint p);
+
+	// -- PATH PLANNING --
+	std::vector<MapPoint> getPath(MapPoint A, MapPoint B, double padding = ROBOT_WIDTH);
+	std::vector<MapPoint> simplifyPath(std::vector<MapPoint> path);
+
 
 	cv::Vec3b vObstacle = cv::Vec3b(0, 0, 0);
 	cv::Vec3b vFree = cv::Vec3b(255, 255, 255);
@@ -107,7 +116,7 @@ private:
 		MapPoint position;
 
 		//Room Values
-		int wallDistance = 0;
+		double wallDistance = -1;
 
 		//Heatmap Values
 		double hmDistance = -1;
