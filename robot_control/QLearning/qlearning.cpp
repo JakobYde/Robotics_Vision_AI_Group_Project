@@ -137,7 +137,7 @@ void QLearning::clear(){
 float QLearning::getAvgReward(){
     float sum = 0.0;
     for(float r : rewardHistroic) sum += r;
-    return sum/rewardHistroic.size();
+    return sum/float(rewardHistroic.size());
 }
 void QLearning::clearRewardHistroic(){
     rewardHistroic.clear();
@@ -215,7 +215,7 @@ float QLearning::getReward(state* newstate) //should return reward of given stat
     bool stateVisiset = visest.at(stateIndex);
 
     if(not stateVisiset) return runNormal_distribution(newstate->mean,newstate->stddev);
-    return 0.0;
+    return -0.5;
 }
 
 QLearning::state QLearning::getCurrentStarte(){

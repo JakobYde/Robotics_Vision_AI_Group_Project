@@ -419,7 +419,7 @@ std::string getProcessbar(int n, int maxn, int len = 10){
 
     for(int i = 0; i < barNumber; i++) bar += '#';
 
-    if(barNumber+1 < len) bar += rn[c++%8];
+    if(barNumber < len) bar += rn[c++%8];
 
     for(int i = barNumber+1; i < len; i++) bar += ' ';
     bar += "]";
@@ -460,13 +460,12 @@ data testQ(QLearning &q, int epsiodes = 2000, int maxStepsInEpsiode = 20, int av
         ydata.push_back(std::vector<float>());
 
         for(int i = 0; i < epsiodes; i++){
-            q.setState("S0");//getRandomState(q)
+            q.setState("S0");//getRandomState(q) //"S0"
 
             if(print) printf("\033c");
             if(print) std::cout << preSet << "Epsiode " << i+1 << "/" << epsiodes << " --- " << getProcessbar(i, epsiodes, 30);
 
             if(k==0) dataset.xdata.push_back(i);
-
 
             int step = 0;
 
@@ -474,7 +473,9 @@ data testQ(QLearning &q, int epsiodes = 2000, int maxStepsInEpsiode = 20, int av
                 q.simulateActionReward();
                 step++;
             }
-            ydata.at(k).push_back(q.getAvgReward());
+            float avgR = q.getAvgReward();
+            //std::cout << avgR << std::endl;
+            ydata.at(k).push_back(avgR);
             q.clearRewardHistroic();
         }
     }
@@ -512,30 +513,30 @@ void worker(workerParameter wp){
         wp.mux_dataqueue->lock();
         wp.dataqueue->push(testdata);
         wp.mux_dataqueue->unlock();
-        boost::this_thread::sleep( boost::posix_time::microseconds(10) );
+        boost::this_thread::sleep( boost::posix_time::microseconds(10));
     }
 }
 
 int main()
 {
-    const int thredsN = 5;
+    const int thredsN = 1;
 
     qTestPra gound;
     gound.epsiodes = 2000;
     gound.maxStepsInEpsiode = 20;
-    gound.avgOver = 10;
+    gound.avgOver = 100;
     gound.mvAvgAlfa = 0.01;
 
     gound.filename = "../QLearning/stats.txt";
     gound.startState = "S0";
-    gound.discount_rate = 0.9;
-    gound.stepSize = 0.1;
+    gound.discount_rate = 0.75;
+    gound.stepSize = 0.2;
     gound.greedy = 0.05;
-    gound.qInitValue = 1;
+    gound.qInitValue = 0;
 
     JSONPlot j("Q-learning. Discount_rate: "+fts(gound.discount_rate,3) +", stepSize: "+fts(gound.stepSize,3)+", greedy: test"/*+fts(gound.greedy,3)*/+", qInitValue: "+fts(gound.qInitValue,3) , "Steps", "movingAvg reward (alfa = 0.01)");
 
-    std::vector<float> testVar= {0.0, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+    std::vector<float> testVar= {0.5};
     //for(float var = 0.0; var <= 1.0; var+=0.05) testVar.push_back(var);
 
 
@@ -564,7 +565,7 @@ int main()
         printf("\033c");
         std::cout << "Running test: " << getProcessbar(dataqueue.size(),testVar.size(),testVar.size()) << std::endl;
 
-        boost::this_thread::sleep( boost::posix_time::seconds(0.5) );
+        boost::this_thread::sleep( boost::posix_time::seconds(1) );
 
     }
 
