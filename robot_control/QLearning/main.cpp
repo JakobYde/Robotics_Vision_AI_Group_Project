@@ -33,14 +33,17 @@
 static boost::mutex mutex;
 LaserScanner controllerScan;
 
-struct Possison{
+struct Position
+{
     float x;
     float y;
-    Possison() {
+    Position()
+    {
          x = 0.0;
          y = 0.0;
     }
-    Possison(float xIn,float yIn) {
+    Position(float xIn,float yIn)
+    {
          x = xIn;
          y = yIn;
     }
@@ -55,7 +58,7 @@ void statCallback(ConstWorldStatisticsPtr &_msg) {
 }
 
 std::ofstream *myfile;
-Possison robotPos[2];
+Position robotPos[2];
 
 std::vector<float> robot_xvalues;
 std::vector<float> robot_yvalues;
@@ -104,6 +107,9 @@ void cameraCallback(ConstImageStampedPtr &msg) {
   mutex.unlock();
 }
 
+
+
+//Values that define the three different cone sections of the robots lidar scanner. Notice that the robot has roughly 270 degrees of "vision" and the center cone only makes up a tenth of that.
 float angle_min = -2.26889;
 float angle_max = 2.2689;
 float angle_step = 0.0228029648241206;
@@ -171,30 +177,33 @@ void lidarCallbackImg(ConstLaserScanStampedPtr &msg) {
   mutex.unlock();
 }
 
-float calDist(Possison pos1, Possison pos2){
+
+
+// A list of functions that determines relationship between two positions on the map. Used in combination with fuzzycontrol to steer toward a specific point in a straight line.
+float calDist(Position pos1, Position pos2){
     float xDif = pos2.x - pos1.x;
     float yDif = pos2.y - pos1.y;
     return std::sqrt((std::pow(xDif, 2))+std::pow(yDif, 2));
 }
 
-float calDotVec(Possison vec1, Possison vec2){
+float calDotVec(Position vec1, Position vec2){
     return vec1.x*vec2.x+vec1.y*vec2.y;
 }
 
-float calCrossVec(Possison vec1, Possison vec2){
+float calCrossVec(Position vec1, Position vec2){
     return vec1.x*vec2.y-vec1.y*vec2.x;
 }
 
-float angleVec(Possison vec1, Possison vec2){
+float angleVec(Position vec1, Position vec2){
     return std::atan2(calCrossVec(vec1,vec2),calDotVec(vec1,vec2));
 }
 
-float calAngleError(Possison *posHist, Possison goal){
-    Possison headingVector;
+float calAngleError(Position *posHist, Position goal){
+    Position headingVector;
     headingVector.x = posHist[0].x - posHist[1].x;
     headingVector.y = posHist[0].y - posHist[1].y;
 
-    Possison goalVector;
+    Position goalVector;
     goalVector.x = goal.x - posHist[1].x;
     goalVector.y = goal.y - posHist[1].y;
 
@@ -202,28 +211,32 @@ float calAngleError(Possison *posHist, Possison goal){
 }
 
 
-struct pointManger{
-    std::vector<Possison> poss;
+struct pointManager{
+    std::vector<Position> poss;
     unsigned int index;
 };
 
+
+//Function that updates the current goal position of the robot based on a vector of positions. When the robot is close enough to a goal that the distance is smaller than mindist it will update the goal position with the
+//next position in the list. When it reaches either end of the list it repeats the list in reverse order.
 bool getPointI = true;
-Possison getpoint(pointManger &pm, Possison pos, float mindist){
-    Possison goal = pm.poss.at(pm.index);
+Position getpoint(pointManager &pm, Position pos, float mindist){
+    Position goal = pm.poss.at(pm.index);
 
     float dist = calDist(goal,pos);
-    if(dist<=mindist){
+    if(dist<=mindist)
+    {
         if(getPointI) pm.index++;
         else pm.index--;
 
         if(pm.index==pm.poss.size()-1) getPointI=false;
         else if (pm.index==0) getPointI=true;
     }
-    Possison newGoal = pm.poss.at(pm.index);
+    Position newGoal = pm.poss.at(pm.index);
     return newGoal;
 }
 
-bool atState(Possison goal, Possison pos, float mindist){
+bool atState(Position goal, Position pos, float mindist){
     float dist = calDist(goal,pos);
     if(dist<=mindist) return true;
     return false;
@@ -286,7 +299,7 @@ int main(int _argc, char **_argv) {
     QLearning q("../QLearning/stats.txt","S0",0.7,0.4,0.0,0.0, true);
     QLearning::state* currentstate = q.getNewState();
     q.print_stats();
-    Possison goal = Possison(currentstate->x,currentstate->y);
+    Position goal = Position(currentstate->x,currentstate->y);
 
     ControlOutput controllerOut;
 
@@ -314,7 +327,7 @@ int main(int _argc, char **_argv) {
 
                 currentstate = q.getNewState();
 
-                goal = Possison(currentstate->x,currentstate->y);
+                goal = Position(currentstate->x,currentstate->y);
                 statemc = onTheWay;
                 q.print_stats();
 
@@ -357,6 +370,8 @@ std::string getRandomState(QLearning & q){
     return stats.at(rand()%stats.size());
 }
 
+
+//Gives average of elements between vectors. Used to estimate the reward of an episode after learning in a given amount of episodes
 std::vector<float> getAvg(std::vector <std::vector<float>> vec, int axle = 0) {
     std::vector<float> sum;
     if (axle == 0){
@@ -429,6 +444,7 @@ std::string getProcessbar(int n, int maxn, int len = 10){
     return bar;
 }
 
+//initialization data for QLearning
 struct qTestPra
 {
     qTestPra() {}
@@ -451,7 +467,7 @@ struct data{
     qTestPra prameters;
 };
 
-
+//Central function that runs the learning iterations. Given a configuration it uses QLearning on the model, and saves the result.
 data testQ(QLearning &q, int epsiodes = 2000, int maxStepsInEpsiode = 20, int avgOver = 10, float mvAvgAlfa = 0.01, bool print = false, std::string preSet = ""){
     data dataset;
     std::vector<std::vector<float>> ydata;
@@ -469,7 +485,7 @@ data testQ(QLearning &q, int epsiodes = 2000, int maxStepsInEpsiode = 20, int av
 
             int step = 0;
 
-            while(not q.allVisest() and step < maxStepsInEpsiode){
+            while(not q.allVisits() and step < maxStepsInEpsiode){
                 q.simulateActionReward();
                 step++;
             }
@@ -484,6 +500,8 @@ data testQ(QLearning &q, int epsiodes = 2000, int maxStepsInEpsiode = 20, int av
     return dataset;
 }
 
+
+//Too shorten learning time multiple threads are used. Critical parts of the code are protected with mutex locks.
 struct workerParameter
 {
     workerParameter() {}

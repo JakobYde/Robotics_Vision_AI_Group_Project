@@ -24,7 +24,7 @@ QLearning::QLearning(std::string filename, std::string startState, float discoun
             states.at(i).push_back(state());
         }
         stateNameIndex[stringvecsFromFile.at(i).at(STATE_NAME_INDEX).front()] = i;
-        visest.push_back(false);
+        visits.push_back(false);
     }
 
     for(std::vector<std::vector<std::string>> stateLine : stringvecsFromFile){
@@ -79,10 +79,10 @@ std::string QLearning::toBits(unsigned int n) {
 
 void QLearning::print_stats(){
     std::cout << "[ ";
-    for(unsigned int g = 0; g < visest.size()-1; g++){
-        std::cout << states.at(g).at(0).name << " = " << visest.at(g) << ", ";
+    for(unsigned int g = 0; g < visits.size()-1; g++){
+        std::cout << states.at(g).at(0).name << " = " << visits.at(g) << ", ";
     }
-    std::cout << states.back().at(0).name << " = " << visest.back() << " ]";
+    std::cout << states.back().at(0).name << " = " << visits.back() << " ]";
     for(unsigned int i = 0; i < states.size(); i++){
         std::cout << states.at(i).at(0).name << " | " << "(" << states.at(i).at(0).x << ", " << states.at(i).at(0).y << ") | " << "mean:" << states.at(i).at(0).mean << ", stdDiv:" << states.at(i).at(0).stddev << std::endl;
         for(unsigned int j = 0; j < states.at(i).size(); j++){
@@ -102,7 +102,7 @@ void QLearning::print_stats(){
 
 void QLearning::setState(std::string state){
     currentStateIndex = stateNameIndex[state];
-    for(unsigned int i = 0; i < visest.size(); i++) visest.at(i) = false;
+    for(unsigned int i = 0; i < visits.size(); i++) visits.at(i) = false;
 }
 std::vector<std::string> QLearning::getStats(){
     std::vector<std::string> st;
@@ -110,13 +110,13 @@ std::vector<std::string> QLearning::getStats(){
     return st;
 }
 
-std::vector<bool> QLearning::getVisest(){
-    return visest;
+std::vector<bool> QLearning::getVisits(){
+    return visits;
 }
 
 
-bool QLearning::allVisest(){
-    for(bool vi : visest) if(not vi) return false;
+bool QLearning::allVisits(){
+    for(bool vi : visits) if(not vi) return false;
     return true;
 }
 
@@ -212,28 +212,28 @@ float QLearning::runNormal_distribution(float neam, float stddev){
 float QLearning::getReward(state* newstate) //should return reward of given state but return reward simulated by runNormal_distribution
 {
     int stateIndex = stateNameIndex[newstate->name];
-    bool stateVisiset = visest.at(stateIndex);
+    bool stateVisiset = visits.at(stateIndex);
 
     if(not stateVisiset) return runNormal_distribution(newstate->mean,newstate->stddev);
     return -0.5;
 }
 
 QLearning::state QLearning::getCurrentStarte(){
-    if(debug) std::cout << "currentStateIndex: " << currentStateIndex << " calIndex(visest): " << calIndex(visest) << " State name is: " << states.at(currentStateIndex).at(calIndex(visest)).name << std::endl;
-    return states.at(currentStateIndex).at(calIndex(visest));
+    if(debug) std::cout << "currentStateIndex: " << currentStateIndex << " calIndex(visits): " << calIndex(visits) << " State name is: " << states.at(currentStateIndex).at(calIndex(visits)).name << std::endl;
+    return states.at(currentStateIndex).at(calIndex(visits));
 }
 
 int QLearning::getRandomactionIndex(){
-    return rand()%states.at(currentStateIndex).at(calIndex(visest)).actionStates.size();
+    return rand()%states.at(currentStateIndex).at(calIndex(visits)).actionStates.size();
 }
 
 int QLearning::getMaxactionIndex(){
     int index = 0;
-    float max_q = states.at(currentStateIndex).at(calIndex(visest)).qValues.at(0);
-    for(unsigned int i = 1; i < states.at(currentStateIndex).at(calIndex(visest)).qValues.size(); i++){
-        if(states.at(currentStateIndex).at(calIndex(visest)).qValues.at(i) > max_q){
+    float max_q = states.at(currentStateIndex).at(calIndex(visits)).qValues.at(0);
+    for(unsigned int i = 1; i < states.at(currentStateIndex).at(calIndex(visits)).qValues.size(); i++){
+        if(states.at(currentStateIndex).at(calIndex(visits)).qValues.at(i) > max_q){
             index = i;
-            max_q = states.at(currentStateIndex).at(calIndex(visest)).qValues.at(i);
+            max_q = states.at(currentStateIndex).at(calIndex(visits)).qValues.at(i);
         }
     }
     return index;
@@ -251,35 +251,35 @@ int QLearning::policy(){
     else{
         if(debug) std::cout << "QDEBUG :::: Taking random action.";
         actionIndex = getRandomactionIndex();
-        while (states.at(currentStateIndex).at(calIndex(visest)).actionStates.size() > 1 and actionIndex == actionIndexMax) {
+        while (states.at(currentStateIndex).at(calIndex(visits)).actionStates.size() > 1 and actionIndex == actionIndexMax) {
            actionIndex = getRandomactionIndex();
         }
     }
-    if(debug) std::cout << " Greedy is: " << greedy << " Chanse was: " << chance << ". From state: " << states.at(currentStateIndex).at(calIndex(visest)).name << " to state: " << states.at(currentStateIndex).at(calIndex(visest)).actionStates.at(actionIndex)->name << std::endl;
+    if(debug) std::cout << " Greedy is: " << greedy << " Chanse was: " << chance << ". From state: " << states.at(currentStateIndex).at(calIndex(visits)).name << " to state: " << states.at(currentStateIndex).at(calIndex(visits)).actionStates.at(actionIndex)->name << std::endl;
     return actionIndex;
 }
 
 //Choose A from S using policy derived from Q (e.g., e-ereedy
 QLearning::state* QLearning::getNewState(){
     nextStateActionIndex = policy();
-    return states.at(currentStateIndex).at(calIndex(visest)).actionStates.at(nextStateActionIndex);
+    return states.at(currentStateIndex).at(calIndex(visits)).actionStates.at(nextStateActionIndex);
 }
 
 //Take action A, observe R, S'
 void QLearning::giveReward(float r){
     rewardHistroic.push_back(r);
 
-    std::vector<bool> visests = visest;
-    visests.at(currentStateIndex) = true;
+    std::vector<bool> temp_visits = visits;
+    visits.at(currentStateIndex) = true;
 
-    state* newState = states.at(currentStateIndex).at(calIndex(visests)).actionStates.at(nextStateActionIndex);
+    state* newState = states.at(currentStateIndex).at(calIndex(temp_visits)).actionStates.at(nextStateActionIndex);
 
-    float qNow = states.at(currentStateIndex).at(calIndex(visest)).qValues.at(nextStateActionIndex);
+    float qNow = states.at(currentStateIndex).at(calIndex(temp_visits)).qValues.at(nextStateActionIndex);
     float maxQ = getMaxQ(newState);
-    states.at(currentStateIndex).at(calIndex(visest)).qValues.at(nextStateActionIndex) = qNow + stepSize*(r + discount_rate*maxQ - qNow);
+    states.at(currentStateIndex).at(calIndex(temp_visits)).qValues.at(nextStateActionIndex) = qNow + stepSize*(r + discount_rate*maxQ - qNow);
 
     currentStateIndex = stateNameIndex[newState->name];
-    visest = visests;
+    visits = temp_visits;
 }
 
 void QLearning::simulateActionReward(){
@@ -314,8 +314,8 @@ void QLearning::wirteJSON(std::string filename){
     j.write(filename);
 }
 
-unsigned long long int QLearning::calIndex(std::vector<bool> visests){
+unsigned long long int QLearning::calIndex(std::vector<bool> visits){
     unsigned long long int index = 0;
-    for(unsigned int i = 0; i < visests.size(); i++) if(visests.at(i)) index += std::pow(2,i);
+    for(unsigned int i = 0; i < visits.size(); i++) if(visits.at(i)) index += std::pow(2,i);
     return index;
 }

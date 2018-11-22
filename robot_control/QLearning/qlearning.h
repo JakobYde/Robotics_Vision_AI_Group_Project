@@ -49,8 +49,8 @@ public:
     void print_stats();
     void setState(std::string state);
     std::vector<std::string> getStats();
-    std::vector<bool> getVisest();
-    bool allVisest();
+    std::vector<bool> getVisits();
+    bool allVisits();
     void simulateActionReward();
     void wirteJSON(std::string filename);
     float runNormal_distribution(float neam, float stddev);
@@ -90,9 +90,9 @@ protected:
     std::string startState;
     unsigned int nextStateActionIndex;
     unsigned int currentStateIndex;
-    unsigned long long int calIndex(std::vector<bool> visests);
+    unsigned long long int calIndex(std::vector<bool> visits);
 
-    std::vector<bool> visest;
+    std::vector<bool> visits;
 
 };
 
