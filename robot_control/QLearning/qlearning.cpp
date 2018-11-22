@@ -18,9 +18,12 @@ QLearning::QLearning(std::string filename, std::string startState, float discoun
         std::exit(1);
     }
 
-    for(unsigned int i = 0; i < stringvecsFromFile.size(); i++){
+    //extracts states from the file stats.tex and puts them into a vector of vectors of states .
+    for(unsigned int i = 0; i < stringvecsFromFile.size(); i++)
+    {
         states.push_back(std::vector<state>());
-        for(int j = 0; j < std::pow(2,stringvecsFromFile.size()); j++){
+        for(int j = 0; j < std::pow(2,stringvecsFromFile.size()); j++)
+        {
             states.at(i).push_back(state());
         }
         stateNameIndex[stringvecsFromFile.at(i).at(STATE_NAME_INDEX).front()] = i;
@@ -31,16 +34,13 @@ QLearning::QLearning(std::string filename, std::string startState, float discoun
         state newstate;
 
         std::string stateName = stateLine.at(STATE_NAME_INDEX).front();
-        newstate.name = stateName;
-
-
         float x = std::stof(stateLine.at(STATE_X_INDEX).front());
-        newstate.x = x;
         float y = std::stof(stateLine.at(STATE_Y_INDEX).front());
-        newstate.y = y;
-
         float mean = std::stof(stateLine.at(STATE_MEAN_INDEX).front());
         float stddev = std::stof(stateLine.at(STATE_STDDIV_INDEX).front());
+        newstate.name = stateName;
+        newstate.x = x;
+        newstate.y = y;
         newstate.mean = mean;
         newstate.stddev = stddev;
 
@@ -58,7 +58,7 @@ QLearning::QLearning(std::string filename, std::string startState, float discoun
             for(std::string connName : stringvecsFromFile.at(i).at(STATE_CONN_INDEX)){
                 unsigned int connBaseIndex = stateNameIndex[connName];
                 state * connState = &states.at(connBaseIndex).at(j);
-                states.at(i).at(j).actionStates.push_back(connState);
+                states.at(i).at(j).actionStates.push_back(connState);  //This is where we push back the different actions that each state has available.
                 states.at(i).at(j).qValues.push_back(qInitValue);
             }
         }
