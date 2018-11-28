@@ -539,20 +539,20 @@ int main()
 {
     const int thredsN = 1;
 
-    qTestPra gound;
-    gound.epsiodes = 2000;
-    gound.maxStepsInEpsiode = 20;
-    gound.avgOver = 100;
-    gound.mvAvgAlfa = 0.01;
+    qTestPra ground;
+    ground.epsiodes = 2000;
+    ground.maxStepsInEpsiode = 20;
+    ground.avgOver = 100;
+    ground.mvAvgAlfa = 0.01;
 
-    gound.filename = "../QLearning/stats.txt";
-    gound.startState = "S0";
-    gound.discount_rate = 0.75;
-    gound.stepSize = 0.2;
-    gound.greedy = 0.05;
-    gound.qInitValue = 0;
+    ground.filename = "../QLearning/stats.txt";
+    ground.startState = "S0";
+    ground.discount_rate = 0.75;
+    ground.stepSize = 0.2;
+    ground.greedy = 0.05;
+    ground.qInitValue = 0;
 
-    JSONPlot j("Q-learning. Discount_rate: "+fts(gound.discount_rate,3) +", stepSize: "+fts(gound.stepSize,3)+", greedy: test"/*+fts(gound.greedy,3)*/+", qInitValue: "+fts(gound.qInitValue,3) , "Steps", "movingAvg reward (alfa = 0.01)");
+    JSONPlot j("Q-learning. Discount_rate: "+fts(ground.discount_rate,3) +", stepSize: "+fts(ground.stepSize,3)+", greedy: test"/*+fts(ground.greedy,3)*/+", qInitValue: "+fts(ground.qInitValue,3) , "Steps", "movingAvg reward (alfa = 0.01)");
 
     std::vector<float> testVar= {0.5};
     //for(float var = 0.0; var <= 1.0; var+=0.05) testVar.push_back(var);
@@ -564,7 +564,7 @@ int main()
     std::mutex mux_qqueue;
 
     for(unsigned int i = 0; i < testVar.size(); i++){
-        qTestPra test = gound;
+        qTestPra test = ground;
         test.greedy = testVar.at(i);
 
         qqueue.push(test);

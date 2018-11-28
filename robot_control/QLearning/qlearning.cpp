@@ -13,12 +13,13 @@ QLearning::QLearning(std::string filename, std::string startState, float discoun
 
     std::vector<std::vector<std::vector<std::string>>> stringvecsFromFile = stringFromFile(filename);
 
-    if(stringvecsFromFile.size() > sizeof(unsigned long long int)*8){
+    if(stringvecsFromFile.size() > sizeof(unsigned long long int)*8)
+    {
         std::cout << "ERROR :::: To many states. Max number of stats is: " << sizeof(unsigned long long int)*8 << std::endl;
         std::exit(1);
     }
 
-    //extracts states from the file stats.tex and puts them into a vector of vectors of states .
+    //extracts states from the file stats.tex and puts them into a vector of vectors of states. Visits is initialized as false
     for(unsigned int i = 0; i < stringvecsFromFile.size(); i++)
     {
         states.push_back(std::vector<state>());
@@ -30,7 +31,8 @@ QLearning::QLearning(std::string filename, std::string startState, float discoun
         visits.push_back(false);
     }
 
-    for(std::vector<std::vector<std::string>> stateLine : stringvecsFromFile){
+    for(std::vector<std::vector<std::string>> stateLine : stringvecsFromFile)
+    {
         state newstate;
 
         std::string stateName = stateLine.at(STATE_NAME_INDEX).front();
@@ -52,10 +54,12 @@ QLearning::QLearning(std::string filename, std::string startState, float discoun
         std::string stateName = stringvecsFromFile.at(i).at(STATE_NAME_INDEX).front();
         if(debug) std::cout << "\t state name: " << stateName << " and i is: " << i << " nameToIndexMap is: " << stateNameIndex[stateName] <<  std::endl;
 
-        for(unsigned int j = 0; j < std::pow(2,stringvecsFromFile.size()); j++){
+        for(unsigned int j = 0; j < std::pow(2,stringvecsFromFile.size()); j++)
+        {
             states.at(i).at(j) = statesTemp.at(stateNameIndex[stateName]);
 
-            for(std::string connName : stringvecsFromFile.at(i).at(STATE_CONN_INDEX)){
+            for(std::string connName : stringvecsFromFile.at(i).at(STATE_CONN_INDEX))
+            {
                 unsigned int connBaseIndex = stateNameIndex[connName];
                 state * connState = &states.at(connBaseIndex).at(j);
                 states.at(i).at(j).actionStates.push_back(connState);  //This is where we push back the different actions that each state has available.
@@ -100,7 +104,8 @@ void QLearning::print_stats(){
     }
 }
 
-void QLearning::setState(std::string state){
+void QLearning::setState(std::string state)
+{
     currentStateIndex = stateNameIndex[state];
     for(unsigned int i = 0; i < visits.size(); i++) visits.at(i) = false;
 }
@@ -120,7 +125,8 @@ bool QLearning::allVisits(){
     return true;
 }
 
-void QLearning::clear(std::string state){
+void QLearning::clear(std::string state)
+{
     for(unsigned int i = 0; i < states.size(); i++){
         for(unsigned int j = 0; j < states.at(i).size(); j++){
             for(unsigned int k = 0; k < states.at(i).at(j).qValues.size(); k++) states.at(i).at(j).qValues.at(k) = ininQValue;
@@ -267,14 +273,14 @@ QLearning::state* QLearning::getNewState(){
 
 //Take action A, observe R, S'
 void QLearning::giveReward(float r){
-    rewardHistroic.push_back(r);
+    rewardHistroic.push_back(r);   //rewardHistroic contains a list of previously given rewards
 
     std::vector<bool> temp_visits = visits;
     visits.at(currentStateIndex) = true;
 
     state* newState = states.at(currentStateIndex).at(calIndex(temp_visits)).actionStates.at(nextStateActionIndex);
 
-    float qNow = states.at(currentStateIndex).at(calIndex(temp_visits)).qValues.at(nextStateActionIndex);
+    float qNow = states.at(currentStateIndex).at(calIndex(visits)).qValues.at(nextStateActionIndex);
     float maxQ = getMaxQ(newState);
     states.at(currentStateIndex).at(calIndex(temp_visits)).qValues.at(nextStateActionIndex) = qNow + stepSize*(r + discount_rate*maxQ - qNow);
 
@@ -314,6 +320,7 @@ void QLearning::wirteJSON(std::string filename){
     j.write(filename);
 }
 
+//converts the visits bitset to an integer value that can be used to access states
 unsigned long long int QLearning::calIndex(std::vector<bool> visits){
     unsigned long long int index = 0;
     for(unsigned int i = 0; i < visits.size(); i++) if(visits.at(i)) index += std::pow(2,i);
