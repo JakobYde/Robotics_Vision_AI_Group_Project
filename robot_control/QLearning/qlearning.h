@@ -93,7 +93,6 @@ protected:
     unsigned long long int calIndex(std::vector<bool> visits);
 
     std::vector<bool> visits;  //the bits indicate whether or not we visitied the state with the corresponding position. false is not visited. true is visited.
-
 };
 
 #endif // QLEARNING_H

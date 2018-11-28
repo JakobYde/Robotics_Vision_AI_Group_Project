@@ -54,7 +54,7 @@ QLearning::QLearning(std::string filename, std::string startState, float discoun
         std::string stateName = stringvecsFromFile.at(i).at(STATE_NAME_INDEX).front();
         if(debug) std::cout << "\t state name: " << stateName << " and i is: " << i << " nameToIndexMap is: " << stateNameIndex[stateName] <<  std::endl;
 
-        for(unsigned int j = 0; j < std::pow(2,stringvecsFromFile.size()); j++)
+        for(unsigned int j = 0; j < std::pow(2,stringvecsFromFile.size()); j++)//Husk der er en fejl her !!!!!!!
         {
             states.at(i).at(j) = statesTemp.at(stateNameIndex[stateName]);
 
@@ -267,25 +267,24 @@ int QLearning::policy(){
 
 //Choose A from S using policy derived from Q (e.g., e-ereedy
 QLearning::state* QLearning::getNewState(){
+    visits.at(currentStateIndex) = true;
+
     nextStateActionIndex = policy();
     return states.at(currentStateIndex).at(calIndex(visits)).actionStates.at(nextStateActionIndex);
 }
 
-//Take action A, observe R, S'
+//Take action A, observe R, S'. Use reward to update q-values for the corresponding action.
 void QLearning::giveReward(float r){
     rewardHistroic.push_back(r);   //rewardHistroic contains a list of previously given rewards
 
-    std::vector<bool> temp_visits = visits;
-    visits.at(currentStateIndex) = true;
+    state* newState = states.at(currentStateIndex).at(calIndex(visits)).actionStates.at(nextStateActionIndex);  // saves the pre-visits updated action_state for current state. the action-states are the states that can be moved to as a result of an action
 
-    state* newState = states.at(currentStateIndex).at(calIndex(temp_visits)).actionStates.at(nextStateActionIndex);
-
-    float qNow = states.at(currentStateIndex).at(calIndex(visits)).qValues.at(nextStateActionIndex);
+    float qNow = states.at(currentStateIndex).at(calIndex(visits)).qValues.at(nextStateActionIndex);  // currently gets the qvalues of actionstate after updating currentstate, that is the
     float maxQ = getMaxQ(newState);
-    states.at(currentStateIndex).at(calIndex(temp_visits)).qValues.at(nextStateActionIndex) = qNow + stepSize*(r + discount_rate*maxQ - qNow);
+    states.at(currentStateIndex).at(calIndex(visits)).qValues.at(nextStateActionIndex) = qNow + stepSize*(r + discount_rate*maxQ - qNow);
 
+    //visits.at(currentStateIndex) = true;
     currentStateIndex = stateNameIndex[newState->name];
-    visits = temp_visits;
 }
 
 void QLearning::simulateActionReward(){
