@@ -46,33 +46,41 @@ QLearning::QLearning(std::string filename, std::string startState, float discoun
         newstate.mean = mean;
         newstate.stddev = stddev;
 
-        statesTemp.push_back(newstate);
+        statesTemp.push_back(newstate);  // all the base states are saved in statesTemp
     }
 
-    if(debug) std::cout << "Compling stats :::::" << std::endl;
+    if(debug) std::cout << "Compiling stats :::::" << std::endl;
     for(unsigned int i = 0; i < stringvecsFromFile.size(); i++){
         std::string stateName = stringvecsFromFile.at(i).at(STATE_NAME_INDEX).front();
         if(debug) std::cout << "\t state name: " << stateName << " and i is: " << i << " nameToIndexMap is: " << stateNameIndex[stateName] <<  std::endl;
 
         for(unsigned int j = 0; j < std::pow(2,stringvecsFromFile.size()); j++)//Husk der er en fejl her !!!!!!!
         {
-            states.at(i).at(j) = statesTemp.at(stateNameIndex[stateName]);
+            states.at(i).at(j) = statesTemp.at(stateNameIndex[stateName]); //Basestates are copied to all substates indexed by j
 
             for(std::string connName : stringvecsFromFile.at(i).at(STATE_CONN_INDEX))
             {
                 unsigned int connBaseIndex = stateNameIndex[connName];
-                state * connState = &states.at(connBaseIndex).at(j);
+                unsigned long long int connectionJ = setBit(j,i);
+                state * connState = &states.at(connBaseIndex).at(connectionJ); //look up functions to integer
+
+
                 states.at(i).at(j).actionStates.push_back(connState);  //This is where we push back the different actions that each state has available.
                 states.at(i).at(j).qValues.push_back(qInitValue);
             }
         }
     }
-
     currentStateIndex = stateNameIndex[startState];
 }
 
+unsigned long long int QLearning::setBit(unsigned long long  int j, unsigned int i){
+    std::bitset<sizeof(unsigned long long int)*8> bit(j);
+    bit[i] = true;
+    return bit.to_ullong();
+}
+
 std::string QLearning::toBits(unsigned int n) {
-    std::bitset<64> bit(n);
+    std::bitset<sizeof(unsigned long long int)*8> bit(n);
     std::string bits = bit.to_string();
     std::string bitstring = "[ ";
     for(unsigned int i = 0; i < states.size(); i++){

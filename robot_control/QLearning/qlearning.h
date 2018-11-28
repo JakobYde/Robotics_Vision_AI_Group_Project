@@ -64,6 +64,7 @@ public:
     state getCurrentStarte();
 
 protected:
+    unsigned long long int setBit(unsigned long long  int j, unsigned int i);
     std::default_random_engine generator;
     std::unordered_map<std::string, int> stateNameIndex;
     std::vector<std::vector<std::vector<std::string>>> stringFromFile(std::string filename);
