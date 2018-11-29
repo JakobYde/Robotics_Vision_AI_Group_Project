@@ -476,7 +476,7 @@ data testQ(QLearning &q, int epsiodes = 2000, int maxStepsInEpsiode = 20, int av
         ydata.push_back(std::vector<float>());
 
         for(int i = 0; i < epsiodes; i++){
-            q.setState("S0");//getRandomState(q) //"S0"
+            q.setState(getRandomState(q));//getRandomState(q) //"S0"
 
             if(print) printf("\033c");
             if(print) std::cout << preSet << "Epsiode " << i+1 << "/" << epsiodes << " --- " << getProcessbar(i, epsiodes, 30);
@@ -537,11 +537,11 @@ void worker(workerParameter wp){
 
 int main()
 {
-    const int thredsN = 1;
+    const int thredsN = 5;
 
     qTestPra ground;
-    ground.epsiodes = 2000;
-    ground.maxStepsInEpsiode = 20;
+    ground.epsiodes = 8000;
+    ground.maxStepsInEpsiode = 10;
     ground.avgOver = 100;
     ground.mvAvgAlfa = 0.01;
 
@@ -550,11 +550,11 @@ int main()
     ground.discount_rate = 0.75;
     ground.stepSize = 0.2;
     ground.greedy = 0.05;
-    ground.qInitValue = 0;
+    ground.qInitValue = 10;
 
     JSONPlot j("Q-learning. Discount_rate: "+fts(ground.discount_rate,3) +", stepSize: "+fts(ground.stepSize,3)+", greedy: test"/*+fts(ground.greedy,3)*/+", qInitValue: "+fts(ground.qInitValue,3) , "Steps", "movingAvg reward (alfa = 0.01)");
 
-    std::vector<float> testVar= {0.5};
+    std::vector<float> testVar= {0.001, 0.005, 0.01, 0.05, 0.2};
     //for(float var = 0.0; var <= 1.0; var+=0.05) testVar.push_back(var);
 
 
@@ -597,7 +597,7 @@ int main()
         data dt = dataqueue.front();
         dataqueue.pop();
 
-        j.addData("Greedy: "+fts(dt.prameters.greedy,2),dt.xdata,dt.ydata);
+        j.addData("Greedy: "+fts(dt.prameters.greedy,5),dt.xdata,dt.ydata);
     }
     j.write();
 

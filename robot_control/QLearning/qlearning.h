@@ -61,10 +61,14 @@ public:
     void clear();
     void clear(std::string startState);
 
-    state getCurrentStarte();
+    state* getCurrentStarte();
 
 protected:
+    state * currentStat;
+    state * preStat;
+
     unsigned long long int setBit(unsigned long long  int j, unsigned int i);
+    unsigned long long int setBit(unsigned long long  int j, unsigned int i, unsigned int g);
     std::default_random_engine generator;
     std::unordered_map<std::string, int> stateNameIndex;
     std::vector<std::vector<std::vector<std::string>>> stringFromFile(std::string filename);
@@ -90,7 +94,7 @@ protected:
     float ininQValue;
     std::string startState;
     unsigned int nextStateActionIndex;
-    unsigned int currentStateIndex;
+    //unsigned int currentStateIndex;
     unsigned long long int calIndex(std::vector<bool> visits);
 
     std::vector<bool> visits;  //the bits indicate whether or not we visitied the state with the corresponding position. false is not visited. true is visited.
