@@ -554,7 +554,7 @@ int main()
 
     JSONPlot j("Q-learning. Discount_rate: "+fts(ground.discount_rate,3) +", stepSize: "+fts(ground.stepSize,3)+", greedy: test"/*+fts(ground.greedy,3)*/+", qInitValue: "+fts(ground.qInitValue,3) , "Steps", "movingAvg reward (alfa = 0.01)");
 
-    std::vector<float> testVar= {0.001, 0.005, 0.01, 0.05, 0.2};
+    std::vector<float> testVar= {0.001, 0.005, 0.01, 0.05, 0.2, 0.8};
     //for(float var = 0.0; var <= 1.0; var+=0.05) testVar.push_back(var);
 
 

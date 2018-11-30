@@ -4,6 +4,7 @@ QLearning::QLearning(std::string filename, std::string startState, float discoun
 {
     std::vector<state> statesTemp;
     srand (time(NULL));
+    generator.seed(time(NULL));
     QLearning::discount_rate = discount_rate;
     QLearning::stepSize = stepSize;
     QLearning::greedy = greedy;
@@ -122,6 +123,7 @@ void QLearning::print_stats(){
 
 void QLearning::setState(std::string state)
 {
+    startState = state;
     currentStat = &states.at(stateNameIndex[state]).at(0);
     //currentStateIndex = stateNameIndex[state];
     for(unsigned int i = 0; i < visits.size(); i++) visits.at(i) = false;
@@ -159,7 +161,7 @@ void QLearning::clear(){
 
 float QLearning::getAvgReward(){
     float sum = 0.0;
-    for(float r : rewardHistroic) sum += r;
+    for(rewardH rh : rewardHistroic) sum += rh.r;
     return sum/float(rewardHistroic.size());
 }
 void QLearning::clearRewardHistroic(){
@@ -250,34 +252,44 @@ int QLearning::getRandomactionIndex(){
     return rand()%currentStat->actionStates.size();
 }
 
-int QLearning::getMaxactionIndex(){
-    int index = 0;
+std::vector<int> QLearning::getMaxactionIndexs(){
+    std::vector<int> indexs;
 
+    indexs.push_back(0);
     float max_q = currentStat->qValues.at(0);
+
     for(unsigned int i = 1; i < currentStat->qValues.size(); i++){
         if(currentStat->qValues.at(i) > max_q){
-            index = i;
             max_q = currentStat->qValues.at(i);
+            indexs.clear();
+            indexs.push_back(i);
         }
+        else if(currentStat->qValues.at(i) == max_q) indexs.push_back(i);
     }
-    return index;
+
+    return indexs;
+}
+
+bool QLearning::inVec(std::vector<int> vec, int a){
+    for(int temp : vec) if(a == temp) return true;
+    else return false;
 }
 
 // e-ereedy
 int QLearning::policy(){
     float chance = (rand()%10001)/10000.0;
     int actionIndex;
-    int actionIndexMax = getMaxactionIndex();
+    std::vector<int> actionIndexMaxs = getMaxactionIndexs();
     if(1-greedy >= chance){
         if(debug) std::cout << "QDEBUG :::: Taking greedy action.";
-        actionIndex = actionIndexMax;
+        actionIndex = actionIndexMaxs.at(rand()%actionIndexMaxs.size());
     }
     else{
         if(debug) std::cout << "QDEBUG :::: Taking random action.";
         actionIndex = getRandomactionIndex();
-        if(currentStat->actionStates.size() == 1) return actionIndex;
+        if(currentStat->actionStates.size() == 1 or currentStat->actionStates.size() == actionIndexMaxs.size()) return actionIndex;
 
-        while (actionIndex == actionIndexMax) {
+        while (inVec(actionIndexMaxs,actionIndex)) {
            actionIndex = getRandomactionIndex();
         }
     }
@@ -299,7 +311,7 @@ QLearning::state* QLearning::getNewState(){
 
 //Take action A, observe R, S'. Use reward to update q-values for the corresponding action.
 void QLearning::giveReward(float r){
-    rewardHistroic.push_back(r);   //rewardHistroic contains a list of previously given rewards
+    rewardHistroic.push_back(rewardH(r,currentStat->name));   //rewardHistroic contains a list of previously given rewards
 
     //state* newState = states.at(currentStateIndex).at(calIndex(visits)).actionStates.at(nextStateActionIndex);  // saves the pre-visits updated action_state for current state. the action-states are the states that can be moved to as a result of an action
 

@@ -42,6 +42,18 @@ public:
         float mean;
     };
 
+    struct rewardH
+    {
+        rewardH() {
+        }
+        rewardH(float rin, std::string stateName) {
+            r = rin;
+            fromState = stateName;
+        }
+        float r;
+        std::string fromState;
+    };
+
     QLearning(std::string filename, std::string startState, float discount_rate, float stepSize, float greedy, float qInitValue, bool debug=false);
 
     state* getNewState();
@@ -55,7 +67,7 @@ public:
     void wirteJSON(std::string filename);
     float runNormal_distribution(float neam, float stddev);
 
-    std::vector<float> rewardHistroic;
+
     float getAvgReward();
     void clearRewardHistroic();
     void clear();
@@ -64,6 +76,7 @@ public:
     state* getCurrentStarte();
 
 protected:
+    std::vector<rewardH> rewardHistroic;
     state * currentStat;
     state * preStat;
 
@@ -84,8 +97,8 @@ protected:
     int policy();//Returnerer det nye state index som også er den action man tager
 
     void stripWhitespace(std::string& s);
-
-    int getMaxactionIndex();
+    bool inVec(std::vector<int> vec, int a);
+    std::vector<int> getMaxactionIndexs();
     int getRandomactionIndex();
     bool debug;
     float discount_rate;
