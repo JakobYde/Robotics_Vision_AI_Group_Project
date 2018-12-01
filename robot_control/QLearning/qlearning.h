@@ -20,6 +20,7 @@
 #define STATE_MEAN_INDEX 4
 #define STATE_STDDIV_INDEX 5
 
+
 class QLearning
 {
 public:
@@ -28,13 +29,13 @@ public:
         state() {
             name = "No name";
             actionStates = std::vector<state*>();
-            qValues = std::vector<float>();
+            qValues = std::vector<std::vector<float>>();
         }
         ~state(){}
 
         std::string name;
         std::vector<state*> actionStates;
-        std::vector<float> qValues;
+        std::vector<std::vector<float>> qValues;
 
         float x, y;
 
@@ -54,7 +55,7 @@ public:
         std::string fromState;
     };
 
-    QLearning(std::string filename, std::string startState, float discount_rate, float stepSize, float greedy, float qInitValue, bool debug=false);
+    QLearning(std::string filename, std::string startState, float discount_rate, float stepSize, float greedy, float qInitValue, bool useMultiQ, unsigned int numberOfQValues = 2, bool debug=false);
 
     state* getNewState();
     void giveReward(float r);
@@ -76,6 +77,8 @@ public:
     state* getCurrentStarte();
 
 protected:
+    bool useMultiQ;
+
     std::vector<rewardH> rewardHistroic;
     state * currentStat;
     state * preStat;
@@ -92,19 +95,21 @@ protected:
     //[0,0,0,0,0,0]; std::vector<std::vector<state>> states;
     std::string toBits(unsigned int n);
 
-    float getMaxQ(state* newState);
+    float getMaxQ(state* newState, unsigned int nQ);
     float getReward(state* newState);
     int policy();//Returnerer det nye state index som også er den action man tager
 
     void stripWhitespace(std::string& s);
     bool inVec(std::vector<int> vec, int a);
-    std::vector<int> getMaxactionIndexs();
+    std::vector<int> getMaxActionIndexs();
+    std::vector<int> getMaxActionIndexs(unsigned int nQ);
     int getRandomactionIndex();
     bool debug;
     float discount_rate;
     float stepSize;
     float greedy;
     float ininQValue;
+    unsigned int numberOfQValues;
     std::string startState;
     unsigned int nextStateActionIndex;
     //unsigned int currentStateIndex;

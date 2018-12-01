@@ -452,6 +452,9 @@ struct qTestPra
     int maxStepsInEpsiode;
     int avgOver;
     float mvAvgAlfa;
+    bool useDoubelQ;
+    unsigned int numberOfQValues;
+    bool randomStartState;
 
     std::string filename;
     std::string startState;
@@ -468,7 +471,7 @@ struct data{
 };
 
 //Central function that runs the learning iterations. Given a configuration it uses QLearning on the model, and saves the result.
-data testQ(QLearning &q, int epsiodes = 2000, int maxStepsInEpsiode = 20, int avgOver = 10, float mvAvgAlfa = 0.01, bool print = false, std::string preSet = ""){
+data testQ(QLearning &q, int epsiodes = 2000, int maxStepsInEpsiode = 20, int avgOver = 10, float mvAvgAlfa = 0.01, bool randomStartState = true, std::string startState = "S0", bool print = false, std::string preSet = ""){
     data dataset;
     std::vector<std::vector<float>> ydata;
     for(int k = 0; k < avgOver; k++){
@@ -476,7 +479,8 @@ data testQ(QLearning &q, int epsiodes = 2000, int maxStepsInEpsiode = 20, int av
         ydata.push_back(std::vector<float>());
 
         for(int i = 0; i < epsiodes; i++){
-            q.setState(getRandomState(q));//getRandomState(q) //"S0"
+            if(randomStartState) q.setState(getRandomState(q));//getRandomState(q)
+            else q.setState(startState); //"S0"
 
             if(print) printf("\033c");
             if(print) std::cout << preSet << "Epsiode " << i+1 << "/" << epsiodes << " --- " << getProcessbar(i, epsiodes, 30);
@@ -523,9 +527,9 @@ void worker(workerParameter wp){
         wp.qqueue->pop();
         wp.mux_qqueue->unlock();
 
-        QLearning q(qp.filename,qp.startState,qp.discount_rate,qp.stepSize,qp.greedy,qp.qInitValue);
+        QLearning q(qp.filename,qp.startState,qp.discount_rate,qp.stepSize,qp.greedy,qp.qInitValue, qp.useDoubelQ, qp.numberOfQValues);
 
-        data testdata = testQ(q,qp.epsiodes,qp.maxStepsInEpsiode,qp.avgOver,qp.mvAvgAlfa,false,"");
+        data testdata = testQ(q,qp.epsiodes,qp.maxStepsInEpsiode,qp.avgOver,qp.mvAvgAlfa, qp.randomStartState, qp.startState, false,"");
         testdata.prameters = qp;
 
         wp.mux_dataqueue->lock();
@@ -540,21 +544,25 @@ int main()
     const int thredsN = 5;
 
     qTestPra ground;
-    ground.epsiodes = 8000;
-    ground.maxStepsInEpsiode = 10;
+    ground.epsiodes = 100000;
+    ground.maxStepsInEpsiode = 5;
     ground.avgOver = 100;
-    ground.mvAvgAlfa = 0.01;
+    ground.mvAvgAlfa = 0.005;
 
+    ground.useDoubelQ = true;
+    ground.numberOfQValues = 2;
     ground.filename = "../QLearning/stats.txt";
     ground.startState = "S0";
+    ground.randomStartState = true;
     ground.discount_rate = 0.75;
     ground.stepSize = 0.2;
     ground.greedy = 0.05;
     ground.qInitValue = 10;
 
-    JSONPlot j("Q-learning. Discount_rate: "+fts(ground.discount_rate,3) +", stepSize: "+fts(ground.stepSize,3)+", greedy: test"/*+fts(ground.greedy,3)*/+", qInitValue: "+fts(ground.qInitValue,3) , "Steps", "movingAvg reward (alfa = 0.01)");
+    JSONPlot j("Q-learning. Discount_rate: "+fts(ground.discount_rate,3) +", stepSize: "+fts(ground.stepSize,3)+", greedy: "+fts(ground.greedy,3)+", qInitValue: "+fts(ground.qInitValue,3) , "Steps", "movingAvg reward (alfa = "+fts(ground.mvAvgAlfa,3)+")");
 
-    std::vector<float> testVar= {0.001, 0.005, 0.01, 0.05, 0.2, 0.8};
+    std::vector<int> testVar= {1, 2,3,4};
+    //std::vector<float> testVar= {0.0, 0.001, 0.005, 0.01, 0.05, 0.2, 0.8};
     //for(float var = 0.0; var <= 1.0; var+=0.05) testVar.push_back(var);
 
 
@@ -565,7 +573,7 @@ int main()
 
     for(unsigned int i = 0; i < testVar.size(); i++){
         qTestPra test = ground;
-        test.greedy = testVar.at(i);
+        test.numberOfQValues = testVar.at(i);
 
         qqueue.push(test);
     }
@@ -597,7 +605,7 @@ int main()
         data dt = dataqueue.front();
         dataqueue.pop();
 
-        j.addData("Greedy: "+fts(dt.prameters.greedy,5),dt.xdata,dt.ydata);
+        j.addData("NumberOfQValues: "+std::to_string(dt.prameters.numberOfQValues),dt.xdata,dt.ydata);//fts(dt.prameters.greedy,5),dt.xdata,dt.ydata);
     }
     j.write();
 
