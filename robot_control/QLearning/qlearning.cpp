@@ -251,8 +251,8 @@ float QLearning::runNormal_distribution(float neam, float stddev){
     std::normal_distribution<float> distribution(neam,stddev);
     return distribution(generator);
 }
-
-float QLearning::getReward(state* newstate) //should return reward of given state but return reward simulated by runNormal_distribution
+//Used to simulate reward for a state from it given mean and stddev
+float QLearning::getReward(state* newstate)
 {
     int stateIndex = stateNameIndex[newstate->name];
     bool stateVisiset = visits.at(stateIndex);
@@ -260,40 +260,41 @@ float QLearning::getReward(state* newstate) //should return reward of given stat
     if(not stateVisiset) return runNormal_distribution(newstate->mean,newstate->stddev);
     return -5;
 }
-
+//Gives the current state
 QLearning::state *QLearning::getCurrentStarte(){
     if(debug) std::cout << " State name is: " << currentStat->name << std::endl;
     return currentStat;
 }
-
+//Return a random action index for the current state
 int QLearning::getRandomactionIndex(){
     return rand()%currentStat->actionStates.size();
 }
-
+//Return a vector with the action index withs gives the maximum expeted value where if there is multipul q values for a action thay are sumt
 std::vector<int> QLearning::getMaxActionIndexs(){
-    std::vector<int> indexs;
+    std::vector<int> indexs; //Vector for the indexs
+
+
+
+    float max_q = currentStat->qValues.at(0)[0]; //Start gesh that index 0 is best
+    if(numberOfQValues > 1 and useMultiQ) for(unsigned int i = 1; i < numberOfQValues; i++) max_q += currentStat->qValues.at(0).at(i); //Sum all Qvlaues for the action
     indexs.push_back(0);
 
-
-    float max_q = currentStat->qValues.at(0)[0];
-    if(numberOfQValues > 1 and useMultiQ) for(unsigned int i = 1; i < numberOfQValues; i++) max_q += currentStat->qValues.at(0)[i];
-
-
     for(unsigned int i = 1; i < currentStat->qValues.size(); i++){
-        float currentQ = currentStat->qValues.at(i)[0];
-        if(numberOfQValues > 1 and useMultiQ) for(unsigned int j = 1; j < numberOfQValues; j++) currentQ += currentStat->qValues.at(i)[j];
+        //Cal the sum of q values for the action
+        float currentQ = currentStat->qValues.at(i).at(0);
+        if(numberOfQValues > 1 and useMultiQ) for(unsigned int j = 1; j < numberOfQValues; j++) currentQ += currentStat->qValues.at(i).at(j);//Sum all Qvlaues for the action
 
-        if(currentQ > max_q){
+        if(currentQ > max_q){//If the current q values is greater than the maxmum qvalue
             max_q = currentQ;
-            indexs.clear();
-            indexs.push_back(i);
+            indexs.clear();//Cleres the indexs
+            indexs.push_back(i);//Inset the current index
         }
-        else if(currentQ == max_q) indexs.push_back(i);
+        else if(currentQ == max_q) indexs.push_back(i);//If the current q values is the same as the max q valuse save the index
     }
 
     return indexs;
 }
-
+//Return a vector with the action index withs gives the maximum expeted value over a given index qvalue of the action
 std::vector<int> QLearning::getMaxActionIndexs(unsigned int nQ){
     std::vector<int> indexs;
     indexs.push_back(0);
@@ -313,17 +314,18 @@ std::vector<int> QLearning::getMaxActionIndexs(unsigned int nQ){
 
     return indexs;
 }
-
+//Return rather a is pressent in vec
 bool QLearning::inVec(std::vector<int> vec, int a){
     for(int temp : vec) if(a == temp) return true;
     return false;
 }
-
-// e-ereedy
+// Run the policy (e-ereedy)
 int QLearning::policy(){
-    float chance = (rand()%RAND_MAX)/float(RAND_MAX);
     int actionIndex;
-    std::vector<int> actionIndexMaxs = getMaxActionIndexs();
+
+    float chance = (rand()%RAND_MAX)/float(RAND_MAX-1);//Cal the chance for greedy action
+
+    std::vector<int> actionIndexMaxs = getMaxActionIndexs();//Gets the action index with gives the maximum expeted value
     if(1-greedy >= chance){
         if(debug) std::cout << "QDEBUG :::: Taking greedy action.";
         actionIndex = actionIndexMaxs.at(rand()%actionIndexMaxs.size());
@@ -333,7 +335,7 @@ int QLearning::policy(){
         actionIndex = getRandomactionIndex();
         if(currentStat->actionStates.size() == 1 or currentStat->actionStates.size() == actionIndexMaxs.size()) return actionIndex;
 
-        while (inVec(actionIndexMaxs,actionIndex)) {
+        while (inVec(actionIndexMaxs,actionIndex)) {//Enchore the random action isent the maximum axtion
            actionIndex = getRandomactionIndex();
         }
     }
@@ -341,15 +343,16 @@ int QLearning::policy(){
     return actionIndex;
 }
 
-//Choose A from S using policy derived from Q (e.g., e-ereedy
+//Choose A from S using policy derived from Q (e.g., e-ereedy)
 QLearning::state* QLearning::getNewState(){
     //visits.at(currentStateIndex) = true;
 
-    nextStateActionIndex = policy();
+    nextStateActionIndex = policy();//Gets the action from the policy (e-greedy)
 
+    //Updates the preiures state to the current and the current state to the state wish the action go to
     preStat = currentStat;
-
     currentStat = currentStat->actionStates.at(nextStateActionIndex);
+
     return currentStat;
 }
 
@@ -360,39 +363,49 @@ void QLearning::giveReward(float r){
 
     rewardHistroic.push_back(rewardH(r,currentStat->name));   //rewardHistroic contains a list of previously given rewards
 
-    //Find q value for update and q value for action
+    //Find q value for update and q value for action. If there is not used multiQ thay are the same
     int qToUpdate = 0;
     int qForAction = 0;
 
-    if(numberOfQValues > 1 and useMultiQ){
+    if(numberOfQValues > 1 and useMultiQ){//If it is multiQ two random diffrend q index is found
         qToUpdate = rand()%numberOfQValues;
         qForAction = rand()%numberOfQValues;
 
-        while (qForAction == qToUpdate) qForAction = rand()%numberOfQValues;
+        while (qForAction == qToUpdate) qForAction = rand()%numberOfQValues;//Finds a index for qForAction wish is diffrend for the qToUpdate index
     }
+    //Findes the current q values of the q value to update
+    float qNow = preStat->qValues.at(nextStateActionIndex).at(qToUpdate);
 
-    float qNow = preStat->qValues.at(nextStateActionIndex)[qToUpdate];
 
-    float maxQ = getMaxQ(currentStat, qToUpdate);
+    float maxQ = 0.0;
     if(numberOfQValues > 1 and useMultiQ){
+        //If useMultiQ is used:
+
+        //Finds the action there gives the maximum expeted value (within qToUpdate qvaluess)
         std::vector<int> actions = getMaxActionIndexs(qToUpdate);
         float action = actions.at(rand()%actions.size());
 
-        maxQ = currentStat->qValues.at(action)[qForAction];
+        //Finds the value of the expeted value of the found action with the qForAction qvalue index
+        maxQ = currentStat->qValues.at(action).at(qForAction);
 
+    }else{
+        //If useMultiQ is not used it findes the maximum expeted value to S'
+        maxQ = getMaxQ(currentStat, qToUpdate);
     }
 
-    preStat->qValues.at(nextStateActionIndex)[qToUpdate] = qNow + stepSize*(r + discount_rate*maxQ - qNow);
+    //Update the expeted value at the qToUpdate qvalue index
+    preStat->qValues.at(nextStateActionIndex).at(qToUpdate) = qNow + stepSize*(r + discount_rate*maxQ - qNow);
 
+    //Indikate that the currentStat (S') is viseted
     visits.at(stateNameIndex[currentStat->name]) = true;
 }
-
+//Simulate a step in a episode
 void QLearning::simulateActionReward(){
     state* action = getNewState();
     float reward = getReward(action);
     giveReward(reward);
 }
-
+//Wirte the stats and thers q values to a json
 void QLearning::wirteJSON(std::string filename){
     std::vector<Json> jsons;
 
