@@ -107,9 +107,9 @@ std::vector<Line> Lidar::getLines()
 	return lines;
 }
 
-std::vector<Point<double>> Lidar::getCorners()
+std::vector<Point> Lidar::getCorners()
 {
-	std::vector<Point<double>> corners;
+	std::vector<Point> corners;
 	std::vector<Line> lines = getLines();
 
 	for (std::vector<Line>::iterator lA = lines.begin(); lA != lines.end(); lA++) {
@@ -118,11 +118,11 @@ std::vector<Point<double>> Lidar::getCorners()
 				double x, y;
 				x = (lA->B - lB->B) / (lA->A - lB->A);
 				y = lA->A * x + lA->B;
-				corners.push_back(Point<double>(x, y));
+				corners.push_back(Point(x, y));
 			}
 		}
 	}
 
 	return corners;
-	return std::vector<Point<double>>();
+	return std::vector<Point>();
 }

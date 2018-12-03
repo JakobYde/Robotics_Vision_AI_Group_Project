@@ -25,7 +25,7 @@ public:
 		return grid[y][x]; 
 	}
 
-	T& at(Point<GridCoordinateType> p, bool secure = true) { return at(p.x(), p.y(), secure); }
+	T& at(Point p, bool secure = true) { return at(p.x(), p.y(), secure); }
 
 	unsigned int rows() { return grid.size(); }
 	unsigned int cols() { 
@@ -33,7 +33,7 @@ public:
 		return 0;
 	}
 
-	bool inBounds(Point<GridCoordinateType> p) { return inBounds(p.x(), p.y()); }
+	bool inBounds(Point p) { return inBounds(p.x(), p.y()); }
 
 	bool inBounds(GridCoordinateType x, GridCoordinateType y) {
 		if (y < grid.size() && y >= 0) if (x < grid[y].size() && x >= 0) return true;

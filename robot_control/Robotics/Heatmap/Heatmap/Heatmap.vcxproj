@@ -120,18 +120,22 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Edge.cpp" />
+    <ClCompile Include="GraphDrawer.cpp" />
     <ClCompile Include="Grid.cpp" />
     <ClCompile Include="Lidar.cpp" />
     <ClCompile Include="Map.cpp" />
     <ClCompile Include="Point.cpp" />
+    <ClCompile Include="RandFloat.cpp" />
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Edge.h" />
+    <ClInclude Include="GraphDrawer.h" />
     <ClInclude Include="Grid.h" />
     <ClInclude Include="Lidar.h" />
     <ClInclude Include="Map.h" />
     <ClInclude Include="Point.h" />
+    <ClInclude Include="RandFloat.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

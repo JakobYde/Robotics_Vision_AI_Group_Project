@@ -15,7 +15,6 @@
 #define ROBOT_WIDTH 0.5
 #define BALL_WIDTH 1
 
-typedef Point<GridCoordinateType> MapPoint;
 
 enum nodeType {
 	eObstacle,
@@ -33,8 +32,8 @@ enum drawType {
 };
 
 struct drawArguments {
-	MapPoint A;
-	MapPoint B;
+	Point A;
+	Point B;
 	unsigned int padding;
 };
 
@@ -52,7 +51,7 @@ public:
 
 	void loadImage(cv::Mat img, int upscaling = 1);
 	cv::Mat drawMap(drawType type, bool draw = true, drawArguments args = drawArguments());
-	std::vector<MapPoint> getPoints();
+	std::vector<Point> getPoints();
 
 	struct GreaterH {
 		constexpr bool operator()(MapNode* A, MapNode* B){
@@ -62,43 +61,43 @@ public:
 
 private:
 	double fov, viewDistance, scale = 1;
-	std::vector<MapPoint> points;
+	std::vector<Point> points;
 
-	MapPoint dirs[8] = { 
-		MapPoint(-1,0), 
-		MapPoint(-1,-1),
-		MapPoint(0,-1), 
-		MapPoint(1,-1), 
-		MapPoint(1,0),
-		MapPoint(1,1), 
-		MapPoint(0,1), 
-		MapPoint(-1,1) };
+	Point dirs[8] = { 
+		Point(-1,0), 
+		Point(-1,-1),
+		Point(0,-1), 
+		Point(1,-1), 
+		Point(1,0),
+		Point(1,1), 
+		Point(0,1), 
+		Point(-1,1) };
 
 	//  -- UTILITY --
-	bool hasLineOfSight(MapPoint a, MapPoint b, double wallDistanceThreshold = 0);
-	void recursivelyFill(MapPoint p);
-	bool isDiscoverable(MapPoint p);
-	MapPoint getPointFromIndex(unsigned int i, unsigned int w = 0);
+	bool hasLineOfSight(Point a, Point b, double wallDistanceThreshold = 0);
+	void recursivelyFill(Point p);
+	bool isDiscoverable(Point p);
+	Point getPointFromIndex(unsigned int i, unsigned int w = 0);
 
 	//  -- HEATMAP --
-	void placePoint(MapPoint p);
+	void placePoint(Point p);
 
 	//  -- GEOMETRY --
-	std::vector<MapPoint> vertices;
+	std::vector<Point> vertices;
 	std::vector<Edge> edges;
 
-	std::vector<MapPoint> getVertices();
+	std::vector<Point> getVertices();
 	std::vector<Edge> getEdges();
 
 	//  -- BRUSHFIRE --
 	double maxDist = 0;
 
 	void calculateBrushfire();
-	double getMinNeighbor(MapPoint p);
+	double getMinNeighbor(Point p);
 
 	// -- PATH PLANNING --
-	std::vector<MapPoint> getPath(MapPoint A, MapPoint B, double padding = ROBOT_WIDTH);
-	std::vector<MapPoint> simplifyPath(std::vector<MapPoint> path);
+	std::vector<Point> getPath(Point A, Point B, double padding = ROBOT_WIDTH);
+	std::vector<Point> simplifyPath(std::vector<Point> path);
 
 
 	cv::Vec3b vObstacle = cv::Vec3b(0, 0, 0);
@@ -113,7 +112,7 @@ private:
 	public:
 		//Base Values
 		nodeType type;
-		MapPoint position;
+		Point position;
 
 		//Room Values
 		double wallDistance = -1;

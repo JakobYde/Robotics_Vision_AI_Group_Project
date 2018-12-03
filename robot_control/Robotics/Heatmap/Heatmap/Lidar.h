@@ -15,7 +15,7 @@ public:
 
 	Line leastSquareFit(std::vector<PolarPoint> points);
 	std::vector<Line> getLines();
-	std::vector<Point<double>> getCorners();
+	std::vector<Point> getCorners();
 
 private:
 	std::vector<PolarPoint> points;

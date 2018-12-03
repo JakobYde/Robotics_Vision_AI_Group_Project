@@ -1,70 +1,71 @@
 #pragma once
-#include <vector>
+
 #include <opencv2\opencv.hpp>
 
-template <typename T>
+#include <vector>
+#include <math.h>
+
+#define ORIGIN (Point(0,0))
+#define MAX(a,b) ((a) > (b) ? (a) : (b))
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+
 class Point;
 
-#define ORIGIN (Point<double>(0,0))
-
-class Edge;
 class Line;
+class Edge;
 
 class PolarPoint 
 {
 public:
 	PolarPoint();
 	PolarPoint(double d, double angle);
-	Point<double> asPoint();
-	Point<unsigned int> asUIntPoint();
+	Point asPoint();
 	double d = 0, angle = 0;
-
 };
 
-template <typename T>
 class Point
 {
 private:
-	T X = 0, Y = 0;
+	double X, Y;
 
 public:
 	Point() {}
-	Point(T x, T y) : X(x), Y(y) {}
+	Point(double x, double y) : X(x), Y(y) {}
 	~Point() {}
 
-	T& x() { 
+	double& x() { 
 		return X; 
 	}
 
-	T& y() {
+	double& y() {
 		return Y;
 	}
 
-	Point<T> operator-(Point<T> p) {
-		return Point<T>(X - p.x(), Y - p.y());
+	Point operator-(Point p) {
+		return Point(X - p.x(), Y - p.y());
 	}
 
-	Point<T> operator+(Point<T> p) {
-		return Point<T>(X + p.x(), Y + p.y());
+	Point operator+(Point p) {
+		return Point(X + p.x(), Y + p.y());
 	}
 
-	Point<T> operator*(double n) {
-		return Point<T>(X * n, Y * n);
+	Point operator*(double n) {
+		return Point(X * n, Y * n);
 	}
 
-	Point<T> operator/(double n) {
-		return Point<T>(X / n, Y / n);
+	Point operator/(double n) {
+		return Point(X / n, Y / n);
 	}
 
-	bool operator!=(Point<T> p) {
+	bool operator!=(Point p) {
 		return (X != p.x() || Y != p.y());
 	}
 
-	bool operator==(Point<T> p) {
+	bool operator==(Point p) {
 		return (X == p.x() && Y == p.y());
 	}
 
-	void operator+=(Point<T> p) {
+	void operator+=(Point p) {
 		X += p.x();
 		Y += p.y();
 	}
@@ -78,35 +79,38 @@ public:
 		return (sqrt(X*X + Y * Y));
 	}
 
-	double getDistance(Point<T> p) {
+	double getDistance(Point p) {
 		return sqrt(pow(X - p.x(), 2) + pow(Y - p.y(), 2));
 	}
 
-	double getDistance(Edge e) {
-		std::vector<Point<T>> pts = e.getPoints();
-		double dist = INT_MAX;
-		for (Point<T> p : pts) dist = MIN(dist, getDistance(p));
-		return dist;
-	}
+	double getDistance(Edge e);
 
-	double getDistance(Line l) {
-		T x, y, tA = tan(l.a);
+	double getDistance(Line l);
 
-		x = (X + Y * tA) / (1 + tA*tA);
-		y = x * tA;
-		Point<T> parallelPoint(x,y);
-		return abs(l.d - parallelPoint.getDistance(ORIGIN));
-	}
-
-	Point<T> normalized() {
-		return Point<T>(X / MAX(abs(X),abs(Y)), Y / MAX(abs(X),abs(Y)));
+	Point normalized() {
+		return Point(X / MAX(abs(X),abs(Y)), Y / MAX(abs(X),abs(Y)));
 	}
 
 	PolarPoint asPolar() {
 		return PolarPoint(sqrt(X*X+Y*Y), atan2((double)Y, (double)X));
 	}
 
+	Point rotate(double angle) {
+		double x, y;
+		x = sin(angle) * Y + cos(angle) * X;
+		y = cos(angle) * Y - sin(angle) * X;
+		return Point(x, y);
+	}
+
+	Point times(Point p) {
+		return Point(X * p.x(), Y * p.y());
+	}
+
 	cv::Point getCVPoint() {
 		return cv::Point(X,Y);
+	}
+
+	cv::Point getCVPoint(double x, double y) {
+		return cv::Point(X * x, Y * y);
 	}
 };
