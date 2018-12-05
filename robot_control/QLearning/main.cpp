@@ -210,12 +210,12 @@ void worker(workerParameter wp){
 
 int main()
 {
-    const int thredsN = 5;
+    const int thredsN = 9;
 
     qTestPra ground;
-    ground.epsiodes = 500000;
+    ground.epsiodes = 1000;
     ground.maxStepsInEpsiode = 5;
-    ground.avgOver = 100;
+    ground.avgOver = 100000;
 
     ground.useDoubelQ = true;
     ground.numberOfQValues = 2;
