@@ -27,7 +27,7 @@ void Json::add(std::string name, std::vector<float> value)
 {
     std::string valueString = "[ ";
 
-    for (int i = 0; i < value.size()-1; i++) {
+    for (unsigned int i = 0; i < value.size()-1; i++) {
         valueString += std::to_string(value.at(i)) + ", ";
     }
     valueString += std::to_string(value.back()) + " ]";
@@ -39,7 +39,7 @@ void Json::add(std::string name, std::vector<int> value)
 {
     std::string valueString = "[ ";
 
-    for (int i = 0; i < value.size()-1; i++) {
+    for (unsigned int i = 0; i < value.size()-1; i++) {
         valueString += std::to_string(value.at(i)) + ", ";
     }
     valueString += std::to_string(value.back()) + " ]";
@@ -51,7 +51,7 @@ void Json::add(std::string name, std::vector<std::string> value)
 {
     std::string valueString = "[ ";
 
-    for (int i = 0; i < value.size() - 1; i++) {
+    for (unsigned int i = 0; i < value.size() - 1; i++) {
         valueString += '"' + value.at(i) + '"' + ", ";
     }
     valueString += '"' + value.back() + '"' + " ]";
@@ -69,7 +69,7 @@ void Json::add(std::string name, Json value){
 void Json::add(std::string name,  std::vector<Json> value){
     std::string valueString = "[ ";
 
-    for (int i = 0; i < value.size()-1; i++) {
+    for (unsigned int i = 0; i < value.size()-1; i++) {
         valueString += value.at(i).to_string() + ", ";
     }
     valueString += value.back().to_string() + " ]";
@@ -88,7 +88,7 @@ void Json::write(std::string filename)
 
 void Json::addJsonValue(jsonValue val)
 {
-    for (int i = 0; i < valuse.size(); i++){
+    for (unsigned int i = 0; i < valuse.size(); i++){
         if (val.name == valuse.at(i).name) {
             valuse.at(i) = val;
             return;
@@ -100,7 +100,7 @@ void Json::addJsonValue(jsonValue val)
 std::string Json::to_string()
 {
     std::string jsonString = "{";
-    for(int i = 0; i < valuse.size()-1; i++)
+    for(unsigned int i = 0; i < valuse.size()-1; i++)
     {
         jsonString += '"' + valuse.at(i).name + '"' + ": " + valuse.at(i).value + ", \n";
     }

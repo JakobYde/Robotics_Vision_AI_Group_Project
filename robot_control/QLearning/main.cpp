@@ -28,342 +28,6 @@
 #include "json.h"
 #include "jsonplot.h"
 
-#define ESC_KEY 27
-#define PI 3.14159265
-static boost::mutex mutex;
-LaserScanner controllerScan;
-
-struct Position
-{
-    float x;
-    float y;
-    Position()
-    {
-         x = 0.0;
-         y = 0.0;
-    }
-    Position(float xIn,float yIn)
-    {
-         x = xIn;
-         y = yIn;
-    }
-
-};
-
-void statCallback(ConstWorldStatisticsPtr &_msg) {
-  (void)_msg;
-  // Dump the message contents to stdout.
-  //  std::cout << _msg->DebugString();
-  //  std::cout << std::flush;
-}
-
-std::ofstream *myfile;
-Position robotPos[2];
-
-std::vector<float> robot_xvalues;
-std::vector<float> robot_yvalues;
-
-void poseCallback(ConstPosesStampedPtr &_msg) {
-  // Dump the message contents to stdout.
-  //  std::cout << _msg->DebugString();
-
-  for (int i = 0; i < _msg->pose_size(); i++) {
-    if (_msg->pose(i).name() == "pioneer2dx") {
-      //robot_xvalues.push_back(_msg->pose(i).position().x());
-      //robot_yvalues.push_back(_msg->pose(i).position().y());
-
-      robotPos[1] = robotPos[0];
-      robotPos[0].x = _msg->pose(i).position().x();
-      robotPos[0].y = _msg->pose(i).position().y();
-      std::stringstream pos_ori_stream;
-
-      pos_ori_stream << std::setprecision(2) << std::fixed << std::setw(6)
-                << _msg->pose(i).position().x() << ", " << std::setw(6)
-                << _msg->pose(i).position().y() << ", " << std::setw(6)
-                << _msg->pose(i).position().z() << ", " << std::setw(6)
-                << _msg->pose(i).orientation().w() << ", " << std::setw(6)
-                << _msg->pose(i).orientation().x() << ", " << std::setw(6)
-                << _msg->pose(i).orientation().y() << ", " << std::setw(6)
-                << _msg->pose(i).orientation().z() << std::endl;
-      std::string pos_ori_str = pos_ori_stream.str();
-      //std::cout << pos_ori_str;
-      *myfile << pos_ori_str;
-    }
-  }
-}
-
-void cameraCallback(ConstImageStampedPtr &msg) {
-
-  std::size_t width = msg->image().width();
-  std::size_t height = msg->image().height();
-  const char *data = msg->image().data().c_str();
-  cv::Mat im(int(height), int(width), CV_8UC3, const_cast<char *>(data));
-
-  im = im.clone();
-  cv::cvtColor(im, im, CV_BGR2RGB);
-
-  mutex.lock();
-  cv::imshow("camera", im);
-  mutex.unlock();
-}
-
-
-
-//Values that define the three different cone sections of the robots lidar scanner. Notice that the robot has roughly 270 degrees of "vision" and the center cone only makes up a tenth of that.
-float angle_min = -2.26889;
-float angle_max = 2.2689;
-float angle_step = 0.0228029648241206;
-float total_angle_range = abs(angle_min)+abs(angle_max);
-float center_angle_pct = 0.1;
-
-float rightStartAngle = angle_min;
-float rightEndAngle = angle_step*round((angle_min+total_angle_range*(1-center_angle_pct)/2)/angle_step);
-float centerStartAngle = rightEndAngle;
-float centerEndAngle = angle_step*round((centerStartAngle+total_angle_range*center_angle_pct)/angle_step);
-
-float leftStartAngle= centerEndAngle;
-float leftEndAngle = angle_max;
-
-
-void lidarCallbackImg(ConstLaserScanStampedPtr &msg) {
-  controllerScan.parseLaserScannerMessage(msg);
-  //std::cout << ">> " << msg->DebugString() << std::endl;
-  float angle_min = float(msg->scan().angle_min());
-  //  double angle_max = msg->scan().angle_max();
-  float angle_increment = float(msg->scan().angle_step());
-
-  float range_min = float(msg->scan().range_min());
-  float range_max = float(msg->scan().range_max());
-
-  int sec = msg->time().sec();
-  int nsec = msg->time().nsec();
-
-  int nranges = msg->scan().ranges_size();
-  int nintensities = msg->scan().intensities_size();
-
-  assert(nranges == nintensities);
-
-  int width = 400;
-  int height = 400;
-  float px_per_m = 200 / range_max;
-
-  cv::Mat im(height, width, CV_8UC3);
-  im.setTo(0);
-  for (int i = 0; i < nranges; i++) {
-    float angle = angle_min + i * angle_increment;
-    float range = std::min(float(msg->scan().ranges(i)), range_max);
-    //    double intensity = msg->scan().intensities(i);
-    cv::Point2f startpt(200.5f + range_min * px_per_m * std::cos(angle),
-                        200.5f - range_min * px_per_m * std::sin(angle));
-    cv::Point2f endpt(200.5f + range * px_per_m * std::cos(angle),
-                      200.5f - range * px_per_m * std::sin(angle));
-
-    cv::Scalar collor = cv::Scalar(255, 255, 255, 255);
-    if(((angle >= leftStartAngle - angle_increment )and (angle <= leftStartAngle + angle_increment)) or ((angle >= leftEndAngle - angle_increment) and (angle <= leftEndAngle + angle_increment))) collor = cv::Scalar(255, 0, 0, 255);
-    else if(((angle >= centerStartAngle - angle_increment) and (angle <= centerStartAngle + angle_increment)) or ((angle >= centerEndAngle - angle_increment) and (angle <= centerEndAngle + angle_increment))) collor = cv::Scalar(255, 255, 0, 255);
-    else if(((angle >= rightStartAngle - angle_increment) and (angle <= rightStartAngle + angle_increment)) or ((angle >= rightEndAngle - angle_increment) and (angle <= rightEndAngle + angle_increment))) collor = cv::Scalar(255, 0, 255, 255);
-    cv::line(im, startpt * 16, endpt * 16, collor, 1, cv::LINE_AA, 4);
-    //std::cout << angle << " " << leftStartAngle << " " << leftEndAngle << " " << centerStartAngle << " " << centerEndAngle<< " " << rightStartAngle << " " << rightEndAngle << std::endl;
-
-    //    std::cout << angle << " " << range << " " << intensity << std::endl;
-  }
-  cv::circle(im, cv::Point(200, 200), 2, cv::Scalar(0, 0, 255));
-  cv::putText(im, std::to_string(sec) + ":" + std::to_string(nsec),
-              cv::Point(10, 20), cv::FONT_HERSHEY_PLAIN, 1.0,
-              cv::Scalar(255, 0, 0));
-
-  mutex.lock();
-  cv::imshow("lidar", im);
-  mutex.unlock();
-}
-
-
-
-// A list of functions that determines relationship between two positions on the map. Used in combination with fuzzycontrol to steer toward a specific point in a straight line.
-float calDist(Position pos1, Position pos2){
-    float xDif = pos2.x - pos1.x;
-    float yDif = pos2.y - pos1.y;
-    return std::sqrt((std::pow(xDif, 2))+std::pow(yDif, 2));
-}
-
-float calDotVec(Position vec1, Position vec2){
-    return vec1.x*vec2.x+vec1.y*vec2.y;
-}
-
-float calCrossVec(Position vec1, Position vec2){
-    return vec1.x*vec2.y-vec1.y*vec2.x;
-}
-
-float angleVec(Position vec1, Position vec2){
-    return std::atan2(calCrossVec(vec1,vec2),calDotVec(vec1,vec2));
-}
-
-float calAngleError(Position *posHist, Position goal){
-    Position headingVector;
-    headingVector.x = posHist[0].x - posHist[1].x;
-    headingVector.y = posHist[0].y - posHist[1].y;
-
-    Position goalVector;
-    goalVector.x = goal.x - posHist[1].x;
-    goalVector.y = goal.y - posHist[1].y;
-
-    return angleVec(headingVector,goalVector);
-}
-
-
-struct pointManager{
-    std::vector<Position> poss;
-    unsigned int index;
-};
-
-
-//Function that updates the current goal position of the robot based on a vector of positions. When the robot is close enough to a goal that the distance is smaller than mindist it will update the goal position with the
-//next position in the list. When it reaches either end of the list it repeats the list in reverse order.
-bool getPointI = true;
-Position getpoint(pointManager &pm, Position pos, float mindist){
-    Position goal = pm.poss.at(pm.index);
-
-    float dist = calDist(goal,pos);
-    if(dist<=mindist)
-    {
-        if(getPointI) pm.index++;
-        else pm.index--;
-
-        if(pm.index==pm.poss.size()-1) getPointI=false;
-        else if (pm.index==0) getPointI=true;
-    }
-    Position newGoal = pm.poss.at(pm.index);
-    return newGoal;
-}
-
-bool atState(Position goal, Position pos, float mindist){
-    float dist = calDist(goal,pos);
-    if(dist<=mindist) return true;
-    return false;
-}
-
-/*
-int main(int _argc, char **_argv) {
-    //Zero start pos
-    robotPos[0].x = 0.0;
-    robotPos[0].y = 0.0;
-    robotPos[1].x = 0.0;
-    robotPos[1].y = 0.0;
-
-    //Lav pos log
-    myfile = new std::ofstream("pos.log");
-
-    //Lav controller
-
-    FuzzyBugController controller( & controllerScan);
-    controller.buildController();
-
-    // Load gazebo
-    gazebo::client::setup(_argc, _argv);
-
-    // Create our node for communication
-    gazebo::transport::NodePtr node(new gazebo::transport::Node());
-    node->Init();
-
-    // Listen to Gazebo topics
-    gazebo::transport::SubscriberPtr statSubscriber =
-      node->Subscribe("~/world_stats", statCallback);
-
-    gazebo::transport::SubscriberPtr poseSubscriber =
-      node->Subscribe("~/pose/info", poseCallback);
-
-    gazebo::transport::SubscriberPtr cameraSubscriber =
-      node->Subscribe("~/pioneer2dx/camera/link/camera/image", cameraCallback);
-
-    gazebo::transport::SubscriberPtr lidarSubscriber =
-      node->Subscribe("~/pioneer2dx/hokuyo/link/laser/scan", lidarCallbackImg);
-
-    // Publish to the robot velkey_esc_cmd topic
-    gazebo::transport::PublisherPtr movementPublisher =
-      node->Advertise<gazebo::msgs::Pose>("~/pioneer2dx/vel_cmd");
-
-    // Publish a reset of the world
-    gazebo::transport::PublisherPtr worldPublisher =
-      node->Advertise<gazebo::msgs::WorldControl>("~/world_control");
-    gazebo::msgs::WorldControl controlMessage;
-    controlMessage.mutable_reset()->set_all(true);
-    worldPublisher->WaitForConnection();
-    worldPublisher->Publish(controlMessage);
-
-
-    enum statsStateMachine {onTheWay, atState_};
-
-    statsStateMachine statemc = onTheWay;
-
-    //filename, startState, discount_rate, stepSize, greedy, qInitValue
-    QLearning q("../QLearning/stats.txt","S0",0.7,0.4,0.0,0.0, true);
-    QLearning::state* currentstate = q.getNewState();
-    q.print_stats();
-    Position goal = Position(currentstate->x,currentstate->y);
-
-    ControlOutput controllerOut;
-
-    // Loop
-    int run = 0;
-    while (true) {
-        gazebo::common::Time::MSleep(10);
-
-
-
-        switch (statemc) {
-            case onTheWay:
-                if(atState(goal,robotPos[0],0.5)) statemc = atState_;
-
-                controllerOut = controller.getControlOutput(calAngleError(robotPos,goal),calDist(robotPos[0],goal), center_angle_pct);
-
-                break;
-
-            case atState_:
-                controllerOut.direction = 0;
-                controllerOut.speed = 0;
-
-                std::cout << "Run : " << run++ << " at state: " << currentstate->name << std::endl;
-                q.giveReward(q.runNormal_distribution(currentstate->mean,currentstate->stddev));
-
-                currentstate = q.getNewState();
-
-                goal = Position(currentstate->x,currentstate->y);
-                statemc = onTheWay;
-                q.print_stats();
-
-                break;
-        }
-
-        //Få control signal
-
-
-
-
-
-        mutex.lock();
-        int key = cv::waitKey(1);
-        mutex.unlock();
-
-        if (key == ESC_KEY)
-          break;
-
-        // Generate a pose
-        ignition::math::Pose3d pose(controllerOut.speed, 0, 0, 0, 0, controllerOut.direction);
-
-        // Convert to a pose message
-        gazebo::msgs::Pose msg;
-        gazebo::msgs::Set(&msg, pose);
-        movementPublisher->Publish(msg);
-
-    }
-    q.wirteJSON("stats.json");
-    myfile->close();
-    delete myfile;
-    //makeJOSNPlotData("Robot parth","x","y",robot_xvalues,robot_yvalues);
-    // Make sure to shut everything down.
-    gazebo::client::shutdown();
-}
-*/
 
 std::string getRandomState(QLearning & q){
     std::vector<std::string> stats = q.getStats();
@@ -423,24 +87,24 @@ std::string fts(float f, int dec){
     return res;
 }
 
-std::string getProcessbar(int n, int maxn, int len = 10){
-    char rn[8] = {'|', '/', '-', '\\', '|', '/', '-', '\\'};
-    static int c = 0;
+std::string getProcessbar(long long unsigned int n, long long unsigned int maxn, long long unsigned int len = 10){
+    const char rn[8] = {'|', '/', '-', '\\', '|', '/', '-', '\\'};
+    static long long unsigned int c = 0;
 
     std::string bar = "[";
 
     float pro = (n)/float(maxn)*100;
-    int barNumber = std::floor(pro/100*len);
+    unsigned int barNumber = std::floor(pro/100.0*len);
 
-    for(int i = 0; i < barNumber; i++) bar += '#';
+    for(unsigned int i = 0; i < barNumber; i++) bar += '#';
 
     if(barNumber < len) bar += rn[c++%8];
 
-    for(int i = barNumber+1; i < len; i++) bar += ' ';
+    for(unsigned int i = barNumber+1; i < len; i++) bar += ' ';
     bar += "]";
 
     bar += fts(std::roundf(pro * 100) / 100,2) + "%";
-
+    bar += ". " + std::to_string(n) + " / " + std::to_string(maxn);
     return bar;
 }
 
@@ -451,7 +115,6 @@ struct qTestPra
     int epsiodes;
     int maxStepsInEpsiode;
     int avgOver;
-    float mvAvgAlfa;
     bool useDoubelQ;
     unsigned int numberOfQValues;
     bool randomStartState;
@@ -470,8 +133,20 @@ struct data{
     qTestPra prameters;
 };
 
+//Too shorten learning time multiple threads are used. Critical parts of the code are protected with mutex locks.
+struct workerParameter
+{
+    workerParameter() {}
+    std::queue<qTestPra> *qqueue;
+    std::mutex *mux_qqueue;
+    std::queue<data> *dataqueue;
+    std::mutex *mux_dataqueue;
+    long long unsigned int *count;
+    std::mutex *mux_count;
+};
+
 //Central function that runs the learning iterations. Given a configuration it uses QLearning on the model, and saves the result.
-data testQ(QLearning &q, int epsiodes = 2000, int maxStepsInEpsiode = 20, int avgOver = 10, float mvAvgAlfa = 0.01, bool randomStartState = true, std::string startState = "S0", bool print = false, std::string preSet = ""){
+data testQ(QLearning &q, workerParameter &wp, int epsiodes = 2000, int maxStepsInEpsiode = 20, int avgOver = 10, bool randomStartState = true, std::string startState = "S0", bool print = false, std::string preSet = ""){
     data dataset;
     std::vector<std::vector<float>> ydata;
     for(int k = 0; k < avgOver; k++){
@@ -498,22 +173,16 @@ data testQ(QLearning &q, int epsiodes = 2000, int maxStepsInEpsiode = 20, int av
             ydata.at(k).push_back(avgR);
             q.clearRewardHistroic();
         }
+        wp.mux_count->lock();
+        *wp.count = *wp.count+1;
+        wp.mux_count->unlock();
     }
-    dataset.ydata = getMovingAvg(getAvg(ydata,1),mvAvgAlfa);
+    //dataset.ydata = getMovingAvg(getAvg(ydata,1),mvAvgAlfa);
+    dataset.ydata = getAvg(ydata,1);
 
     return dataset;
 }
 
-
-//Too shorten learning time multiple threads are used. Critical parts of the code are protected with mutex locks.
-struct workerParameter
-{
-    workerParameter() {}
-    std::queue<qTestPra> *qqueue;
-    std::mutex *mux_qqueue;
-    std::queue<data> *dataqueue;
-    std::mutex *mux_dataqueue;
-};
 
 void worker(workerParameter wp){
     qTestPra qp;
@@ -529,7 +198,7 @@ void worker(workerParameter wp){
 
         QLearning q(qp.filename,qp.startState,qp.discount_rate,qp.stepSize,qp.greedy,qp.qInitValue, qp.useDoubelQ, qp.numberOfQValues);
 
-        data testdata = testQ(q,qp.epsiodes,qp.maxStepsInEpsiode,qp.avgOver,qp.mvAvgAlfa, qp.randomStartState, qp.startState, false,"");
+        data testdata = testQ(q,wp,qp.epsiodes,qp.maxStepsInEpsiode,qp.avgOver, qp.randomStartState, qp.startState, false,"");
         testdata.prameters = qp;
 
         wp.mux_dataqueue->lock();
@@ -544,10 +213,9 @@ int main()
     const int thredsN = 5;
 
     qTestPra ground;
-    ground.epsiodes = 100000;
+    ground.epsiodes = 500000;
     ground.maxStepsInEpsiode = 5;
     ground.avgOver = 100;
-    ground.mvAvgAlfa = 0.005;
 
     ground.useDoubelQ = true;
     ground.numberOfQValues = 2;
@@ -557,12 +225,12 @@ int main()
     ground.discount_rate = 0.75;
     ground.stepSize = 0.2;
     ground.greedy = 0.05;
-    ground.qInitValue = 10;
+    ground.qInitValue = 0;
 
-    JSONPlot j("Q-learning. Discount_rate: "+fts(ground.discount_rate,3) +", stepSize: "+fts(ground.stepSize,3)+", greedy: "+fts(ground.greedy,3)+", qInitValue: "+fts(ground.qInitValue,3) , "Steps", "movingAvg reward (alfa = "+fts(ground.mvAvgAlfa,3)+")");
+    JSONPlot j("Q-learning. Discount_rate: "+fts(ground.discount_rate,3) +", stepSize: "+fts(ground.stepSize,3)+", greedy: test"/*+fts(ground.greedy,3)*/+", qInitValue: "+fts(ground.qInitValue,3) , "Episode", "Avg reward over "+std::to_string(ground.avgOver)+" repetitions");
 
-    std::vector<int> testVar= {1, 2,3,4};
-    //std::vector<float> testVar= {0.0, 0.001, 0.005, 0.01, 0.05, 0.2, 0.8};
+    //std::vector<int> testVar= {1, 2,3,4};
+    std::vector<float> testVar= {-1.0, 0.0, 0.001, 0.005, 0.01, 0.05, 0.2, 0.8, 1.0};
     //for(float var = 0.0; var <= 1.0; var+=0.05) testVar.push_back(var);
 
 
@@ -573,10 +241,13 @@ int main()
 
     for(unsigned int i = 0; i < testVar.size(); i++){
         qTestPra test = ground;
-        test.numberOfQValues = testVar.at(i);
+        test.greedy = testVar.at(i);
 
         qqueue.push(test);
     }
+
+    long long unsigned int count = 0;
+    std::mutex mux_count;
 
     std::thread threads[thredsN];
     workerParameter wp;
@@ -584,12 +255,14 @@ int main()
     wp.mux_dataqueue = &mux_dataqueue;
     wp.qqueue = &qqueue;
     wp.mux_qqueue = &mux_qqueue;
+    wp.count = &count;
+    wp.mux_count = &mux_count;
 
     for(int i = 0; i < thredsN; i++) threads[i] = std::thread(worker,wp);
 
     while(dataqueue.size() != testVar.size()){
         printf("\033c");
-        std::cout << "Running test: " << getProcessbar(dataqueue.size(),testVar.size(),testVar.size()) << std::endl;
+        std::cout << "Running test: " << getProcessbar(count,ground.avgOver*testVar.size(),20) << std::endl;
 
         boost::this_thread::sleep( boost::posix_time::seconds(1) );
 
@@ -605,7 +278,7 @@ int main()
         data dt = dataqueue.front();
         dataqueue.pop();
 
-        j.addData("NumberOfQValues: "+std::to_string(dt.prameters.numberOfQValues),dt.xdata,dt.ydata);//fts(dt.prameters.greedy,5),dt.xdata,dt.ydata);
+        j.addData("Greedy: "+std::to_string(dt.prameters.greedy),dt.xdata,dt.ydata);//fts(dt.prameters.greedy,5),dt.xdata,dt.ydata);
     }
     j.write();
 

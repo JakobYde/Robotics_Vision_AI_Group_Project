@@ -326,6 +326,7 @@ int QLearning::policy(){
     float chance = (rand()%RAND_MAX)/float(RAND_MAX-1);//Cal the chance for greedy action
 
     std::vector<int> actionIndexMaxs = getMaxActionIndexs();//Gets the action index with gives the maximum expeted value
+    if(greedy == -1.0) return getRandomactionIndex(); //If greedy is set to -1.0 it shoud take a complitly random action (for debug and test porpose)
     if(1-greedy >= chance){
         if(debug) std::cout << "QDEBUG :::: Taking greedy action.";
         actionIndex = actionIndexMaxs.at(rand()%actionIndexMaxs.size());
