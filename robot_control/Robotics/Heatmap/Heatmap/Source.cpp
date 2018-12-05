@@ -6,19 +6,18 @@
 #include <iostream>
 
 int main() {
-	/*
+	
 	Map m(90,45);
 	cv::Mat img = cv::imread("Map.png");
-	m.loadImage(img, 1);
+	m.loadImage(img, 4);
 	//m.drawMap(eBasic);
-	m.drawMap(eGeometry);
-	m.drawMap(eBrushfire);
+	m.drawMap(eCells);
 
 	drawArguments dA;
 	dA.A = Point(9, 7);
 	dA.B = Point(54,71);
 	m.drawMap(ePath, true, dA);
-	*/
+	
 
 	srand(time(NULL));
 	Lidar lidar;

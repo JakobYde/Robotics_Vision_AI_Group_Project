@@ -16,7 +16,6 @@ Map::~Map()
 
 void Map::loadImage(cv::Mat img, int upscaling)
 {
-
 	//PRE-SCALING PREPROCESSING
 
 	//UPSCALING (1ms)
@@ -62,9 +61,10 @@ void Map::loadImage(cv::Mat img, int upscaling)
 	}
 
 	//POST-SCALING PREPROCESSING 
-	vertices = getVertices(); //(28ms)
+	wallVertices = getVertices(eObstacle); //(28ms)
+	floorVertices = getVertices(eFree); //(28ms)
 	edges = getEdges(); //(223ms)
-	calculateBrushfire(); //(437ms)
+	//calculateBrushfire(); //(437ms)
 }
 
 cv::Mat Map::drawMap(drawType type, bool draw, drawArguments args)
@@ -128,7 +128,8 @@ cv::Mat Map::drawMap(drawType type, bool draw, drawArguments args)
 			std::vector<Point> line = e.getPoints();
 			for (Point p : line) img.at<cv::Vec3b>(p.getCVPoint()) = vUndiscovered;
 		}
-		for (Point p : vertices) img.at<cv::Vec3b>(p.getCVPoint()) = vPoint;
+		for (Point p : wallVertices) img.at<cv::Vec3b>(p.getCVPoint()) = vPoint;
+		for (Point p : floorVertices) img.at<cv::Vec3b>(p.getCVPoint()) = vDiscovered;
 		break;
 
 	case ePath:
@@ -138,6 +139,32 @@ cv::Mat Map::drawMap(drawType type, bool draw, drawArguments args)
 		for (Point p : path) img.at<cv::Vec3b>(p.getCVPoint()) = vUndiscovered;
 		path = simplifyPath(path);
 		for (Point p : path) img.at<cv::Vec3b>(p.getCVPoint()) = vPoint;
+		break;
+
+	case eCells:
+		windowName = "Cells";
+		img = drawMap(eGeometry, false);
+		seperateIntoRooms();
+
+		for (int i = 0; i < w * h; i++) {
+			unsigned int x = i % w, y = i / w;
+			if (map.at(x, y).type == eFree) {
+				switch (map.at(x, y).roomNumber) {
+				case ROOM_DEFAULT:
+					img.at<cv::Vec3b>(cv::Point(x, y)) = vFree;
+					break;
+
+				case ROOM_PARTITION:
+					img.at<cv::Vec3b>(cv::Point(x, y)) = map.at(x, y).roomColor;
+					break;
+
+				default:
+
+					break;
+				}
+			}
+		}
+		for (Point p : floorVertices) img.at<cv::Vec3b>(p.getCVPoint()) = cv::Vec3b(0, 255, 0);
 		break;
 	}
 
@@ -182,11 +209,19 @@ bool Map::hasLineOfSight(Point a, Point b, double wallDistanceThreshold)
 
 void Map::recursivelyFill(Point p)
 {
-	map.at(p).type = eOutside;
-	Point dirs[] = { Point(-1,0), Point(1,0), Point(0,-1), Point(0,1) };
-	for (int i = 0; i < 4; i++) {
-		Point nextPoint = p + dirs[i];
-		if (map.inBounds(nextPoint)) if (map.at(nextPoint).type == eFree) recursivelyFill(nextPoint);
+	std::queue<Point> points;
+	points.push(p);
+	while (!points.empty()) {
+		Point p = points.front();
+		points.pop();
+		if (map.at(p).type == eFree) {
+			map.at(p).type = eOutside;
+			Point dirs[] = { Point(-1,0), Point(1,0), Point(0,-1), Point(0,1) };
+			for (int i = 0; i < 4; i++) {
+				Point nextPoint = p + dirs[i];
+				if (map.inBounds(nextPoint)) if (map.at(nextPoint).type == eFree) points.push(nextPoint);
+			}
+		}
 	}
 }
 
@@ -250,16 +285,20 @@ Point Map::getPointFromIndex(unsigned int i, unsigned int w)
 	return Point(i % w, i / w);
 }
 
-std::vector<Point> Map::getVertices()
+std::vector<Point> Map::getVertices(nodeType type)
 {
-	if (vertices.size() != 0) return vertices;
+	if (type == eObstacle && wallVertices.size() != 0) return wallVertices;
+	if (type == eFree && floorVertices.size() != 0) return floorVertices;
+	nodeType invType;
+	if (type == eObstacle) invType = eFree;
+	else invType = eObstacle;
 	std::vector<Point> _vertices;
 	nodeType vertexTest[2][3] = {
-		{ eObstacle, eFree, eObstacle },
-		{ eFree, eFree, eFree } };
+		{ type, invType, type },
+		{ invType, invType, invType } };
 	for (int i = 0; i < map.cols() * map.rows(); i++) {
 		Point p = getPointFromIndex(i);
-		if (map.at(p, false).type == eObstacle) {
+		if (map.at(p, false).type == type) {
 			for (int j = 0; j < 2; j++) {
 				bool vertex = false;
 				for (int i = 0; i < 4 && !vertex; i++) {
@@ -278,7 +317,8 @@ std::vector<Point> Map::getVertices()
 			}
 		}
 	}
-	vertices = _vertices;
+	if (type == eObstacle) wallVertices = _vertices;
+	else floorVertices = _vertices;
 	return _vertices;
 }
 
@@ -286,11 +326,12 @@ std::vector<Edge> Map::getEdges()
 {
 	if (edges.size() != 0) return edges;
 	std::vector<Edge> _edges;
-	if (vertices.size() == 0) getVertices();
+	if (wallVertices.size() == 0) getVertices(eObstacle);
+	if (floorVertices.size() == 0) getVertices(eFree);
 	nodeType edgeTest[] = { eObstacle, eFree, eFree, eFree, eObstacle };
-	for (int i = 0; i < vertices.size(); i++) {
-		for (int j = i + 1; j < vertices.size(); j++) {
-			Edge edge(vertices[i], vertices[j]);
+	for (int i = 0; i < wallVertices.size(); i++) {
+		for (int j = i + 1; j < wallVertices.size(); j++) {
+			Edge edge(wallVertices[i], wallVertices[j]);
 			std::vector<Point> line = edge.getPoints();
 			line.erase(line.begin());
 			line.erase(line.end() - 1);
@@ -303,6 +344,25 @@ std::vector<Edge> Map::getEdges()
 	}
 	edges = _edges;
 	return _edges;
+}
+
+void Map::seperateIntoRooms()
+{
+	getVertices(eFree);
+	for (Point p1 : floorVertices) {
+		for (int i = 0; i < 4; i++) {
+			Point dir = dirs[(i * 2) % 8];
+			Point p = p1 + dir;
+			std::vector<Point> points;
+			bool inLineWithOtherPoint = false;
+			while (map.at(p).type != eObstacle) {
+				points.push_back(p);
+				inLineWithOtherPoint |= std::find(floorVertices.begin(), floorVertices.end(), p) != floorVertices.end();
+				p += dir;
+			}
+			for (Point p : points) map.at(p).roomNumber = ROOM_PARTITION;
+		}
+	}
 }
 
 std::vector<Point> Map::getPath(Point A, Point B, double padding)

@@ -15,6 +15,9 @@
 #define ROBOT_WIDTH 0.5
 #define BALL_WIDTH 1
 
+#define ROOM_DEFAULT -1
+#define ROOM_PARTITION -2
+
 
 enum nodeType {
 	eObstacle,
@@ -83,11 +86,16 @@ private:
 	void placePoint(Point p);
 
 	//  -- GEOMETRY --
-	std::vector<Point> vertices;
+	std::vector<Point> wallVertices;
+	std::vector<Point> floorVertices;
 	std::vector<Edge> edges;
 
-	std::vector<Point> getVertices();
+	std::vector<Point> getVertices(nodeType type);
 	std::vector<Edge> getEdges();
+
+	//  -- CELL DECOMPOSITION --
+	//  -- CONSERVATIVE REGIONS -- 
+	void seperateIntoRooms();
 
 	//  -- BRUSHFIRE --
 	double maxDist = 0;
@@ -116,6 +124,8 @@ private:
 
 		//Room Values
 		double wallDistance = -1;
+		int roomNumber = ROOM_DEFAULT;
+		cv::Vec3b roomColor = cv::Vec3b(0, 0, 0);
 
 		//Heatmap Values
 		double hmDistance = -1;

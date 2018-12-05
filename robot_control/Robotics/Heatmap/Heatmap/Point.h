@@ -70,6 +70,11 @@ public:
 		Y += p.y();
 	}
 
+	void operator-=(Point p) {
+		X -= p.x();
+		Y -= p.y();
+	}
+
 	void operator*=(double n) {
 		X *= n;
 		Y *= n;
