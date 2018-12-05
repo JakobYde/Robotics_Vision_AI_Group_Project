@@ -213,9 +213,9 @@ int main()
     const int thredsN = 9;
 
     qTestPra ground;
-    ground.epsiodes = 1000;
+    ground.epsiodes = 200000;
     ground.maxStepsInEpsiode = 5;
-    ground.avgOver = 100000;
+    ground.avgOver = 100;
 
     ground.useDoubelQ = true;
     ground.numberOfQValues = 2;
@@ -230,9 +230,16 @@ int main()
     JSONPlot j("Q-learning. Discount_rate: "+fts(ground.discount_rate,3) +", stepSize: "+fts(ground.stepSize,3)+", greedy: test"/*+fts(ground.greedy,3)*/+", qInitValue: "+fts(ground.qInitValue,3) , "Episode", "Avg reward over "+std::to_string(ground.avgOver)+" repetitions");
 
     //std::vector<int> testVar= {1, 2,3,4};
-    std::vector<float> testVar= {-1.0, 0.0, 0.001, 0.005, 0.01, 0.05, 0.2, 0.8, 1.0};
-    //for(float var = 0.0; var <= 1.0; var+=0.05) testVar.push_back(var);
+    //0.1 <- 0.001
 
+    const float maxTest = 0.1;
+    const float minTest = 0.001;
+    const int numberOfTests = 22;//Will be +1
+    const float inc = (maxTest-minTest)/numberOfTests;
+    std::vector<float> testVar;
+    for(float testV = minTest; testV <= maxTest+inc; testV += inc) testVar.push_back(testV);
+
+    //std::vector<float> testVar= {-1.0, 0.0, 0.001, 0.005, 0.01, 0.05, 0.2, 0.8, 1.0};
 
     std::queue<data> dataqueue;
     std::mutex mux_dataqueue;
