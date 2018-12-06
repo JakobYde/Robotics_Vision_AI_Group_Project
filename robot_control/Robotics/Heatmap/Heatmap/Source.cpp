@@ -9,13 +9,14 @@ int main() {
 	
 	Map m(90,45);
 	cv::Mat img = cv::imread("Map.png");
-	m.loadImage(img, 4);
+	m.loadImage(img, 2);
 	//m.drawMap(eBasic);
-	m.drawMap(eCells);
-
+	//m.drawMap(eCells);
+	//m.drawMap(eHeatmap);
 	drawArguments dA;
 	dA.A = Point(9, 7);
 	dA.B = Point(54,71);
+	dA.padding = 1;
 	m.drawMap(ePath, true, dA);
 	
 

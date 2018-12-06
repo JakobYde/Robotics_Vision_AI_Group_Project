@@ -3,6 +3,7 @@
 #include "Grid.h"
 #include "Point.h"
 #include "Edge.h"
+#include "GraphDrawer.h"
 
 #include <opencv2/opencv.hpp>
 
@@ -17,6 +18,8 @@
 
 #define ROOM_DEFAULT -1
 #define ROOM_PARTITION -2
+
+#define HMDISTANCE_DEFAULT -1
 
 
 enum nodeType {
@@ -48,12 +51,43 @@ class Map
 {
 private: class MapNode;
 public:
+	class Path
+	{
+	public:
+		Path(std::vector<Point> pts) : points(pts), length(pts.size()) { }
+		~Path() {};
+
+		std::vector<Point> points;
+		double length;
+	};
+
+	class Plan {
+	public:
+		Plan(std::vector<Path> paths) : paths(paths) { for (Path p : paths) length += p.points.size(); }
+		Plan(std::vector<Path> paths, double length) : paths(paths), length(length) { }
+		~Plan() {};
+
+		bool operator>(const Plan p) const {
+			return length > p.length;
+		}
+
+		Plan operator+(Path pth) const {
+			std::vector<Path> newPaths = paths;
+			newPaths.push_back(pth);
+			Plan pln(newPaths, length + pth.length);
+		}
+
+		std::vector<Path> paths;
+		double length = 0;
+	};
+
 	Map();
 	Map(double fov, double viewDistance);
 	~Map();
 
 	void loadImage(cv::Mat img, int upscaling = 1);
 	cv::Mat drawMap(drawType type, bool draw = true, drawArguments args = drawArguments());
+	std::queue<Path> getPath();
 	std::vector<Point> getPoints();
 
 	struct GreaterH {
@@ -63,8 +97,26 @@ public:
 	};
 
 private:
+	class Room {
+	public:
+		Room(Point origin, int width, int height) : origin(origin), width(width), height(height), area(width * height) {};
+		Room(Point A, Point B);
+		~Room() {};
+
+		std::vector<Point> getPoints(double viewDistance);
+		int getArea();
+
+		bool operator<(const Room r) const {
+			return area < r.area;
+		}
+
+		int width = 0, height = 0, area = 0;
+		Point origin = Point(0,0);
+	};
+
 	double fov, viewDistance, scale = 1;
 	std::vector<Point> points;
+	std::priority_queue<Room> rooms;
 
 	Point dirs[8] = { 
 		Point(-1,0), 
@@ -96,6 +148,7 @@ private:
 	//  -- CELL DECOMPOSITION --
 	//  -- CONSERVATIVE REGIONS -- 
 	void seperateIntoRooms();
+	bool isScouted(Room room);
 
 	//  -- BRUSHFIRE --
 	double maxDist = 0;
@@ -128,15 +181,14 @@ private:
 		cv::Vec3b roomColor = cv::Vec3b(0, 0, 0);
 
 		//Heatmap Values
-		double hmDistance = -1;
+		double hmDistance = HMDISTANCE_DEFAULT;
 
 		//A* Values
 		double asH, asG, asF;
 		MapNode* asParent;
 		bool asSeen, asVisited;
-
-
 	};
+
 
 	Grid<MapNode> map;
 };

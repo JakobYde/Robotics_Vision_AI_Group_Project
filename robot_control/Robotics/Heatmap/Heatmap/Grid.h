@@ -12,6 +12,8 @@ typedef double GridCoordinateType;
 template <class T>
 class Grid
 {
+private: 
+	class GridIterator;
 public:
 	Grid() {}
 	~Grid() {}
@@ -33,12 +35,53 @@ public:
 		return 0;
 	}
 
+	GridIterator begin() {
+		return GridIterator(this, Point(0, 0));
+	}
+
+	GridIterator end() {
+		return GridIterator();
+	}
+
 	bool inBounds(Point p) { return inBounds(p.x(), p.y()); }
 
 	bool inBounds(GridCoordinateType x, GridCoordinateType y) {
 		if (y < grid.size() && y >= 0) if (x < grid[y].size() && x >= 0) return true;
 		return false;
 	}
+
+	class GridIterator {
+	public:
+		GridIterator() {};
+		GridIterator(Grid<T>* grid, Point point) : grid(grid), point(point) {}
+		~GridIterator() {}
+
+		bool operator==(GridIterator gI) {
+			return (point == gI.point && grid == gI.grid);
+		}
+
+		bool operator!=(GridIterator gI) {
+			return (point != gI.point || grid != gI.grid);
+		}
+
+		T& operator*() {
+			if (grid == NULL) return *(new T);
+			return grid->at(point);
+		}
+
+		void operator++() {
+			point += Point(1, 0);
+			if (!grid->inBounds(point)) point = Point(0, point.y() + 1);
+			if (!grid->inBounds(point)) {
+				point = Point();
+				grid = nullptr;
+			}
+		}
+
+	private:
+		Grid<T>* grid = nullptr;
+		Point point;
+	};
 
 private:
 	std::vector<std::vector<T>> grid;

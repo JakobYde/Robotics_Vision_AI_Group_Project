@@ -16,7 +16,7 @@ Edge::~Edge()
 std::vector<Point> Edge::getPoints(double stepSize)
 {
 	std::vector<Point> line;
-	if (A != B) {
+	if (Point(floor(A.x()), floor(A.y())) != Point(floor(B.x()), floor(B.y()))) {
 		int dX = (int)B.x() - (int)A.x(), dY = (int)B.y() - (int)A.y(), l, g;
 		bool findingX = false;
 		if (abs(dX) > abs(dY)) l = dY, g = dX;

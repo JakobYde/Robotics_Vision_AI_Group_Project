@@ -22,7 +22,11 @@ void Map::loadImage(cv::Mat img, int upscaling)
 	if (upscaling > 1) {
 		resize(img, img, img.size() * upscaling, 0, 0, cv::INTER_NEAREST);
 		scale = 1 / (double)upscaling;
+		viewDistance /= scale;
 	}
+
+	Room r(Point(10, 5), 5, 3);
+	r.getPoints(M_SQRT2);
 
 	//CREATION OF MAP OBJECT (14ms)
 	int i = 0;
@@ -64,7 +68,7 @@ void Map::loadImage(cv::Mat img, int upscaling)
 	wallVertices = getVertices(eObstacle); //(28ms)
 	floorVertices = getVertices(eFree); //(28ms)
 	edges = getEdges(); //(223ms)
-	//calculateBrushfire(); //(437ms)
+	calculateBrushfire(); //(437ms)
 }
 
 cv::Mat Map::drawMap(drawType type, bool draw, drawArguments args)
@@ -73,9 +77,9 @@ cv::Mat Map::drawMap(drawType type, bool draw, drawArguments args)
 	unsigned int w = map.cols(), h = map.rows();
 	cv::Mat img(h, w, CV_8UC3);
 
-	placePoint(Point(100, 40));
-
 	std::vector<Point> path;
+	int postScale = MIN((980 / img.rows), (1720 / img.cols));
+	bool dontResize = false;
 
 	switch (type) {
 	case eBasic:
@@ -90,14 +94,25 @@ cv::Mat Map::drawMap(drawType type, bool draw, drawArguments args)
 		}
 		break;
 
-	case eHeatmap:
+	case eHeatmap: {
 		windowName = "Heatmap";
+		std::priority_queue<Room> _rooms = rooms;
+		while (!_rooms.empty()) {
+			Room r = _rooms.top();
+			if (!isScouted(r)) {
+				std::vector<Point> points = r.getPoints(viewDistance);
+				for (Point p : points) {
+					placePoint(p);
+				}
+			}
+			_rooms.pop();
+		}
 		for (int i = 0; i < w * h; i++) {
 			unsigned int x = i % w, y = i / w;
 			cv::Vec3b* v = &img.at<cv::Vec3b>(cv::Point(x, y));
 
 			MapNode n = map.at(x, y);
-				 if (n.type == eObstacle) *v = vObstacle;
+			if (n.type == eObstacle) *v = vObstacle;
 			else if (n.type == eOutside) *v = vOutside;
 			else if (n.type == eFree) {
 				if (n.hmDistance == -1 || n.hmDistance > viewDistance) *v = vUndiscovered;
@@ -105,6 +120,16 @@ cv::Mat Map::drawMap(drawType type, bool draw, drawArguments args)
 				else *v = (1 - n.hmDistance / viewDistance) * vDiscovered + (n.hmDistance / viewDistance) * vUndiscovered;
 			}
 		}
+		cv::resize(img, img, cv::Size(), postScale, postScale, cv::INTER_NEAREST);
+		for (int i = 0; i < map.cols() * map.rows(); i++) {
+			Point p = getPointFromIndex(i);
+			MapNode n = map.at(p);
+			if (n.roomNumber == ROOM_PARTITION) {
+				for (int i = 0; i < postScale; i++) img.at<cv::Vec3b>((p * postScale + Point(i, 0.5 * postScale)).getCVPoint()) = vPoint;
+			}
+		}
+		dontResize = true;
+	}
 		break;
 
 	case eBrushfire:
@@ -133,7 +158,7 @@ cv::Mat Map::drawMap(drawType type, bool draw, drawArguments args)
 		break;
 
 	case ePath:
-		path = getPath(args.A / scale, args.B / scale);
+		path = getPath(args.A / scale, args.B / scale, args.padding / scale);
 		windowName = "Path";
 		img = drawMap(eBasic, false);
 		for (Point p : path) img.at<cv::Vec3b>(p.getCVPoint()) = vUndiscovered;
@@ -143,7 +168,7 @@ cv::Mat Map::drawMap(drawType type, bool draw, drawArguments args)
 
 	case eCells:
 		windowName = "Cells";
-		img = drawMap(eGeometry, false);
+		img = drawMap(eBasic, false);
 		seperateIntoRooms();
 
 		for (int i = 0; i < w * h; i++) {
@@ -159,7 +184,7 @@ cv::Mat Map::drawMap(drawType type, bool draw, drawArguments args)
 					break;
 
 				default:
-
+					img.at<cv::Vec3b>(cv::Point(x, y)) = map.at(x, y).roomColor;
 					break;
 				}
 			}
@@ -169,13 +194,19 @@ cv::Mat Map::drawMap(drawType type, bool draw, drawArguments args)
 	}
 
 	if (draw) {
-		int scale = MIN((980 / img.rows), (1720 / img.cols));
-		cv::resize(img, img, cv::Size(), scale, scale, cv::INTER_NEAREST);
+		if (!dontResize) cv::resize(img, img, cv::Size(), postScale, postScale, cv::INTER_NEAREST);
 		cv::namedWindow(windowName, CV_WINDOW_AUTOSIZE);
 		cv::imshow(windowName, img);
 		cv::waitKey();
 	}
 	return img;
+}
+
+std::queue<Map::Path> Map::getPath()
+{
+	std::vector<Plan> closedSet;
+	std::priority_queue<Plan, std::vector<Plan>, std::greater<Plan>> openSet;
+	return std::queue<Path>();
 }
 
 std::vector<Point> Map::getPoints()
@@ -189,13 +220,17 @@ void Map::placePoint(Point p)
 	unsigned int xStart = MAX(0, p.x() - viewDistance), xEnd = MIN(w - 1, p.x() + viewDistance);
 	unsigned int yStart = MAX(0, p.y() - viewDistance), yEnd = MIN(h - 1, p.y() + viewDistance);
 	int dX = xEnd - xStart, dY = yEnd - yStart;
+	points.push_back(p);
 	for (int i = 0; i < dX * dY; i++) {
 		int x = i % dX + xStart, y = i / dX + yStart;
 		if (map.at(x, y, false).type == eFree) {
 			double dx = x - (int)p.x(), dy = y - (int)p.y();
 			double dist = sqrt(dx * dx + dy * dy);
 			bool LOS = hasLineOfSight(p, Point(x, y));
-			if (LOS) map.at(x, y, false).hmDistance = dist;
+			if (LOS) {
+				double* phmDist = &map.at(x, y, false).hmDistance;
+				if (*phmDist == HMDISTANCE_DEFAULT || *phmDist > dist) *phmDist = dist;
+			}
 		}
 	}
 }
@@ -350,8 +385,8 @@ void Map::seperateIntoRooms()
 {
 	getVertices(eFree);
 	for (Point p1 : floorVertices) {
-		for (int i = 0; i < 4; i++) {
-			Point dir = dirs[(i * 2) % 8];
+		for (int i = 0; i < 2; i++) {
+			Point dir = dirs[(i * 4) % 8];
 			Point p = p1 + dir;
 			std::vector<Point> points;
 			bool inLineWithOtherPoint = false;
@@ -360,9 +395,53 @@ void Map::seperateIntoRooms()
 				inLineWithOtherPoint |= std::find(floorVertices.begin(), floorVertices.end(), p) != floorVertices.end();
 				p += dir;
 			}
-			for (Point p : points) map.at(p).roomNumber = ROOM_PARTITION;
+			for (Point p : points)
+			{
+				map.at(p).roomNumber = ROOM_PARTITION;
+				map.at(p).roomColor = vUndiscovered;
+			}
 		}
 	}
+
+	for (int i = 0; i < map.cols() * map.rows(); i++) {
+		Point origin = getPointFromIndex(i);
+
+		int nextRoomNum = rooms.size();
+		if (map.at(origin).type == eFree && map.at(origin).roomNumber == ROOM_DEFAULT) {
+			int width = 0, height = 0;
+			cv::Vec3b roomColor(rand() % 256, rand() % 256, rand() % 256);
+			std::queue<Point> points;
+			points.push(origin);
+
+			while (!points.empty()) {
+				Point p = points.front();
+				points.pop();
+				if (map.at(p).roomNumber == ROOM_DEFAULT) {
+					map.at(p).roomNumber = nextRoomNum;
+					map.at(p).roomColor = roomColor;
+					width = MAX(width, p.x() - origin.x());
+					height = MAX(height, p.y() - origin.y());
+					for (int d = 0; d < 4; d++) {
+						Point _p = p + dirs[(d * 2) % 8];
+						if (map.at(_p).type == eFree && map.at(_p).roomNumber == ROOM_DEFAULT) points.push(_p);
+					}
+				}
+			}
+			rooms.push(Room(origin, width, height));
+			nextRoomNum++;
+		}
+	}
+
+}
+
+bool Map::isScouted(Room room)
+{
+	for (int i = 0; i < room.height * room.width; i++) {
+		Point p(i % room.width, i / room.width);
+		p += room.origin;
+		if (map.at(p).hmDistance == -1 || map.at(p).hmDistance > viewDistance) return false;
+	}
+	return true;
 }
 
 std::vector<Point> Map::getPath(Point A, Point B, double padding)
@@ -452,3 +531,26 @@ std::vector<Point> Map::simplifyPath(std::vector<Point> path)
 	} while (changedPath);
 	return path;
 }
+
+Map::Room::Room(Point A, Point B)
+{
+	origin = Point(MIN(A.x(), B.x()), MIN(A.y(), B.y()));
+	width = abs(A.x() - B.x());
+	height = abs(A.y() - B.y());
+}
+
+std::vector<Point> Map::Room::getPoints(double viewDistance)
+{
+	std::vector<Point> result;
+	double viewLength = viewDistance / M_SQRT2;
+	int nX = ceil(width / viewLength), nY = ceil(height / viewLength);
+	double dW = (double)width / (double)nX, dH = (double)height / (double)nY;
+	for (int x = 0; x < nX; x++)  for (int y = 0; y < nY; y++)  result.push_back(origin + Point((x + 0.5) * dW, (y + 0.5) * dH));
+	return result;
+}
+
+int Map::Room::getArea()
+{
+	return width * height;
+}
+

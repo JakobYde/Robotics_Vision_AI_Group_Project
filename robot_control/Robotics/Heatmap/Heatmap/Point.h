@@ -111,6 +111,10 @@ public:
 		return Point(X * p.x(), Y * p.y());
 	}
 
+	Point floor() {
+		return Point(std::floor(X), std::floor(Y));
+	}
+
 	cv::Point getCVPoint() {
 		return cv::Point(X,Y);
 	}
