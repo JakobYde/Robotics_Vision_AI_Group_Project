@@ -66,11 +66,13 @@ ydataTemp = []
 for x in xdata:
     ydataTemp.append(ydata[mapTemp[x]])
 ydata = ydataTemp
+#ydata = rooling(ydata,0.35)
 
-plt.xlabel("Greedy")
-plt.ylabel("Avg over the first 200000 episoder")
-#plt.plot(xdata,ydata,label="####")
+plt.xlabel(r"$\epsilon$")
+plt.ylabel("Average reward over the first 200000 steps")
+plt.plot(xdata,ydata)
 plt.legend(bbox_to_anchor=(1,0.5), loc="center left")
+plt.rcParams.update({'font.size': 20})
 #plt.legend()
 plt.title(data["titel"])
 

@@ -12,7 +12,7 @@ JSONPlot::JSONPlot(std::string titel, std::string xlabel, std::string ylabel, st
 
 void JSONPlot::write(std::string filename)
 {
-    if (filename == " ") filename = titel+".json";
+    if (filename == " ") filename = titel+"_"+std::to_string(std::rand()%10000)+".json";
     j.write(filename);
 }
 

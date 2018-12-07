@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <cstdio>
 
 void makeJOSNPlotData(std::string titel, std::string xlabel, std::string ylabel, std::vector<float> xdata, std::vector<float> ydata, std::string plotType = "plot");
 

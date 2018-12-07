@@ -12,6 +12,7 @@
 
 #include <fl/Headers.h>
 
+#include <time.h>
 #include <array>
 #include <iostream>
 #include <math.h>
@@ -232,9 +233,9 @@ int main()
     //std::vector<int> testVar= {1, 2,3,4};
     //0.1 <- 0.001
 
-    const float maxTest = 0.1;
-    const float minTest = 0.001;
-    const int numberOfTests = 22;//Will be +1
+    const float maxTest = 1.0;
+    const float minTest = 0.0;
+    const int numberOfTests = 39;//Will be +1
     const float inc = (maxTest-minTest)/numberOfTests;
     std::vector<float> testVar;
     for(float testV = minTest; testV <= maxTest+inc; testV += inc) testVar.push_back(testV);
@@ -280,7 +281,7 @@ int main()
     int dataSice = dataqueue.size();
     while(not dataqueue.empty()){
         printf("\033c");
-        std::cout << "Wirting JSON: " << getProcessbar(dataSice-dataqueue.size(),dataSice,dataSice) << std::endl;
+        std::cout << "Wirting JSON: " << getProcessbar(dataSice-dataqueue.size()+1,dataSice,dataSice) << std::endl;
 
         data dt = dataqueue.front();
         dataqueue.pop();

@@ -38,11 +38,13 @@ count = 0
 windo = 500
 alphaColor = 0.5
 alfaRunning = 0.002
+plt.rcParams.update({'font.size': 20})
 while True:
     if "xdata_{}".format(count) in data:
         if "legend_{}".format(count) in data:            
             #p = plt.plot(data["xdata_{}".format(count)][:-windo], movingAvg(data["ydata_{}".format(count)],windo)[:-windo], label=data["legend_{}".format(count)]+" - moving avg ")
-            plt.plot(data["xdata_{}".format(count)], rooling(data["ydata_{}".format(count)],alfaRunning), label=data["legend_{}".format(count)]+" - EMA (alfa = {})".format(alfaRunning))#, color=p[0].get_color(), alpha=alphaColor)
+            greedy = float(data["legend_{}".format(count)].split()[1])
+            plt.plot(data["xdata_{}".format(count)], rooling(data["ydata_{}".format(count)],alfaRunning), label="Greedy = "+str(greedy))#, color=p[0].get_color(), alpha=alphaColor)
             #plt.plot(data["xdata_{}".format(count)], data["ydata_{}".format(count)], label=data["legend_{}".format(count)], color=p[0].get_color(), alpha=alphaColor/2)
                 
         else:
@@ -52,11 +54,13 @@ while True:
         count += 1
     else:
         break
-if "xlabel" in data: plt.xlabel(data["xlabel"])
-if "ylabel" in data: plt.ylabel(data["ylabel"])
-plt.legend(bbox_to_anchor=(1,0.5), loc="center left")
+if "xlabel" in data: plt.xlabel("Steps")
+if "ylabel" in data: plt.ylabel("Average reward over 100 repetitions")
+plt.legend(bbox_to_anchor=(1,0.5), loc="best")
+
 #plt.legend()
 plt.title(data["titel"])
+
 plt.show()
 
 

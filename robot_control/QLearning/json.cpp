@@ -82,7 +82,16 @@ void Json::write(std::string filename)
 {
     std::ofstream jsonfile;
     jsonfile.open(filename);
-    jsonfile << to_string();
+
+    jsonfile << "{";
+    for(unsigned int i = 0; i < valuse.size()-1; i++)
+    {
+        jsonfile << '"' + valuse.at(i).name + '"' + ": " + valuse.at(i).value + ", \n";
+    }
+    jsonfile << '"' + valuse.back().name + '"' + ": " + valuse.back().value;
+
+    jsonfile << "}";
+
     jsonfile.close();
 }
 
