@@ -2,7 +2,7 @@
 
 Map::Map()
 {
-	*this = Map(90, 100);
+	*this = Map(90, 40);
 }
 
 Map::Map(double fov, double viewDistance) : fov(fov), viewDistance(viewDistance)
@@ -67,7 +67,7 @@ void Map::loadImage(cv::Mat img, int upscaling)
 	//POST-SCALING PREPROCESSING 
 	wallVertices = getVertices(eObstacle); //(28ms)
 	floorVertices = getVertices(eFree); //(28ms)
-	edges = getEdges(); //(223ms)
+	//edges = getEdges(); //(223ms)
 	calculateBrushfire(); //(437ms)
 }
 
@@ -77,7 +77,6 @@ cv::Mat Map::drawMap(drawType type, bool draw, drawArguments args)
 	unsigned int w = map.cols(), h = map.rows();
 	cv::Mat img(h, w, CV_8UC3);
 
-	std::vector<Point> path;
 	int postScale = MIN((980 / img.rows), (1720 / img.cols));
 	bool dontResize = false;
 
@@ -116,7 +115,7 @@ cv::Mat Map::drawMap(drawType type, bool draw, drawArguments args)
 			else if (n.type == eOutside) *v = vOutside;
 			else if (n.type == eFree) {
 				if (n.hmDistance == -1 || n.hmDistance > viewDistance) *v = vUndiscovered;
-				else if (n.hmDistance == 0) *v = vPoint;
+				//else if (n.hmDistance == 0) *v = vPoint;
 				else *v = (1 - n.hmDistance / viewDistance) * vDiscovered + (n.hmDistance / viewDistance) * vUndiscovered;
 			}
 		}
@@ -128,6 +127,9 @@ cv::Mat Map::drawMap(drawType type, bool draw, drawArguments args)
 				for (int i = 0; i < postScale; i++) img.at<cv::Vec3b>((p * postScale + Point(i, 0.5 * postScale)).getCVPoint()) = vPoint;
 			}
 		}
+		for (Point p : points) cv::circle(img, (p * postScale).getCVPoint(), 4, vPoint, -1);
+		for (int i = 0; i < points.size(); i++) cv::putText(img, std::to_string(i), (points[i] * postScale).getCVPoint(), cv::FONT_HERSHEY_PLAIN, 4, cv::Vec3b(0,0,0));
+
 		dontResize = true;
 	}
 		break;
@@ -157,13 +159,14 @@ cv::Mat Map::drawMap(drawType type, bool draw, drawArguments args)
 		for (Point p : floorVertices) img.at<cv::Vec3b>(p.getCVPoint()) = vDiscovered;
 		break;
 
-	case ePath:
-		path = getPath(args.A / scale, args.B / scale, args.padding / scale);
+	case ePath: {
+		Path path = getPath(args.A / scale, args.B / scale, args.padding / scale);
 		windowName = "Path";
 		img = drawMap(eBasic, false);
 		for (Point p : path) img.at<cv::Vec3b>(p.getCVPoint()) = vUndiscovered;
 		path = simplifyPath(path);
 		for (Point p : path) img.at<cv::Vec3b>(p.getCVPoint()) = vPoint;
+	}
 		break;
 
 	case eCells:
@@ -202,11 +205,47 @@ cv::Mat Map::drawMap(drawType type, bool draw, drawArguments args)
 	return img;
 }
 
-std::queue<Map::Path> Map::getPath()
+Map::Plan Map::getPlan()
 {
-	std::vector<Plan> closedSet;
+	Plan plan;
 	std::priority_queue<Plan, std::vector<Plan>, std::greater<Plan>> openSet;
-	return std::queue<Path>();
+
+	size_t N = points.size();
+	//Path* paths = new Path[N * N];
+	Path paths[21 * 21];
+
+	int startIndex = 2;
+
+	for (int i = 0; i < N; i++) {
+		if (i != startIndex) {
+			paths[i + N * startIndex] = getPath(points[startIndex], points[i]);
+			paths[N * i + startIndex] = paths[i];
+			Plan plan({ paths[i] });
+			plan.pointsVisited = { startIndex, i };
+			openSet.push(plan);
+		}
+	}
+
+	bool stop = false;
+	while (!stop) {
+		Plan plan = openSet.top();
+		openSet.pop();
+		if (plan.pointsVisited.size() == N) break;
+		int lastPointIndex = plan.pointsVisited[plan.pointsVisited.size() - 1];
+		std::vector<int> pointsLeft;
+		for (int i = 0; i < N; i++) if (std::find(plan.pointsVisited.begin(), plan.pointsVisited.end(), i) == plan.pointsVisited.end()) pointsLeft.push_back(i);
+		for (int i : pointsLeft) {
+			Path path = paths[lastPointIndex + i * N];
+			if (path == Path()) {
+				path = getPath(points[i], points[lastPointIndex]);
+				paths[lastPointIndex + i * N] = path;
+			}
+			Plan p = plan + path;
+			p.pointsVisited.push_back(i);
+			openSet.push(p);
+		}
+	}
+	return plan;
 }
 
 std::vector<Point> Map::getPoints()
@@ -224,7 +263,7 @@ void Map::placePoint(Point p)
 	for (int i = 0; i < dX * dY; i++) {
 		int x = i % dX + xStart, y = i / dX + yStart;
 		if (map.at(x, y, false).type == eFree) {
-			double dx = x - (int)p.x(), dy = y - (int)p.y();
+			double dx = x - p.x(), dy = y - p.y();
 			double dist = sqrt(dx * dx + dy * dy);
 			bool LOS = hasLineOfSight(p, Point(x, y));
 			if (LOS) {
@@ -444,7 +483,7 @@ bool Map::isScouted(Room room)
 	return true;
 }
 
-std::vector<Point> Map::getPath(Point A, Point B, double padding)
+Map::Path Map::getPath(Point A, Point B, double padding)
 {
 	if (!isDiscoverable(A) || !isDiscoverable(B)) throw "ASTAR - Points inside wall.";
 	if (!map.inBounds(A) || !map.inBounds(B)) throw "ASTAR - Points out of bounds.";
@@ -512,19 +551,19 @@ std::vector<Point> Map::getPath(Point A, Point B, double padding)
 		nextNode = nextNode->asParent;
 	}
 
-	return path;
+	return Path(path);
 }
 
-std::vector<Point> Map::simplifyPath(std::vector<Point> path)
+Map::Path Map::simplifyPath(Path path)
 {
 	bool changedPath;
 	do {
 		changedPath = false;
 		int i = 0;
-		while (i < path.size() - 2 && !changedPath) {
-			if (path[i + 1] + (path[i + 1] - path[i]).normalized() == path[i + 2]) {
+		while (i < path.points.size() - 2 && !changedPath) {
+			if (path.points[i + 1] + (path.points[i + 1] - path.points[i]).normalized() == path.points[i + 2]) {
 				changedPath = true;
-				path.erase(path.begin() + i + 1);
+				path.points.erase(path.points.begin() + i + 1);
 			}
 			i++;
 		}
@@ -542,7 +581,7 @@ Map::Room::Room(Point A, Point B)
 std::vector<Point> Map::Room::getPoints(double viewDistance)
 {
 	std::vector<Point> result;
-	double viewLength = viewDistance / M_SQRT2;
+	double viewLength = 2 * viewDistance / M_SQRT2;
 	int nX = ceil(width / viewLength), nY = ceil(height / viewLength);
 	double dW = (double)width / (double)nX, dH = (double)height / (double)nY;
 	for (int x = 0; x < nX; x++)  for (int y = 0; y < nY; y++)  result.push_back(origin + Point((x + 0.5) * dW, (y + 0.5) * dH));

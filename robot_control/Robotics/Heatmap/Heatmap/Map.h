@@ -13,7 +13,7 @@
 #define BLEND_COLOR(a,b,alpha) (a * (1 - alpha) + b * alpha)
 #define GET_DISTANCE(a,b) (sqrt((a.x() - b.x())*(a.x() - b.x()) + sqrt((a.y() - b.y())*(a.y() - b.y()))))
 
-#define ROBOT_WIDTH 0.5
+#define ROBOT_WIDTH 0
 #define BALL_WIDTH 1
 
 #define ROOM_DEFAULT -1
@@ -54,31 +54,61 @@ public:
 	class Path
 	{
 	public:
+		Path() {}
 		Path(std::vector<Point> pts) : points(pts), length(pts.size()) { }
 		~Path() {};
 
-		std::vector<Point> points;
-		double length;
+		bool operator>(Path p) const {
+			return length > p.length;
+		}
+
+		bool operator==(Path p) {
+			if (length != p.length) return false;
+			for (int i = 0; i < points.size(); i++) if (points[i] != p.points[i]) return false;
+			//if (points != p.points) return false;
+			return true;
+		}
+
+		Path reverse() {
+			Path p = *this;
+			std::reverse(p.points.begin(), p.points.end());
+			return p;
+		}
+
+		std::vector<Point>::iterator begin() { return points.begin(); }
+		std::vector<Point>::iterator end() { return points.end(); }
+		void erase(int i) { points.erase(points.begin() + 1); }
+
+		std::vector<Point> points = std::vector<Point>();
+		double length = 0;
 	};
 
 	class Plan {
 	public:
+		Plan() {}
 		Plan(std::vector<Path> paths) : paths(paths) { for (Path p : paths) length += p.points.size(); }
 		Plan(std::vector<Path> paths, double length) : paths(paths), length(length) { }
 		~Plan() {};
 
 		bool operator>(const Plan p) const {
-			return length > p.length;
+			return (length / paths.size()) > (p.length / p.paths.size());
 		}
+
+		std::vector<Path>::iterator begin() { return paths.begin(); }
+		std::vector<Path>::iterator end() { return paths.end(); }
 
 		Plan operator+(Path pth) const {
 			std::vector<Path> newPaths = paths;
 			newPaths.push_back(pth);
-			Plan pln(newPaths, length + pth.length);
+			Plan newPlan(newPaths, length + pth.length);
+			newPlan.pointsVisited = pointsVisited;
+			return newPlan;
 		}
 
+		std::vector<int> pointsVisited;
 		std::vector<Path> paths;
 		double length = 0;
+
 	};
 
 	Map();
@@ -87,7 +117,7 @@ public:
 
 	void loadImage(cv::Mat img, int upscaling = 1);
 	cv::Mat drawMap(drawType type, bool draw = true, drawArguments args = drawArguments());
-	std::queue<Path> getPath();
+	Plan getPlan();
 	std::vector<Point> getPoints();
 
 	struct GreaterH {
@@ -157,8 +187,8 @@ private:
 	double getMinNeighbor(Point p);
 
 	// -- PATH PLANNING --
-	std::vector<Point> getPath(Point A, Point B, double padding = ROBOT_WIDTH);
-	std::vector<Point> simplifyPath(std::vector<Point> path);
+	Path getPath(Point A, Point B, double padding = ROBOT_WIDTH);
+	Path simplifyPath(Path path);
 
 
 	cv::Vec3b vObstacle = cv::Vec3b(0, 0, 0);

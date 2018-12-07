@@ -7,17 +7,19 @@
 
 int main() {
 	
-	Map m(90,45);
+	Map m(90,100);
 	cv::Mat img = cv::imread("Map.png");
-	m.loadImage(img, 2);
-	//m.drawMap(eBasic);
-	//m.drawMap(eCells);
-	//m.drawMap(eHeatmap);
-	drawArguments dA;
+	m.loadImage(img, 1);
+	m.drawMap(eBasic, false);
+	m.drawMap(eCells, false);
+	m.drawMap(eHeatmap, true);
+	Map::Plan plan = m.getPlan();
+	/*drawArguments dA;
 	dA.A = Point(9, 7);
 	dA.B = Point(54,71);
 	dA.padding = 1;
 	m.drawMap(ePath, true, dA);
+
 	
 
 	srand(time(NULL));
@@ -46,8 +48,8 @@ int main() {
 	gD.addLine(line);
 
 	cv::imshow("Graph", gD.getImage());
-	cv::waitKey();
-	int c;
-	std::cin >> c;
+	cv::waitKey();*/
+	int key = 0;
+	while (key != 'q') key = cv::waitKey();
 	return 0;
 }
