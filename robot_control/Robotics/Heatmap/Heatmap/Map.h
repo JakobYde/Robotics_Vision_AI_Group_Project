@@ -13,7 +13,7 @@
 #define BLEND_COLOR(a,b,alpha) (a * (1 - alpha) + b * alpha)
 #define GET_DISTANCE(a,b) (sqrt((a.x() - b.x())*(a.x() - b.x()) + sqrt((a.y() - b.y())*(a.y() - b.y()))))
 
-#define ROBOT_WIDTH 0
+#define ROBOT_WIDTH 1.01
 #define BALL_WIDTH 1
 
 #define ROOM_DEFAULT -1
@@ -86,12 +86,20 @@ public:
 	class Plan {
 	public:
 		Plan() {}
-		Plan(std::vector<Path> paths) : paths(paths) { for (Path p : paths) length += p.points.size(); }
+		Plan(std::vector<Path> paths) : paths(paths) { 
+			for (Path p : paths) length += p.points.size(); 
+		}
 		Plan(std::vector<Path> paths, double length) : paths(paths), length(length) { }
 		~Plan() {};
 
+		double heuristic() const {
+			return length / (pointsVisited.size() * pointsVisited.size());
+			//return length / pointsVisited.size();
+			return length;
+		}
+
 		bool operator>(const Plan p) const {
-			return (length / paths.size()) > (p.length / p.paths.size());
+			return heuristic() > p.heuristic();
 		}
 
 		std::vector<Path>::iterator begin() { return paths.begin(); }
@@ -105,9 +113,21 @@ public:
 			return newPlan;
 		}
 
+		bool isEquivalent(Plan p) {
+			if (pointsVisited.size() != p.pointsVisited.size()) return false;
+			if (pointsVisited[pointsVisited.size() - 1] != p.pointsVisited[p.pointsVisited.size() - 1]) return false;
+			std::vector<int> copyA = pointsVisited, copyB = p.pointsVisited;
+			std::sort(copyA.begin() + 1, copyA.end() - 1);
+			std::sort(copyB.begin() + 1, copyB.end() - 1);
+			for (int i = 0; i < pointsVisited.size() - 1; i++) if (copyA[i] != copyB[i]) return false;
+			return true;
+		}
+
+
 		std::vector<int> pointsVisited;
 		std::vector<Path> paths;
 		double length = 0;
+
 
 	};
 
@@ -129,6 +149,7 @@ public:
 private:
 	class Room {
 	public:
+		Room() {}
 		Room(Point origin, int width, int height) : origin(origin), width(width), height(height), area(width * height) {};
 		Room(Point A, Point B);
 		~Room() {};
@@ -140,8 +161,18 @@ private:
 			return area < r.area;
 		}
 
+		std::vector<Point>::iterator begin() {
+			if (points.size() < area) for (int i = 0; i < width * height; i++) points.push_back(Point(i % width, i / width) + origin);
+			return points.begin();
+		}
+
+		std::vector<Point>::iterator end() {
+			return points.end();
+		}
+
 		int width = 0, height = 0, area = 0;
 		Point origin = Point(0,0);
+		std::vector<Point> points;
 	};
 
 	double fov, viewDistance, scale = 1;
@@ -193,10 +224,11 @@ private:
 
 	cv::Vec3b vObstacle = cv::Vec3b(0, 0, 0);
 	cv::Vec3b vFree = cv::Vec3b(255, 255, 255);
-	cv::Vec3b vUndiscovered = cv::Vec3b(0, 0, 255);
+	cv::Vec3b vRed = cv::Vec3b(0, 0, 255);
 	cv::Vec3b vDiscovered = cv::Vec3b(255, 255, 255);
 	cv::Vec3b vOutside = cv::Vec3b(80, 80, 80);
-	cv::Vec3b vPoint = cv::Vec3b(255, 0, 0);
+	cv::Vec3b vBlue = cv::Vec3b(255, 0, 0);
+	cv::Vec3b vGreen = cv::Vec3b(0, 255, 0);
 
 	class MapNode
 	{

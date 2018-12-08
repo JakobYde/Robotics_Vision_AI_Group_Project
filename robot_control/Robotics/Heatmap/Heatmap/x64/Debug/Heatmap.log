@@ -1,77 +1,9 @@
-﻿  Map.cpp
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\point.h(9): warning C4005: 'MAX': macro redefinition
-  c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\grid.h(3): note: see previous definition of 'MAX'
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\point.h(10): warning C4005: 'MIN': macro redefinition
-  c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\grid.h(4): note: see previous definition of 'MIN'
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\point.h(119): warning C4244: 'argument': conversion from 'double' to '_Tp', possible loss of data
-          with
-          [
-              _Tp=int
-          ]
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\point.h(123): warning C4244: 'argument': conversion from 'double' to '_Tp', possible loss of data
-          with
-          [
-              _Tp=int
-          ]
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\map.h(58): warning C4244: 'initializing': conversion from 'unsigned __int64' to 'double', possible loss of data
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\map.cpp(55): warning C4018: '<': signed/unsigned mismatch
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\map.cpp(86): warning C4018: '<': signed/unsigned mismatch
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\map.cpp(109): warning C4018: '<': signed/unsigned mismatch
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\map.cpp(123): warning C4018: '<': signed/unsigned mismatch
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\map.cpp(139): warning C4018: '<': signed/unsigned mismatch
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\map.cpp(142): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\map.cpp(177): warning C4018: '<': signed/unsigned mismatch
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\map.cpp(259): warning C4244: 'initializing': conversion from 'double' to 'unsigned int', possible loss of data
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\map.cpp(260): warning C4244: 'initializing': conversion from 'double' to 'unsigned int', possible loss of data
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\map.cpp(311): warning C4018: '<': signed/unsigned mismatch
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\map.cpp(373): warning C4018: '<': signed/unsigned mismatch
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\map.cpp(445): warning C4018: '<': signed/unsigned mismatch
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\map.cpp(448): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\map.cpp(461): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\map.cpp(462): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\map.cpp(495): warning C4018: '<': signed/unsigned mismatch
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\map.cpp(577): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\map.cpp(578): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\map.cpp(585): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\grid.h(34): warning C4267: 'return': conversion from 'size_t' to 'unsigned int', possible loss of data
-  c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\grid.h(33): note: while compiling class template member function 'unsigned int Grid<Map::MapNode>::cols(void)'
-  c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\map.cpp(55): note: see reference to function template instantiation 'unsigned int Grid<Map::MapNode>::cols(void)' being compiled
-  c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\map.h(217): note: see reference to class template instantiation 'Grid<Map::MapNode>' being compiled
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\grid.h(32): warning C4267: 'return': conversion from 'size_t' to 'unsigned int', possible loss of data
-  c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\grid.h(32): note: while compiling class template member function 'unsigned int Grid<Map::MapNode>::rows(void)'
-  c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\map.cpp(55): note: see reference to function template instantiation 'unsigned int Grid<Map::MapNode>::rows(void)' being compiled
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\grid.h(23): warning C4244: 'argument': conversion from 'GridCoordinateType' to 'const unsigned __int64', possible loss of data
-  c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\grid.h(21): note: while compiling class template member function 'T &Grid<T>::at(GridCoordinateType,GridCoordinateType,bool)'
-          with
-          [
-              T=Map::MapNode
-          ]
-  c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\map.cpp(37): note: see reference to function template instantiation 'T &Grid<T>::at(GridCoordinateType,GridCoordinateType,bool)' being compiled
-          with
-          [
-              T=Map::MapNode
-          ]
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\grid.h(24): warning C4244: 'argument': conversion from 'GridCoordinateType' to 'const unsigned __int64', possible loss of data
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\grid.h(25): warning C4244: 'argument': conversion from 'GridCoordinateType' to 'const unsigned __int64', possible loss of data
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\grid.h(27): warning C4244: 'argument': conversion from 'GridCoordinateType' to 'const unsigned __int64', possible loss of data
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\grid.h(49): warning C4244: 'argument': conversion from 'GridCoordinateType' to 'const unsigned __int64', possible loss of data
-  c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\grid.h(48): note: while compiling class template member function 'bool Grid<Map::MapNode>::inBounds(GridCoordinateType,GridCoordinateType)'
-  c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\grid.h(46): note: see reference to function template instantiation 'bool Grid<Map::MapNode>::inBounds(GridCoordinateType,GridCoordinateType)' being compiled
-  Source.cpp
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\point.h(9): warning C4005: 'MAX': macro redefinition
-  c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\grid.h(3): note: see previous definition of 'MAX'
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\point.h(10): warning C4005: 'MIN': macro redefinition
-  c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\grid.h(4): note: see previous definition of 'MIN'
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\point.h(119): warning C4244: 'argument': conversion from 'double' to '_Tp', possible loss of data
-          with
-          [
-              _Tp=int
-          ]
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\point.h(123): warning C4244: 'argument': conversion from 'double' to '_Tp', possible loss of data
-          with
-          [
-              _Tp=int
-          ]
-c:\users\olive\code\gitrepositories\projekt\robot_control\robotics\heatmap\heatmap\map.h(58): warning C4244: 'initializing': conversion from 'unsigned __int64' to 'double', possible loss of data
-  Generating Code...
-  Heatmap.vcxproj -> C:\Users\olive\Code\GitRepositories\Projekt\robot_control\Robotics\Heatmap\x64\Debug\Heatmap.exe
+﻿  Source.cpp
+c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\point.h(9): warning C4005: 'MAX': macro redefinition
+  c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\grid.h(3): note: see previous definition of 'MAX'
+c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\point.h(10): warning C4005: 'MIN': macro redefinition
+  c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\grid.h(4): note: see previous definition of 'MIN'
+c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\point.h(119): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\point.h(123): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.h(58): warning C4244: 'initializing': conversion from 'unsigned __int64' to 'double', possible loss of data
+  Heatmap.vcxproj -> C:\Users\Oliver\Code\repos\New folder\robot_control\Robotics\Heatmap\x64\Debug\Heatmap.exe

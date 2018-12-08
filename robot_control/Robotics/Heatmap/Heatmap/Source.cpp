@@ -7,12 +7,12 @@
 
 int main() {
 	
-	Map m(90,100);
+	Map m(60,60);
 	cv::Mat img = cv::imread("Map.png");
 	m.loadImage(img, 1);
 	m.drawMap(eBasic, false);
 	m.drawMap(eCells, false);
-	m.drawMap(eHeatmap, true);
+	m.drawMap(eHeatmap);
 	Map::Plan plan = m.getPlan();
 	/*drawArguments dA;
 	dA.A = Point(9, 7);
