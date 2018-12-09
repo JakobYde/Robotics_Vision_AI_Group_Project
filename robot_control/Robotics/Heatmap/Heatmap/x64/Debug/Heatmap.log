@@ -1,2 +1,9 @@
 ﻿  Source.cpp
+c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\point.h(9): warning C4005: 'MAX': macro redefinition
+  c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\grid.h(3): note: see previous definition of 'MAX'
+c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\point.h(10): warning C4005: 'MIN': macro redefinition
+  c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\grid.h(4): note: see previous definition of 'MIN'
+c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\point.h(119): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\point.h(123): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+c:\users\oliver\code\repos\new folder\robot_control\robotics\heatmap\heatmap\map.h(58): warning C4244: 'initializing': conversion from 'unsigned __int64' to 'double', possible loss of data
   Heatmap.vcxproj -> C:\Users\Oliver\Code\repos\New folder\robot_control\Robotics\Heatmap\x64\Debug\Heatmap.exe
