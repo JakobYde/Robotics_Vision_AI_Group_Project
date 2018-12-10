@@ -14,6 +14,7 @@ QLearning::QLearning(std::string filename, std::string startState, float discoun
     QLearning::ininQValue = qInitValue;
     QLearning::startState = startState;
     QLearning::numberOfQValues = numberOfQValues;
+    QLearning::runGreedyBool = false;
 
     std::vector<std::vector<std::vector<std::string>>> stringvecsFromFile = stringFromFile(filename);//Reads the file with stats
 
@@ -147,6 +148,11 @@ std::vector<std::string> QLearning::getStats(){
 //Retrun with base states there have been visiits
 std::vector<bool> QLearning::getVisits(){
     return visits;
+}
+//Set rather the q lerning shoud learn og run on what it has learnd
+void QLearning::runGreedy(bool on)
+{
+    QLearning::runGreedyBool = on;
 }
 //Retrun rather all stats have been visits
 bool QLearning::allVisits(){
@@ -327,7 +333,7 @@ int QLearning::policy(){
 
     std::vector<int> actionIndexMaxs = getMaxActionIndexs();//Gets the action index with gives the maximum expeted value
     if(greedy == -1.0) return getRandomactionIndex(); //If greedy is set to -1.0 it shoud take a complitly random action (for debug and test porpose)
-    if(1-greedy >= chance){
+    if(runGreedyBool or 1-greedy >= chance){
         if(debug) std::cout << "QDEBUG :::: Taking greedy action.";
         actionIndex = actionIndexMaxs.at(rand()%actionIndexMaxs.size());
     }
@@ -363,40 +369,42 @@ void QLearning::giveReward(float r){
     //And currentStat is S'
 
     rewardHistroic.push_back(rewardH(r,currentStat->name));   //rewardHistroic contains a list of previously given rewards
+    //If runGreedyBool is not set then Q Learning shoud be done
+    if(not runGreedyBool)
+    {
+        //Find q value for update and q value for action. If there is not used multiQ thay are the same
+        int qToUpdate = 0;
+        int qForAction = 0;
 
-    //Find q value for update and q value for action. If there is not used multiQ thay are the same
-    int qToUpdate = 0;
-    int qForAction = 0;
+        if(numberOfQValues > 1 and useMultiQ){//If it is multiQ two random diffrend q index is found
+            qToUpdate = rand()%numberOfQValues;
+            qForAction = rand()%numberOfQValues;
 
-    if(numberOfQValues > 1 and useMultiQ){//If it is multiQ two random diffrend q index is found
-        qToUpdate = rand()%numberOfQValues;
-        qForAction = rand()%numberOfQValues;
+            while (qForAction == qToUpdate) qForAction = rand()%numberOfQValues;//Finds a index for qForAction wish is diffrend for the qToUpdate index
+        }
+        //Findes the current q values of the q value to update
+        float qNow = preStat->qValues.at(nextStateActionIndex).at(qToUpdate);
 
-        while (qForAction == qToUpdate) qForAction = rand()%numberOfQValues;//Finds a index for qForAction wish is diffrend for the qToUpdate index
+
+        float maxQ = 0.0;
+        if(numberOfQValues > 1 and useMultiQ){
+            //If useMultiQ is used:
+
+            //Finds the action there gives the maximum expeted value (within qToUpdate qvaluess)
+            std::vector<int> actions = getMaxActionIndexs(qToUpdate);
+            float action = actions.at(rand()%actions.size());
+
+            //Finds the value of the expeted value of the found action with the qForAction qvalue index
+            maxQ = currentStat->qValues.at(action).at(qForAction);
+
+        }else{
+            //If useMultiQ is not used it findes the maximum expeted value to S'
+            maxQ = getMaxQ(currentStat, qToUpdate);
+        }
+
+        //Update the expeted value at the qToUpdate qvalue index
+        preStat->qValues.at(nextStateActionIndex).at(qToUpdate) = qNow + stepSize*(r + discount_rate*maxQ - qNow);
     }
-    //Findes the current q values of the q value to update
-    float qNow = preStat->qValues.at(nextStateActionIndex).at(qToUpdate);
-
-
-    float maxQ = 0.0;
-    if(numberOfQValues > 1 and useMultiQ){
-        //If useMultiQ is used:
-
-        //Finds the action there gives the maximum expeted value (within qToUpdate qvaluess)
-        std::vector<int> actions = getMaxActionIndexs(qToUpdate);
-        float action = actions.at(rand()%actions.size());
-
-        //Finds the value of the expeted value of the found action with the qForAction qvalue index
-        maxQ = currentStat->qValues.at(action).at(qForAction);
-
-    }else{
-        //If useMultiQ is not used it findes the maximum expeted value to S'
-        maxQ = getMaxQ(currentStat, qToUpdate);
-    }
-
-    //Update the expeted value at the qToUpdate qvalue index
-    preStat->qValues.at(nextStateActionIndex).at(qToUpdate) = qNow + stepSize*(r + discount_rate*maxQ - qNow);
-
     //Indikate that the currentStat (S') is viseted
     visits.at(stateNameIndex[currentStat->name]) = true;
 }

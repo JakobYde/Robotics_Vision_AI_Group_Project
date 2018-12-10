@@ -1,6 +1,7 @@
 #ifndef JSONPLOT_H
 #define JSONPLOT_H
 #include "json.h"
+#include<ctime>
 #include <string>
 #include <fstream>
 #include <iostream>

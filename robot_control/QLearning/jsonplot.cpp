@@ -12,8 +12,10 @@ JSONPlot::JSONPlot(std::string titel, std::string xlabel, std::string ylabel, st
 
 void JSONPlot::write(std::string filename)
 {
-    if (filename == " ") filename = titel+"_"+std::to_string(std::rand()%10000)+".json";
+
+    if (filename == " ") filename = titel+"_"+std::to_string(std::time(nullptr))+".json";
     j.write(filename);
+    std::cout << "File writen: " << filename << std::endl;
 }
 
 void JSONPlot::addData(std::string legend, std::vector<float> xdata, std::vector<float> ydata)

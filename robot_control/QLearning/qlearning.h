@@ -73,7 +73,7 @@ public:
     void clearRewardHistroic();
     void clear();
     void clear(std::string startState);
-
+    void runGreedy(bool on = true);
     state* getCurrentStarte();
 
 protected:
@@ -109,6 +109,8 @@ protected:
     float stepSize;
     float greedy;
     float ininQValue;
+    bool runGreedyBool;
+
     unsigned int numberOfQValues;
     std::string startState;
     unsigned int nextStateActionIndex;

@@ -44,7 +44,8 @@ xdata = []
 while True:
     if "xdata_{}".format(count) in data:
         if "legend_{}".format(count) in data:      
-            greedy = float(data["legend_{}".format(count)].split()[1])
+            print(data["legend_{}".format(count)])
+            greedy = float(data["legend_{}".format(count)].split()[2])
             xdata.append(greedy)
             tempData = np.array(data["ydata_{}".format(count)])
             tempData = sum(tempData)/len(tempData)

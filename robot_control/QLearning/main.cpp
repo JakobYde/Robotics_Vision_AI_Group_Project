@@ -12,7 +12,7 @@
 
 #include <fl/Headers.h>
 
-#include <time.h>
+#include <time.h>       /* clock_t, clock, CLOCKS_PER_SEC */
 #include <array>
 #include <iostream>
 #include <math.h>
@@ -88,6 +88,7 @@ std::string fts(float f, int dec){
     return res;
 }
 
+
 std::string getProcessbar(long long unsigned int n, long long unsigned int maxn, long long unsigned int len = 10){
     const char rn[8] = {'|', '/', '-', '\\', '|', '/', '-', '\\'};
     static long long unsigned int c = 0;
@@ -101,7 +102,7 @@ std::string getProcessbar(long long unsigned int n, long long unsigned int maxn,
 
     if(barNumber < len) bar += rn[c++%8];
 
-    for(unsigned int i = barNumber+1; i < len; i++) bar += ' ';
+    for(unsigned int i = barNumber+1; i < len; i++) bar += '.';
     bar += "]";
 
     bar += fts(std::roundf(pro * 100) / 100,2) + "%";
@@ -216,7 +217,7 @@ int main()
     qTestPra ground;
     ground.epsiodes = 200000;
     ground.maxStepsInEpsiode = 5;
-    ground.avgOver = 100;
+    ground.avgOver = 1000;
 
     ground.useDoubelQ = true;
     ground.numberOfQValues = 2;
@@ -225,22 +226,22 @@ int main()
     ground.randomStartState = true;
     ground.discount_rate = 0.75;
     ground.stepSize = 0.2;
-    ground.greedy = 0.05;
+    ground.greedy = 0.03;
     ground.qInitValue = 0;
 
-    JSONPlot j("Q-learning. Discount_rate: "+fts(ground.discount_rate,3) +", stepSize: "+fts(ground.stepSize,3)+", greedy: test"/*+fts(ground.greedy,3)*/+", qInitValue: "+fts(ground.qInitValue,3) , "Episode", "Avg reward over "+std::to_string(ground.avgOver)+" repetitions");
+    JSONPlot j("Q-learning. Discount_rate: "+fts(ground.discount_rate,3) +", stepSize: "+fts(ground.stepSize,3)+", greedy: "+fts(ground.greedy,3)+", qInitValue: "+fts(ground.qInitValue,3) , "Episode", "Average reward over "+std::to_string(ground.avgOver)+" repetitions");
 
     //std::vector<int> testVar= {1, 2,3,4};
     //0.1 <- 0.001
 
-    const float maxTest = 1.0;
-    const float minTest = 0.0;
-    const int numberOfTests = 39;//Will be +1
+    const float maxTest = 0.7;
+    const float minTest = 0.3;
+    const int numberOfTests = 10;//Will be +1
     const float inc = (maxTest-minTest)/numberOfTests;
-    std::vector<float> testVar;
-    for(float testV = minTest; testV <= maxTest+inc; testV += inc) testVar.push_back(testV);
+    //std::vector<float> testVar;
+    //for(float testV = minTest; testV <= maxTest+inc; testV += inc) testVar.push_back(testV);
 
-    //std::vector<float> testVar= {-1.0, 0.0, 0.001, 0.005, 0.01, 0.05, 0.2, 0.8, 1.0};
+    std::vector<float> testVar= {0.03};
 
     std::queue<data> dataqueue;
     std::mutex mux_dataqueue;
@@ -286,7 +287,7 @@ int main()
         data dt = dataqueue.front();
         dataqueue.pop();
 
-        j.addData("Greedy: "+std::to_string(dt.prameters.greedy),dt.xdata,dt.ydata);//fts(dt.prameters.greedy,5),dt.xdata,dt.ydata);
+        j.addData(/*"Step size: "+std::to_string(dt.prameters.stepSize)*/"",dt.xdata,dt.ydata);//fts(dt.prameters.greedy,5),dt.xdata,dt.ydata);
     }
     j.write();
 
