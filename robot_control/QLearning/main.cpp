@@ -131,7 +131,7 @@ struct qTestPra
 
 struct data{
     std::vector<int> xdata;
-    std::vector<float> ydata;
+    std::vector<std::vector<float>> ydata;
     qTestPra prameters;
 };
 
@@ -178,9 +178,10 @@ data testQ(QLearning &q, workerParameter &wp, int epsiodes = 2000, int maxStepsI
         wp.mux_count->lock();
         *wp.count = *wp.count+1;
         wp.mux_count->unlock();
+        dataset.ydata = ydata;
     }
     //dataset.ydata = getMovingAvg(getAvg(ydata,1),mvAvgAlfa);
-    dataset.ydata = getAvg(ydata,1);
+    //dataset.ydata = getAvg(ydata,1);
 
     return dataset;
 }
@@ -217,7 +218,7 @@ int main()
     qTestPra ground;
     ground.epsiodes = 200000;
     ground.maxStepsInEpsiode = 5;
-    ground.avgOver = 1000;
+    ground.avgOver = 100;
 
     ground.useDoubelQ = true;
     ground.numberOfQValues = 2;
@@ -225,23 +226,23 @@ int main()
     ground.startState = "S0";
     ground.randomStartState = true;
     ground.discount_rate = 0.75;
-    ground.stepSize = 0.2;
+    ground.stepSize = 0.54;
     ground.greedy = 0.03;
     ground.qInitValue = 0;
 
-    JSONPlot j("Q-learning. Discount_rate: "+fts(ground.discount_rate,3) +", stepSize: "+fts(ground.stepSize,3)+", greedy: "+fts(ground.greedy,3)+", qInitValue: "+fts(ground.qInitValue,3) , "Episode", "Average reward over "+std::to_string(ground.avgOver)+" repetitions");
+    JSONPlot j("Q-learning. Discount_rate: "+fts(ground.discount_rate,3) +", stepSize: "+fts(ground.stepSize,3)+", greedy: "+fts(ground.greedy,3)+", qInitValue: test"+""/*fts(ground.qInitValue,3)*/, "Episode", "Average reward over "+std::to_string(ground.avgOver)+" repetitions");
 
     //std::vector<int> testVar= {1, 2,3,4};
     //0.1 <- 0.001
 
-    const float maxTest = 0.7;
-    const float minTest = 0.3;
-    const int numberOfTests = 10;//Will be +1
+    const float maxTest = 10;
+    const float minTest = 0;
+    const int numberOfTests = 9;//Will be +1
     const float inc = (maxTest-minTest)/numberOfTests;
-    //std::vector<float> testVar;
-    //for(float testV = minTest; testV <= maxTest+inc; testV += inc) testVar.push_back(testV);
+    std::vector<float> testVar;
+    for(float testV = minTest; testV <= maxTest+inc; testV += inc) testVar.push_back(testV);
 
-    std::vector<float> testVar= {0.03};
+    //std::vector<float> testVar= {0.03};
 
     std::queue<data> dataqueue;
     std::mutex mux_dataqueue;
@@ -250,7 +251,7 @@ int main()
 
     for(unsigned int i = 0; i < testVar.size(); i++){
         qTestPra test = ground;
-        test.greedy = testVar.at(i);
+        test.qInitValue = testVar.at(i);
 
         qqueue.push(test);
     }
@@ -287,7 +288,7 @@ int main()
         data dt = dataqueue.front();
         dataqueue.pop();
 
-        j.addData(/*"Step size: "+std::to_string(dt.prameters.stepSize)*/"",dt.xdata,dt.ydata);//fts(dt.prameters.greedy,5),dt.xdata,dt.ydata);
+        j.addData("qInitValue: "+std::to_string(dt.prameters.qInitValue),dt.xdata,dt.ydata);//fts(dt.prameters.greedy,5),dt.xdata,dt.ydata);
     }
     j.write();
 

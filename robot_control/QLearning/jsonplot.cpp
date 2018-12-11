@@ -34,6 +34,14 @@ void JSONPlot::addData(std::string legend, std::vector<int> xdata, std::vector<f
     count++;
 }
 
+void JSONPlot::addData(std::string legend, std::vector<int> xdata, std::vector<std::vector<float>> ydata)
+{
+    j.add("legend_" + std::to_string(count), legend);
+    j.add("xdata_" + std::to_string(count), xdata);
+    j.add("ydata_" + std::to_string(count), ydata);
+    count++;
+}
+
 JSONPlot::~JSONPlot()
 {
 }

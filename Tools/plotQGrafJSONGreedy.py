@@ -38,14 +38,14 @@ count = 0
 
 windo = 500
 alphaColor = 0.5
-alfaRunning = 0.002
+
 ydata = []
 xdata = []
 while True:
     if "xdata_{}".format(count) in data:
         if "legend_{}".format(count) in data:      
             print(data["legend_{}".format(count)])
-            greedy = float(data["legend_{}".format(count)].split()[2])
+            greedy = float(data["legend_{}".format(count)].split()[1])
             xdata.append(greedy)
             tempData = np.array(data["ydata_{}".format(count)])
             tempData = sum(tempData)/len(tempData)
@@ -67,14 +67,16 @@ ydataTemp = []
 for x in xdata:
     ydataTemp.append(ydata[mapTemp[x]])
 ydata = ydataTemp
-#ydata = rooling(ydata,0.35)
+alfaRunning = 1#0.35
+ydata = rooling(ydata,alfaRunning)
 
 plt.xlabel(r"$\epsilon$")
-plt.ylabel("Average reward over the first 200000 steps")
+plt.ylabel("Average reward over the first 200000 episodes")
 plt.plot(xdata,ydata)
-plt.legend(bbox_to_anchor=(1,0.5), loc="center left")
+#plt.legend(bbox_to_anchor=(1,0.5), loc="center left")
 plt.rcParams.update({'font.size': 20})
 #plt.legend()
+plt.grid(color='grey', linestyle='--')
 plt.title(data["titel"])
 
 plt.show()

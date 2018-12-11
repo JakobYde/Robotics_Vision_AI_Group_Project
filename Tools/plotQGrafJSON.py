@@ -41,11 +41,13 @@ alfaRunning = 0.002
 plt.rcParams.update({'font.size': 20})
 while True:
     if "xdata_{}".format(count) in data:
-        if "legend_{}".format(count) in data:            
-            p = plt.plot(data["xdata_{}".format(count)], rooling(data["ydata_{}".format(count)],alfaRunning))#, label=data["legend_{}".format(count)]+" - EMA ")
+        if "legend_{}".format(count) in data:    
+            y_data = data["ydata_{}".format(count)]
+            y_data = np.mean(y_data, axis=0)
+            p = plt.plot(data["xdata_{}".format(count)], rooling(y_data,alfaRunning), label=data["legend_{}".format(count)])
             #greedy = float(data["legend_{}".format(count)].split()[2])
             #plt.plot(data["xdata_{}".format(count)], rooling(data["ydata_{}".format(count)],alfaRunning))#, label="Greedy = "+str(greedy))#, color=p[0].get_color(), alpha=alphaColor)
-            plt.plot(data["xdata_{}".format(count)], data["ydata_{}".format(count)], color=p[0].get_color(), alpha=alphaColor/2)#, label=data["legend_{}".format(count)]
+            #plt.plot(data["xdata_{}".format(count)], data["ydata_{}".format(count)], color=p[0].get_color(), alpha=alphaColor/2)#, label=data["legend_{}".format(count)]
                 
         else:
             p = plt.plot(data["xdata_{}".format(count)][:-windo], np.convolve(data["ydata_{}".format(count)],windo)[:-windo])
@@ -54,11 +56,12 @@ while True:
         count += 1
     else:
         break
-if "xlabel" in data: plt.xlabel("Steps")
+if "xlabel" in data: plt.xlabel("Episode")
 if "ylabel" in data: plt.ylabel(data["ylabel"])
 #plt.legend(bbox_to_anchor=(1,0.5), loc="best")
 
-#plt.legend()
+plt.legend()
+plt.grid(color='grey', linestyle='--')
 plt.title(data["titel"])
 
 plt.show()

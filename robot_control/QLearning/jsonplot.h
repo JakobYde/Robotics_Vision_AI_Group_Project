@@ -19,6 +19,7 @@ public:
 
     void addData(std::string legend, std::vector<float> xdata, std::vector<float> ydata);
     void addData(std::string legend, std::vector<int> xdata, std::vector<float> ydata);
+    void addData(std::string legend, std::vector<int> xdata, std::vector<std::vector<float>> ydata);
     void write(std::string filename = " ");
     ~JSONPlot();
 };
