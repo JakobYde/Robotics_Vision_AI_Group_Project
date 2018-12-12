@@ -26,6 +26,7 @@
 #define ESC_KEY 27
 #define PI 3.14159265
 static boost::mutex mutex;
+static boost::mutex mutex2;
 LaserScanner controllerScan;
 
 struct Possison{
@@ -55,6 +56,8 @@ Possison robotPos[2];
 std::vector<float> robot_xvalues;
 std::vector<float> robot_yvalues;
 
+double angle = 0;
+
 void poseCallback(ConstPosesStampedPtr &_msg) {
   // Dump the message contents to stdout.
   //  std::cout << _msg->DebugString();
@@ -69,6 +72,9 @@ void poseCallback(ConstPosesStampedPtr &_msg) {
       robotPos[0].y = _msg->pose(i).position().y();
       std::stringstream pos_ori_stream;
 
+      angle = atan2(_msg->pose(i).orientation().w(), _msg->pose(i).orientation().z()) * 180 / PI * 2;
+      if (angle < 0) angle += 360;
+      //std::cout << angle << std::endl;
       pos_ori_stream << std::setprecision(2) << std::fixed << std::setw(6)
                 << _msg->pose(i).position().x() << ", " << std::setw(6)
                 << _msg->pose(i).position().y() << ", " << std::setw(6)
@@ -84,7 +90,14 @@ void poseCallback(ConstPosesStampedPtr &_msg) {
   }
 }
 
-void cameraCallback(ConstImageStampedPtr &msg) {
+bool ballCollected = false;
+int distanceToCenter = 200;
+int bluePercentage = 0;
+int biggestCircle = 0;
+int distanceToBall = 0;
+
+void cameraCallback(ConstImageStampedPtr &msg
+                    ) {
 
   std::size_t width = msg->image().width();
   std::size_t height = msg->image().height();
@@ -92,11 +105,78 @@ void cameraCallback(ConstImageStampedPtr &msg) {
   cv::Mat im(int(height), int(width), CV_8UC3, const_cast<char *>(data));
 
   im = im.clone();
-  cv::cvtColor(im, im, CV_BGR2RGB);
+  cv::cvtColor(im, im, CV_RGB2BGR);
+  cv::Mat hls;
+  cv::cvtColor(im, hls, CV_BGR2HLS);
+  cv::Mat hlsch[3];
+  cv::split(hls, hlsch);
+  cv::Mat binary;
+
+  cv::threshold(hlsch[2], binary, 50, 255, cv::THRESH_BINARY);
+
+  GaussianBlur( binary, binary, cv::Size(9, 9), 2, 0);
+
+  std::vector<cv::Vec3f> circles;
+  cv::HoughCircles(binary, circles, cv::HOUGH_GRADIENT,1.2,1,100,60, 10);
+
+  if (circles.size() != 0) {
+      for (int i = circles.size() - 1; i > 0; i--)
+      {
+          for (int j = 1; j < i + 1; j++)
+          {
+              if (sqrt(pow(circles[i][0]-circles[i - j][0],2)+pow(circles[i][1]-circles[i - j][1],2)) < circles[i - j][2]) {
+                  circles.erase(circles.begin() + i);
+                  break;
+              }
+          }
+      }
+  }
+
+  int circleIndex = 0;
+  biggestCircle = 0;
+  for (size_t i = 0; i < circles.size(); i++)
+  {
+      cv::Vec3i c = circles[i];
+      cv::Point center = cv::Point(c[0], c[1]);
+      // circle center
+      circle(im, center, 1, cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
+      // circle outline
+      int radius = c[2];
+      circle(im, center, radius, cv::Scalar(255, 0, 255), 1, cv::LINE_AA);
+      if (radius > biggestCircle) {
+          biggestCircle = radius;
+          circleIndex = i;
+      }
+  }
+  if (biggestCircle > 5) {
+      distanceToCenter = circles[circleIndex][0] - (hlsch[2].cols/2);
+      //Distance to ball is found using the camera FOV, the radius of the ball and simple geometry.
+      distanceToBall = biggestCircle / tan(60/2) / 2;
+  }
+  else distanceToBall++;
+  std::cout << distanceToBall << std::endl;
+  //Finds blue pixels in image, in case no circles are detected.
+  mutex2.lock();
+  bluePercentage = 0;
+      for (cv::MatIterator_<cv::Vec3b> p = hls.begin<cv::Vec3b>(); p != hls.end<cv::Vec3b>(); p++)
+      {
+          if ((*p)[2] > 100)
+              bluePercentage++;
+      }
+      bluePercentage = bluePercentage * 100.0 / 72000.0;
+  //std::cout << "Amount of blue: " << bluePercentage << "%" << std::endl;
+  mutex2.unlock();
 
   mutex.lock();
   cv::imshow("camera", im);
   mutex.unlock();
+}
+
+Possison ballCoordinates(double angle, double distance){
+    Possison temp;
+    temp.x = distance * cos(angle) + robotPos[0].x;
+    temp.y = distance * sin(angle) + robotPos[0].y;
+    return temp;
 }
 
 float angle_min = -2.26889;
@@ -273,45 +353,132 @@ int main(int _argc, char **_argv) {
 
     //filename, startState, discount_rate, stepSize, greedy, qInitValue
     QLearning q("../QLearning/stats.txt","S0",0.7,0.4,0.0,0.0, true);
-    enum statsStateMachine {onTheWay, atState_};
+    enum statsStateMachine {onTheWay, atState_, findMarbles, returnToPoint, pickupMarble};
 
     statsStateMachine statemc = onTheWay;
     QLearning::state* currentstate = q.getNewState();
     Possison goal = Possison(currentstate->x,currentstate->y);
     ControlOutput controllerOut;
+    struct ControlOutput
+    {
+        float direction;
+        float speed;
+    };
     // Loop
     int run = 0;
+
+    int rot = 999;
+    std::vector<int> pos = {0,0};
+    int lastImBlue = 0;
+
+    float angleError;
+    float goalDistance;
+
+    bool hasTurned = false;
+
     while (true) {
         gazebo::common::Time::MSleep(10);
 
         switch (statemc) {
             case onTheWay:
+            {
                 if(atState(goal,robotPos[0],0.5)) statemc = atState_;
+                angleError = calAngleError(robotPos,goal);
+                goalDistance = calDist(robotPos[0],goal);
+                controllerOut = controller.getControlOutput(angleError,goalDistance, center_angle_pct);
                 break;
+            }
 
             case atState_:
-                std::cout << "Run : " << run++ << " at state: " << currentstate->name << std::endl;
+            {
+                //std::cout << "Run : " << run++ << " at state: " << currentstate->name << std::endl;
                 float r = q.runNormal_distribution(currentstate->mean,currentstate->stddev);
                 q.giveReward(r);
                 currentstate = q.getNewState();
                 goal = Possison(currentstate->x,currentstate->y);
-                statemc = onTheWay;
+                //statemc = onTheWay;
+                statemc = findMarbles;
                 q.print_stats();
+                controllerOut.direction = 0.0;
+                controllerOut.speed = 0.0;
                 break;
+            }
+
+            case returnToPoint:
+            {
+                angleError = calAngleError(robotPos, goal);
+                goalDistance = calDist(robotPos[0], goal);
+                controllerOut = controller.getControlOutput(angleError,goalDistance, center_angle_pct);
+
+                if (abs(goal.x - robotPos[0].x) == 0 && abs(goal.x - robotPos[0].y) == 0) {
+                        controllerOut.speed = 0;
+                        rot = angle;
+                        statemc = findMarbles;
+                    }
+                }
+
+            case findMarbles:
+            {
+                mutex2.lock();
+                int bluetemp = bluePercentage;
+                mutex2.unlock();
+                if ((distanceToCenter == 0) || (bluetemp > 90)) {
+                   goal = Possison(robotPos[0].x, robotPos[0].y);
+                   hasTurned = false;
+
+                   Possison ballPosition;
+                   ballPosition = Possison(robotPos[0].x + distanceToBall * cos(angle), robotPos[0].y + distanceToBall * sin(angle));
+                   angleError = calAngleError(robotPos, ballPosition);
+                   goalDistance = calDist(robotPos[0], ballPosition);
+                   controllerOut = controller.getControlOutput(angleError,goalDistance, center_angle_pct);
+
+                   statemc = pickupMarble;
+                }
+                else {
+                    if (abs(rot - angle) > 20) hasTurned = true;
+                    if (abs(rot - angle) < 10 && hasTurned) {
+                        hasTurned = false;
+                        //goal = Possison(currentstate->x,currentstate->y);
+                        statemc = onTheWay;
+                    }
+                    if ((double)distanceToCenter / 200 > 0.5) controllerOut.direction = 0.5;
+                    else controllerOut.direction = (double)distanceToCenter / 200.0;
+                    controllerOut.speed = 0.0;
+                }
+                break;
+            }
+            case pickupMarble:
+            {
+                if (biggestCircle > 50) {
+                    controllerOut.speed = 1;
+                    if (distanceToCenter == 0) controllerOut.direction = 0;
+                    else if (distanceToCenter > 0) controllerOut.direction = 0.01;
+                    else if (distanceToCenter < 0) controllerOut.direction = -0.01;
+                }
+                mutex2.lock();
+                if (lastImBlue - bluePercentage > 50)
+                {
+                    statemc = returnToPoint;
+                }
+                lastImBlue = bluePercentage;
+                mutex2.unlock();
+                break;
+            }
         }
+
+        //Bredde = 0.2770;
 
         //Få control signal
 
 
-        float angleError = calAngleError(robotPos,goal);
-        float goalDistance = calDist(robotPos[0],goal);
         //std::cout << std::setprecision(3) << std::fixed << "Angle error: " << angleError << ", " << std::setw(6) << "goalDistance: " << goalDistance << " ::: " << std::setw(6) << "Goal: " << goal.x << ", " << goal.y << ", " << std::setw(6) << "Pos: " << robotPos[0].x << ", " << robotPos[0].y << std::endl;
-        controllerOut = controller.getControlOutput(angleError,goalDistance, center_angle_pct);
+
 
         //FL_LOG("SenM" << Op::str(senM)<<" : "<< Op::str(sM->getValue())<< " dif: " << Op::str(senM-sM->getValue())
         //       << "; Speed.output = " << Op::str(speed->getValue()));
 
         mutex.lock();
+
         int key = cv::waitKey(1);
         mutex.unlock();
 
