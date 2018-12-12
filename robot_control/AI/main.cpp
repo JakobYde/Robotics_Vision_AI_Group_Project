@@ -11,7 +11,7 @@
 #include <math.h>
 #include <sstream>      // std::stringstream
 #include <fstream>
-
+#include <string>
 #include "FuzzyBugController.h"
 #include "LaserScanner.h"
 
@@ -189,6 +189,7 @@ struct pointManger{
 };
 
 bool getPointI = true;
+
 Possison getpoint(pointManger &pm, Possison pos, float mindist){
     Possison goal = pm.poss.at(pm.index);
 
@@ -204,17 +205,44 @@ Possison getpoint(pointManger &pm, Possison pos, float mindist){
     return newGoal;
 }
 
+Possison altgetpoint(pointManger &pm, Possison pos, float mindist){
+    Possison goal = pm.poss.at(pm.index);
+
+    float dist = calDist(goal,pos);
+
+    if(dist<=mindist)
+    {
+        getPointI = false;
+    }
+    Possison newGoal = pm.poss.at(pm.index);
+    return newGoal;
+}
+
+void teleport(float x, float y, float ori){
+    std::string comd = "/home/mnj/rb-rca5-group2/ChangePosGazebo ";
+    comd += std::to_string(x) + " " + std::to_string(y) + " " + std::to_string(ori);
+    char tab2[1024];
+    strcpy(tab2, comd.c_str());
+    system(tab2);
+}
+
 int main(int _argc, char **_argv) {
     //Zero start pos
+
     robotPos[0].x = 0.0;
     robotPos[0].y = 0.0;
     robotPos[1].x = 0.0;
     robotPos[1].y = 0.0;
 
+
+
     pointManger pm;
     pm.index = 0;
 
+    Possison goalx(-14, 11);
+    pm.poss.push_back(goalx);
 
+/*
     Possison goal0(0,0);
     Possison goal1(23.2,4);
     Possison goal2(29.5,20.7);
@@ -229,7 +257,9 @@ int main(int _argc, char **_argv) {
     Possison goal11(29.8,-12.2);
     Possison goal12(26.9,3.9);
     Possison goal13(-37.2,-0.42);
+*/
 
+    /*
     pm.poss.push_back(goal0);
     pm.poss.push_back(goal1);
     pm.poss.push_back(goal2);
@@ -244,6 +274,7 @@ int main(int _argc, char **_argv) {
     pm.poss.push_back(goal11);
     pm.poss.push_back(goal12);
     pm.poss.push_back(goal13);
+*/
 
     //Lav pos log
     myfile = new std::ofstream("pos.log");
@@ -285,16 +316,39 @@ int main(int _argc, char **_argv) {
     worldPublisher->WaitForConnection();
     worldPublisher->Publish(controlMessage);
 
+    int timeStamp = 0;
+    int success = 0;
+    int failure = 0;
+    float xval = -5;
     // Loop
     while (true) {
         gazebo::common::Time::MSleep(10);
 
         //Få control signal
-        Possison goal = getpoint(pm,robotPos[0], 1.0);
+        //Possison goal = getpoint(pm,robotPos[0], 1.0);
+        Possison goal = altgetpoint(pm, robotPos[0], 1.0); //unsets getPointI if we are close to the goal.
+
+        timeStamp += 1;
+        if(!getPointI )
+        {
+            getPointI = true;
+            timeStamp = 0;
+            teleport(- rand() % 8 - 10,0,0);
+            success ++;
+            std::cout <<"Number of succes': " << success << std::endl;
+        }
+        if (timeStamp > 300)
+        {
+            teleport(- rand() % 8 - 10,0,0);
+            failure ++;
+            std::cout <<"Number of failures: " << failure << std::endl;
+            timeStamp = 0;
+        }
 
         float angleError = calAngleError(robotPos,goal);
         float goalDistance = calDist(robotPos[0],goal);
-        std::cout << std::setprecision(3) << std::fixed << "Angle error: " << angleError << ", " << std::setw(6) << "goalDistance: " << goalDistance << " ::: " << std::setw(6) << "Goal: " << goal.x << ", " << goal.y << ", " << std::setw(6) << "Pos: " << robotPos[0].x << ", " << robotPos[0].y << std::endl;
+        //std::cout << std::setprecision(3) << std::fixed << "Angle error: " << angleError << ", " << std::setw(6) << "goalDistance: " << goalDistance << " ::: " << std::setw(6) << "Goal: " << goal.x << ", " << goal.y << ", " << std::setw(6) << "Pos: " << robotPos[0].x << ", " << robotPos[0].y << std::endl;
+
         ControlOutput controllerOut = controller.getControlOutput(angleError,goalDistance);
 
         //FL_LOG("SenM" << Op::str(senM)<<" : "<< Op::str(sM->getValue())<< " dif: " << Op::str(senM-sM->getValue())
