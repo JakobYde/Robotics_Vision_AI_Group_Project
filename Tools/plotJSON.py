@@ -39,8 +39,8 @@ elif data["plotType"] == "plot":
             break
     if "xlabel" in data: plt.xlabel(data["xlabel"])
     if "ylabel" in data: plt.ylabel(data["ylabel"])
-    plt.legend(bbox_to_anchor=(1,0.5), loc="center left")
-    #plt.legend()
+    #plt.legend(bbox_to_anchor=(1,0.5), loc="center left")
+    plt.legend()
     plt.title(data["titel"])
     plt.show()
 elif data["plotType"] == "plot_surface":

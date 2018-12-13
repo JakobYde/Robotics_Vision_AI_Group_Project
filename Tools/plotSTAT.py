@@ -31,9 +31,6 @@ if len(file) == 0:
 with open(file) as f:
     data = json.load(f)
 
-
-
-
 count = 0
 
 alfaRunning = 0.002

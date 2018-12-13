@@ -221,28 +221,30 @@ int main()
     ground.avgOver = 100;
 
     ground.useDoubelQ = true;
-    ground.numberOfQValues = 2;
+    ground.numberOfQValues = 2;//3
     ground.filename = "../QLearning/stats.txt";
     ground.startState = "S0";
     ground.randomStartState = true;
     ground.discount_rate = 0.75;
-    ground.stepSize = 0.54;
-    ground.greedy = 0.03;
-    ground.qInitValue = 0;
+    ground.stepSize = 0.2;//0.54
+    ground.greedy = 0.03;//0.03
+    ground.qInitValue = 0;//15
 
-    JSONPlot j("Q-learning. Discount_rate: "+fts(ground.discount_rate,3) +", stepSize: "+fts(ground.stepSize,3)+", greedy: "+fts(ground.greedy,3)+", qInitValue: test"+""/*fts(ground.qInitValue,3)*/, "Episode", "Average reward over "+std::to_string(ground.avgOver)+" repetitions");
+    JSONPlot j("Q-learning. Discount_rate: "+fts(ground.discount_rate,3) +", stepSize: test"+/*fts(ground.stepSize,3)+*/", greedy: "+fts(ground.greedy,3)+", qInitValue: "+fts(ground.qInitValue,3), "Episode", "Average reward over "+std::to_string(ground.avgOver)+" repetitions");
 
     //std::vector<int> testVar= {1, 2,3,4};
     //0.1 <- 0.001
 
-    const float maxTest = 10;
-    const float minTest = 0;
-    const int numberOfTests = 9;//Will be +1
+    const float minTest = 0.01;
+    const float maxTest = 0.08;
+    const int numberOfTests = 15;//Will be +1
     const float inc = (maxTest-minTest)/numberOfTests;
     std::vector<float> testVar;
     for(float testV = minTest; testV <= maxTest+inc; testV += inc) testVar.push_back(testV);
 
-    //std::vector<float> testVar= {0.03};
+    //std::vector<float> testVar= {1,2,3,4,5,6,7,8,9,10};
+
+    //Husk også at ændre label!!!!! når du ændre test
 
     std::queue<data> dataqueue;
     std::mutex mux_dataqueue;
@@ -251,7 +253,7 @@ int main()
 
     for(unsigned int i = 0; i < testVar.size(); i++){
         qTestPra test = ground;
-        test.qInitValue = testVar.at(i);
+        test.stepSize = testVar.at(i);
 
         qqueue.push(test);
     }
@@ -288,7 +290,7 @@ int main()
         data dt = dataqueue.front();
         dataqueue.pop();
 
-        j.addData("qInitValue: "+std::to_string(dt.prameters.qInitValue),dt.xdata,dt.ydata);//fts(dt.prameters.greedy,5),dt.xdata,dt.ydata);
+        j.addData("Step size "+std::to_string(dt.prameters.stepSize),dt.xdata,dt.ydata);//fts(dt.prameters.greedy,5),dt.xdata,dt.ydata);
     }
     j.write();
 
