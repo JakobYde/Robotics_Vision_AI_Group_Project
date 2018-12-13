@@ -184,6 +184,57 @@ data testQ(QLearning &q, workerParameter &wp, int epsiodes = 2000, int maxStepsI
     return dataset;
 }
 
+/*
+//Central function that runs the learning iterations. Given a configuration it uses QLearning on the model, and saves the result.
+data testQ(QLearning &q, workerParameter &wp, int epsiodes = 2000, int maxStepsInEpsiode = 20, int avgOver = 10, bool randomStartState = true, std::string startState = "S0", bool print = false, std::string preSet = ""){
+    data dataset;
+    std::vector<std::vector<float>> ydata;
+
+    for(int i = 0; i < epsiodes; i++){
+        if(randomStartState) q.setState(getRandomState(q));//getRandomState(q)
+        else q.setState(startState); //"S0"
+
+        int step = 0;
+
+        while(not q.allVisits() and step < maxStepsInEpsiode){
+            q.simulateActionReward();
+            step++;
+        }
+    }
+    q.runGreedy();
+    for(int k = 0; k < avgOver; k++){
+        //q.clear();//"S0"; getRandomState(q)
+        ydata.push_back(std::vector<float>());
+
+        for(int i = 0; i < epsiodes; i++){
+            if(randomStartState) q.setState(getRandomState(q));//getRandomState(q)
+            else q.setState(startState); //"S0"
+
+            if(print) printf("\033c");
+            if(print) std::cout << preSet << "Epsiode " << i+1 << "/" << epsiodes << " --- " << getProcessbar(i, epsiodes, 30);
+
+            if(k==0) dataset.xdata.push_back(i+epsiodes);
+
+            int step = 0;
+
+            while(not q.allVisits() and step < maxStepsInEpsiode){
+                q.simulateActionReward();
+                step++;
+            }
+            float avgR = q.getAvgReward();
+            //std::cout << avgR << std::endl;
+            ydata.at(k).push_back(avgR);
+            q.clearRewardHistroic();
+        }
+        wp.mux_count->lock();
+        *wp.count = *wp.count+1;
+        wp.mux_count->unlock();
+        dataset.ydata = ydata;
+    }
+
+    return dataset;
+}
+*/
 
 void worker(workerParameter wp){
     qTestPra qp;
@@ -209,7 +260,7 @@ void worker(workerParameter wp){
     }
 }
 
-/*int main()
+int main2()
 {
     const int thredsN = 9;
 
@@ -252,7 +303,7 @@ void worker(workerParameter wp){
 
     while(dataqueue.size() != 1){
         printf("\033c");
-        std::cout << "Running test: " << getProcessbar(count,100*2,20) << std::endl;
+        std::cout << "Running test: " << getProcessbar(count,test1.avgOver,20) << std::endl;
 
         boost::this_thread::sleep( boost::posix_time::seconds(1) );
 
@@ -273,7 +324,7 @@ void worker(workerParameter wp){
     j.write();
 
     return 0;
-}*/
+}
 
 int main()
 {
