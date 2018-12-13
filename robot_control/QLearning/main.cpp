@@ -120,7 +120,7 @@ struct qTestPra
     bool useDoubelQ;
     unsigned int numberOfQValues;
     bool randomStartState;
-
+    std::string lable;
     std::string filename;
     std::string startState;
     float discount_rate;
@@ -151,6 +151,23 @@ struct workerParameter
 data testQ(QLearning &q, workerParameter &wp, int epsiodes = 2000, int maxStepsInEpsiode = 20, int avgOver = 10, bool randomStartState = true, std::string startState = "S0", bool print = false, std::string preSet = ""){
     data dataset;
     std::vector<std::vector<float>> ydata;
+
+    for(int i = 0; i < epsiodes; i++){
+        if(randomStartState) q.setState(getRandomState(q));//getRandomState(q)
+        else q.setState(startState); //"S0"
+
+        if(print) printf("\033c");
+        if(print) std::cout << preSet << "Epsiode " << i+1 << "/" << epsiodes << " --- " << getProcessbar(i, epsiodes, 30);
+
+        int step = 0;
+
+        while(not q.allVisits() and step < maxStepsInEpsiode){
+            q.simulateActionReward();
+            step++;
+        }
+    }
+
+    q.runGreedy();
     for(int k = 0; k < avgOver; k++){
         q.clear();//"S0"; getRandomState(q)
         ydata.push_back(std::vector<float>());
@@ -180,8 +197,6 @@ data testQ(QLearning &q, workerParameter &wp, int epsiodes = 2000, int maxStepsI
         wp.mux_count->unlock();
         dataset.ydata = ydata;
     }
-    //dataset.ydata = getMovingAvg(getAvg(ydata,1),mvAvgAlfa);
-    //dataset.ydata = getAvg(ydata,1);
 
     return dataset;
 }
@@ -211,6 +226,72 @@ void worker(workerParameter wp){
     }
 }
 
+/*int main()
+{
+    const int thredsN = 9;
+
+    JSONPlot j("Start guess vs. Optimized", "Episode", "Average reward over 100 repetitions");
+
+    std::queue<data> dataqueue;
+    std::mutex mux_dataqueue;
+    std::queue<qTestPra> qqueue;
+    std::mutex mux_qqueue;
+
+    qTestPra test1;
+    test1.epsiodes = 200000;
+    test1.maxStepsInEpsiode = 5;
+    test1.avgOver = 100;
+    test1.lable = "Optimized";
+    test1.useDoubelQ = true;
+    test1.numberOfQValues = 3;//3
+    test1.filename = "../QLearning/stats.txt";
+    test1.startState = "S0";
+    test1.randomStartState = true;
+    test1.discount_rate = 0.75;
+    test1.stepSize = 0.54;//0.54
+    test1.greedy = 0.03;//0.03
+    test1.qInitValue = 15;//15
+    qqueue.push(test1);
+
+    long long unsigned int count = 0;
+    std::mutex mux_count;
+
+    std::thread threads[thredsN];
+    workerParameter wp;
+    wp.dataqueue = &dataqueue;
+    wp.mux_dataqueue = &mux_dataqueue;
+    wp.qqueue = &qqueue;
+    wp.mux_qqueue = &mux_qqueue;
+    wp.count = &count;
+    wp.mux_count = &mux_count;
+
+    for(int i = 0; i < thredsN; i++) threads[i] = std::thread(worker,wp);
+
+    while(dataqueue.size() != 1){
+        printf("\033c");
+        std::cout << "Running test: " << getProcessbar(count,100*2,20) << std::endl;
+
+        boost::this_thread::sleep( boost::posix_time::seconds(1) );
+
+    }
+
+    for(unsigned int i = 0; i < thredsN; i++) threads[i].join();
+
+    int dataSice = dataqueue.size();
+    while(not dataqueue.empty()){
+        printf("\033c");
+        std::cout << "Wirting JSON: " << getProcessbar(dataSice-dataqueue.size()+1,dataSice,dataSice) << std::endl;
+
+        data dt = dataqueue.front();
+        dataqueue.pop();
+
+        j.addData(dt.prameters.lable,dt.xdata,dt.ydata);//fts(dt.prameters.greedy,5),dt.xdata,dt.ydata);
+    }
+    j.write();
+
+    return 0;
+}*/
+
 int main()
 {
     const int thredsN = 9;
@@ -226,11 +307,11 @@ int main()
     ground.startState = "S0";
     ground.randomStartState = true;
     ground.discount_rate = 0.75;
-    ground.stepSize = 0.2;//0.54
+    ground.stepSize = 0.54;//0.54
     ground.greedy = 0.03;//0.03
-    ground.qInitValue = 0;//15
+    ground.qInitValue = 15;//15
 
-    JSONPlot j("Q-learning. Discount_rate: "+fts(ground.discount_rate,3) +", stepSize: test"+/*fts(ground.stepSize,3)+*/", greedy: "+fts(ground.greedy,3)+", qInitValue: "+fts(ground.qInitValue,3), "Episode", "Average reward over "+std::to_string(ground.avgOver)+" repetitions");
+    JSONPlot j("Q-learning. Discount_rate: "+fts(ground.discount_rate,3) +", stepSize: "+fts(ground.stepSize,3)+", greedy: test"+/*fts(ground.greedy,3)+*/", qInitValue: "+fts(ground.qInitValue,3), "Episode", "Average reward over "+std::to_string(ground.avgOver)+" repetitions");
 
     //std::vector<int> testVar= {1, 2,3,4};
     //0.1 <- 0.001
@@ -253,7 +334,7 @@ int main()
 
     for(unsigned int i = 0; i < testVar.size(); i++){
         qTestPra test = ground;
-        test.stepSize = testVar.at(i);
+        test.greedy = testVar.at(i);
 
         qqueue.push(test);
     }
@@ -290,7 +371,7 @@ int main()
         data dt = dataqueue.front();
         dataqueue.pop();
 
-        j.addData("Step size "+std::to_string(dt.prameters.stepSize),dt.xdata,dt.ydata);//fts(dt.prameters.greedy,5),dt.xdata,dt.ydata);
+        j.addData("Greedy: "+std::to_string(dt.prameters.greedy),dt.xdata,dt.ydata);//fts(dt.prameters.greedy,5),dt.xdata,dt.ydata);
     }
     j.write();
 

@@ -45,7 +45,7 @@ while True:
     if "xdata_{}".format(count) in data:
         if "legend_{}".format(count) in data:      
             print(data["legend_{}".format(count)])
-            greedy = float(data["legend_{}".format(count)].split()[2])
+            greedy = float(data["legend_{}".format(count)].split()[1])
             xdata.append(greedy)
             
             y_data = data["ydata_{}".format(count)]
