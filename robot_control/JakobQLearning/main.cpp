@@ -72,7 +72,7 @@ void poseCallback(ConstPosesStampedPtr &_msg) {
       robotPos[0].y = _msg->pose(i).position().y();
       std::stringstream pos_ori_stream;
 
-      angle = atan2(_msg->pose(i).orientation().w(), _msg->pose(i).orientation().z()) * 180 / PI * 2;
+      angle = atan2(_msg->pose(i).orientation().z(), _msg->pose(i).orientation().w()) * 180 / PI * 2;
       if (angle < 0) angle += 360;
       //std::cout << angle << std::endl;
       pos_ori_stream << std::setprecision(2) << std::fixed << std::setw(6)
@@ -83,9 +83,9 @@ void poseCallback(ConstPosesStampedPtr &_msg) {
                 << _msg->pose(i).orientation().x() << ", " << std::setw(6)
                 << _msg->pose(i).orientation().y() << ", " << std::setw(6)
                 << _msg->pose(i).orientation().z() << std::endl;
-      std::string pos_ori_str = pos_ori_stream.str();
+      //std::string pos_ori_str = pos_ori_stream.str();
       //std::cout << pos_ori_str;
-      *myfile << pos_ori_str;
+      //*myfile << pos_ori_str;
     }
   }
 }
@@ -112,12 +112,12 @@ void cameraCallback(ConstImageStampedPtr &msg
   cv::split(hls, hlsch);
   cv::Mat binary;
 
-  cv::threshold(hlsch[2], binary, 50, 255, cv::THRESH_BINARY);
+  cv::threshold(hlsch[2], binary, 30, 255, cv::THRESH_BINARY);
 
-  GaussianBlur( binary, binary, cv::Size(9, 9), 2, 0);
+  GaussianBlur( binary, binary, cv::Size(13, 13), 0);
 
   std::vector<cv::Vec3f> circles;
-  cv::HoughCircles(binary, circles, cv::HOUGH_GRADIENT,1.2,1,100,60, 10);
+  cv::HoughCircles(binary, circles, cv::HOUGH_GRADIENT,1.2,1,100,30,10);
 
   if (circles.size() != 0) {
       for (int i = circles.size() - 1; i > 0; i--)
@@ -148,10 +148,12 @@ void cameraCallback(ConstImageStampedPtr &msg
           circleIndex = i;
       }
   }
-  if (biggestCircle > 5) {
+  if (biggestCircle > 10) {
       distanceToCenter = circles[circleIndex][0] - (hlsch[2].cols/2);
       //Distance to ball is found using the camera FOV, the radius of the ball and simple geometry.
-      distanceToBall = biggestCircle / tan(60/2) / 2;
+      distanceToBall = 320 / biggestCircle * 1.5 / 3.14159265358979;
+      std::cout << distanceToBall << std::endl;
+      int dummy = 0;
   }
   else distanceToBall++;
   std::cout << distanceToBall << std::endl;
@@ -353,7 +355,7 @@ int main(int _argc, char **_argv) {
 
     //filename, startState, discount_rate, stepSize, greedy, qInitValue
     QLearning q("../QLearning/stats.txt","S0",0.7,0.4,0.0,0.0, true);
-    enum statsStateMachine {onTheWay, atState_, findMarbles, returnToPoint, pickupMarble};
+    enum statsStateMachine {onTheWay, atState_, findMarbles, returnToPoint, driveTowardsMarble, pickupMarble};
 
     statsStateMachine statemc = onTheWay;
     QLearning::state* currentstate = q.getNewState();
@@ -397,6 +399,7 @@ int main(int _argc, char **_argv) {
                 currentstate = q.getNewState();
                 goal = Possison(currentstate->x,currentstate->y);
                 //statemc = onTheWay;
+                rot = angle;
                 statemc = findMarbles;
                 q.print_stats();
                 controllerOut.direction = 0.0;
@@ -432,34 +435,40 @@ int main(int _argc, char **_argv) {
                    goalDistance = calDist(robotPos[0], ballPosition);
                    controllerOut = controller.getControlOutput(angleError,goalDistance, center_angle_pct);
 
-                   statemc = pickupMarble;
+                   statemc = driveTowardsMarble;
                 }
                 else {
                     if (abs(rot - angle) > 20) hasTurned = true;
-                    if (abs(rot - angle) < 10 && hasTurned) {
+                    if ((abs(rot - angle) < 10) && hasTurned) {
                         hasTurned = false;
                         //goal = Possison(currentstate->x,currentstate->y);
                         statemc = onTheWay;
                     }
-                    if ((double)distanceToCenter / 200 > 0.5) controllerOut.direction = 0.5;
+                    if ((double)distanceToCenter / 200 > 0.4) controllerOut.direction = 0.4;
                     else controllerOut.direction = (double)distanceToCenter / 200.0;
                     controllerOut.speed = 0.0;
                 }
                 break;
             }
-            case pickupMarble:
+            case driveTowardsMarble:
             {
                 if (biggestCircle > 50) {
-                    controllerOut.speed = 1;
-                    if (distanceToCenter == 0) controllerOut.direction = 0;
-                    else if (distanceToCenter > 0) controllerOut.direction = 0.01;
-                    else if (distanceToCenter < 0) controllerOut.direction = -0.01;
+                    statemc = pickupMarble;
                 }
-                mutex2.lock();
-                if (lastImBlue - bluePercentage > 50)
+                break;
+            }
+            case pickupMarble:
+            {
+                controllerOut.speed = 1;
+                if (distanceToCenter == 0) controllerOut.direction = 0;
+                else if (distanceToCenter > 0) controllerOut.direction = 0.01;
+                else if (distanceToCenter < 0) controllerOut.direction = -0.01;
+
+                if (lastImBlue - bluePercentage > 80)
                 {
                     statemc = returnToPoint;
                 }
+                mutex2.lock();
                 lastImBlue = bluePercentage;
                 mutex2.unlock();
                 break;
