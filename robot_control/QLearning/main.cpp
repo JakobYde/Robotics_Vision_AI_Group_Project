@@ -151,23 +151,6 @@ struct workerParameter
 data testQ(QLearning &q, workerParameter &wp, int epsiodes = 2000, int maxStepsInEpsiode = 20, int avgOver = 10, bool randomStartState = true, std::string startState = "S0", bool print = false, std::string preSet = ""){
     data dataset;
     std::vector<std::vector<float>> ydata;
-
-    for(int i = 0; i < epsiodes; i++){
-        if(randomStartState) q.setState(getRandomState(q));//getRandomState(q)
-        else q.setState(startState); //"S0"
-
-        if(print) printf("\033c");
-        if(print) std::cout << preSet << "Epsiode " << i+1 << "/" << epsiodes << " --- " << getProcessbar(i, epsiodes, 30);
-
-        int step = 0;
-
-        while(not q.allVisits() and step < maxStepsInEpsiode){
-            q.simulateActionReward();
-            step++;
-        }
-    }
-
-    q.runGreedy();
     for(int k = 0; k < avgOver; k++){
         q.clear();//"S0"; getRandomState(q)
         ydata.push_back(std::vector<float>());
