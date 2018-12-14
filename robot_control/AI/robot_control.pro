@@ -5,7 +5,8 @@ CONFIG -= qt
 
 SOURCES += main.cpp \
     FuzzyBugController.cpp \
-    LaserScanner.cpp
+    LaserScanner.cpp \
+    json.cpp
 
 CONFIG += link_pkgconfig
 PKGCONFIG += gazebo
@@ -23,4 +24,6 @@ DISTFILES += \
 
 HEADERS += \
     FuzzyBugController.h \
-    LaserScanner.h
+    LaserScanner.h \
+    json.h \
+    json.h

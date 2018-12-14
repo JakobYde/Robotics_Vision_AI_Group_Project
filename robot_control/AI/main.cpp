@@ -6,14 +6,16 @@
 
 #include <fl/Headers.h>
 
+#include "FuzzyBugController.h"
+#include "LaserScanner.h"
+#include "json.h"
 #include <array>
 #include <iostream>
 #include <math.h>
 #include <sstream>      // std::stringstream
-#include <fstream>
-#include <string>
-#include "FuzzyBugController.h"
-#include "LaserScanner.h"
+//#include <fstream>
+//#include <string>
+
 
 #define ESC_KEY 27
 #define PI 3.14159265
@@ -89,7 +91,7 @@ float angle_min = -2.26889;
 float angle_max = 2.2689;
 float angle_step = 0.0228029648241206;
 float total_angle_range = abs(angle_min)+abs(angle_max);
-float center_angle_pct = 0.1;
+float center_angle_pct = 0.15;
 
 float rightStartAngle = angle_min;
 float rightEndAngle = angle_step*round((angle_min+total_angle_range*(1-center_angle_pct)/2)/angle_step);
@@ -239,7 +241,7 @@ int main(int _argc, char **_argv) {
     pointManger pm;
     pm.index = 0;
 
-    Possison goalx(-14, 11);
+    Possison goalx(-12, 0);
     pm.poss.push_back(goalx);
 
 /*
@@ -319,7 +321,11 @@ int main(int _argc, char **_argv) {
     int timeStamp = 0;
     int success = 0;
     int failure = 0;
-    float xval = -5;
+    float xval = 0;
+    float yval = 0;
+    std::vector<float> xval_vec; //starting from  -5 moving until  -30,
+    std::vector<float> yval_vec; //starting from  -5 moving until  -30,
+    std::vector<float> success_vec;  //lets say success is boolean 1. and failure is boolean 0;
     // Loop
     while (true) {
         gazebo::common::Time::MSleep(10);
@@ -328,22 +334,94 @@ int main(int _argc, char **_argv) {
         //Possison goal = getpoint(pm,robotPos[0], 1.0);
         Possison goal = altgetpoint(pm, robotPos[0], 1.0); //unsets getPointI if we are close to the goal.
 
+        /*-----------------------stuff from the doorway test -------------------------------
         timeStamp += 1;
         if(!getPointI )
         {
-            getPointI = true;
-            timeStamp = 0;
-            teleport(- rand() % 8 - 10,0,0);
+            //getPointI = true;
+
+            teleport(xval,0,1.57);
             success ++;
             std::cout <<"Number of succes': " << success << std::endl;
+            timeStamp = 0;
         }
-        if (timeStamp > 300)
+        if (timeStamp > 500)
         {
-            teleport(- rand() % 8 - 10,0,0);
+
+            teleport(xval,0,1.57);
             failure ++;
             std::cout <<"Number of failures: " << failure << std::endl;
             timeStamp = 0;
         }
+
+        if (timeStamp == 0)
+        {
+            xval_vec.push_back(xval);
+            if (getPointI) success_vec.push_back(0);
+            else success_vec.push_back(1);
+
+            xval -= 0.5;
+            getPointI = true;
+            if (xval < -25)
+            {
+                Json test;
+                test.csvCreate(xval_vec, "xvalFile");
+                test.csvCreate(success_vec, "successFile");
+                bool infinity = false;
+                while (true)
+                    if (infinity) infinity = false;
+                            else infinity = true;
+
+
+            }
+        }
+
+       */
+        timeStamp += 1;
+        if(!getPointI )
+        {
+            //getPointI = true;
+            xval = (rand() % 11) * 0.1 - 0.5;
+            yval = (rand() % 11) * 0.1 - 0.5;
+
+            teleport(xval,yval,3.14);
+            success ++;
+            std::cout <<"Number of succes': " << success << std::endl;
+            timeStamp = 0;
+        }
+        if (timeStamp > 500)
+        {
+            xval = (rand() % 11) * 0.1 - 0.5;
+            yval = (rand() % 11) * 0.1 - 0.5;
+            teleport(xval,yval,3.14);
+            failure ++;
+            std::cout <<"Number of failures: " << failure << std::endl;
+            timeStamp = 0;
+        }
+
+        if (timeStamp == 0)
+        {
+            xval_vec.push_back(xval);
+            yval_vec.push_back(yval);
+            if (getPointI) success_vec.push_back(0);
+            else success_vec.push_back(1);
+
+            getPointI = true;
+            if (xval_vec.size() > 29)
+            {
+                Json test;
+                test.csvCreate(xval_vec, "xvalFile");
+                test.csvCreate(yval_vec, "yvalFile");
+                test.csvCreate(success_vec, "successFile");
+                bool infinity = false;
+                while (true)
+                    if (infinity) infinity = false;
+                            else infinity = true;
+
+
+            }
+        }
+
 
         float angleError = calAngleError(robotPos,goal);
         float goalDistance = calDist(robotPos[0],goal);
