@@ -147,6 +147,7 @@ struct workerParameter
     std::mutex *mux_count;
 };
 
+
 //Central function that runs the learning iterations. Given a configuration it uses QLearning on the model, and saves the result.
 data testQ(QLearning &q, workerParameter &wp, int epsiodes = 2000, int maxStepsInEpsiode = 20, int avgOver = 10, bool randomStartState = true, std::string startState = "S0", bool print = false, std::string preSet = ""){
     data dataset;
@@ -271,20 +272,38 @@ int main2()
     std::queue<qTestPra> qqueue;
     std::mutex mux_qqueue;
 
+    /*
+    qTestPra test1;
+    test1.epsiodes = 200000;
+    test1.maxStepsInEpsiode = 5;
+    test1.avgOver = 100;
+    test1.lable = "Start guess";
+    test1.useDoubelQ = true;
+    test1.numberOfQValues = 2;//3
+    test1.filename = "../QLearning/stats.txt";
+    test1.startState = "S0";
+    test1.randomStartState = true;
+    test1.discount_rate = 0.75;
+    test1.stepSize = 0.2;//0.54
+    test1.greedy = 0.001;//0.03
+    test1.qInitValue = 0;//15
+    qqueue.push(test1);
+    */
+
     qTestPra test1;
     test1.epsiodes = 200000;
     test1.maxStepsInEpsiode = 5;
     test1.avgOver = 100;
     test1.lable = "Optimized";
     test1.useDoubelQ = true;
-    test1.numberOfQValues = 3;//3
+    test1.numberOfQValues = 4;//3
     test1.filename = "../QLearning/stats.txt";
     test1.startState = "S0";
     test1.randomStartState = true;
     test1.discount_rate = 0.75;
-    test1.stepSize = 0.54;//0.54
-    test1.greedy = 0.03;//0.03
-    test1.qInitValue = 15;//15
+    test1.stepSize = 0.5;//0.54
+    test1.greedy = 0.0185;//0.03
+    test1.qInitValue = 16;//15
     qqueue.push(test1);
 
     long long unsigned int count = 0;
@@ -299,11 +318,13 @@ int main2()
     wp.count = &count;
     wp.mux_count = &mux_count;
 
+    int numberOftest = qqueue.size();
+
     for(int i = 0; i < thredsN; i++) threads[i] = std::thread(worker,wp);
 
-    while(dataqueue.size() != 1){
+    while(dataqueue.size() != numberOftest){
         printf("\033c");
-        std::cout << "Running test: " << getProcessbar(count,test1.avgOver,20) << std::endl;
+        std::cout << "Running test: " << getProcessbar(count,test1.avgOver*numberOftest,20) << std::endl;
 
         boost::this_thread::sleep( boost::posix_time::seconds(1) );
 
@@ -341,23 +362,23 @@ int main()
     ground.startState = "S0";
     ground.randomStartState = true;
     ground.discount_rate = 0.75;
-    ground.stepSize = 0.54;//0.54
-    ground.greedy = 0.03;//0.03
-    ground.qInitValue = 15;//15
+    ground.stepSize = 0.5;//0.54
+    ground.greedy = 0.0185;//0.0185
+    ground.qInitValue = 16;//15
 
-    JSONPlot j("Q-learning. Discount_rate: "+fts(ground.discount_rate,3) +", stepSize: "+fts(ground.stepSize,3)+", greedy: test"+/*fts(ground.greedy,3)+*/", qInitValue: "+fts(ground.qInitValue,3), "Episode", "Average reward over "+std::to_string(ground.avgOver)+" repetitions");
+    JSONPlot j("Q-learning. Discount_rate: "+fts(ground.discount_rate,3) +", stepSize: "+fts(ground.stepSize,3)+", epsilon: "+fts(ground.greedy,3)+", qInitValue: "+fts(ground.qInitValue,3), "Episode", "Average reward over "+std::to_string(ground.avgOver)+" repetitions");
 
     //std::vector<int> testVar= {1, 2,3,4};
     //0.1 <- 0.001
 
-    const float minTest = 0.01;
-    const float maxTest = 0.08;
-    const int numberOfTests = 15;//Will be +1
+    const float minTest = 0;
+    const float maxTest = 40;
+    const int numberOfTests = 10;//Will be +1
     const float inc = (maxTest-minTest)/numberOfTests;
-    std::vector<float> testVar;
-    for(float testV = minTest; testV <= maxTest+inc; testV += inc) testVar.push_back(testV);
+    //std::vector<float> testVar;
+    //for(float testV = minTest; testV <= maxTest+inc; testV += inc) testVar.push_back(testV);
 
-    //std::vector<float> testVar= {1,2,3,4,5,6,7,8,9,10};
+    std::vector<float> testVar= {1,2,3,4,5,6,7,8,9};
 
     //Husk også at ændre label!!!!! når du ændre test
 
@@ -368,7 +389,7 @@ int main()
 
     for(unsigned int i = 0; i < testVar.size(); i++){
         qTestPra test = ground;
-        test.greedy = testVar.at(i);
+        test.numberOfQValues = testVar.at(i);
 
         qqueue.push(test);
     }
@@ -405,7 +426,7 @@ int main()
         data dt = dataqueue.front();
         dataqueue.pop();
 
-        j.addData("Greedy: "+std::to_string(dt.prameters.greedy),dt.xdata,dt.ydata);//fts(dt.prameters.greedy,5),dt.xdata,dt.ydata);
+        j.addData("Q values: "+std::to_string(dt.prameters.numberOfQValues),dt.xdata,dt.ydata);//fts(dt.prameters.greedy,5),dt.xdata,dt.ydata);
     }
     j.write();
 

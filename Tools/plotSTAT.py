@@ -56,7 +56,7 @@ while True:
     else:
         break
 
-#plt.legend()
+plt.legend(bbox_to_anchor=(1,0.5), loc="center left")
 plt.grid(color='grey', linestyle='--')
 plt.title(data["titel"])
 
