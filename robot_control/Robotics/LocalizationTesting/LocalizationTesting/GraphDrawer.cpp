@@ -90,12 +90,12 @@ cv::Mat GraphDrawer::getImage()
 
 		for (std::string s : pointsetNames) {
 			sPointset* ps = &pointsets[s];
-			for (Point p : ps->pts) cv::circle(image, (p.times(scale) + translation).getCVPoint(), ps->radius, ps->color, ps->thickness);
+			for (Point p : ps->pts) cv::circle(image, (p.times(scale) + translation).asCV(), ps->radius, ps->color, ps->thickness);
 		}
 
 		for (Line l : lines) {
 			Edge e = l.asEdge(min, max);
-			cv::line(image, (e.A.times(scale) + translation).getCVPoint(), (e.B.times(scale) + translation).getCVPoint(), cv::Vec3b(0,0,0));
+			cv::line(image, (e.A.times(scale) + translation).asCV(), (e.B.times(scale) + translation).asCV(), cv::Vec3b(0,0,0));
 		}
 	}
 	return image;

@@ -35,13 +35,13 @@ public:
 		return 0;
 	}
 
-    /*GridIterator begin() {
+	GridIterator begin() {
 		return GridIterator(this, Point(0, 0));
 	}
 
 	GridIterator end() {
 		return GridIterator();
-    }*/
+	}
 
 	bool inBounds(Point p) { return inBounds(p.x(), p.y()); }
 
@@ -50,9 +50,10 @@ public:
 		return false;
 	}
 
-    /*class GridIterator {
+private:
+	class GridIterator {
 	public:
-		GridIterator() {};
+        GridIterator() {}
 		GridIterator(Grid<T>* grid, Point point) : grid(grid), point(point) {}
 		~GridIterator() {}
 
@@ -81,9 +82,8 @@ public:
 	private:
 		Grid<T>* grid = nullptr;
 		Point point;
-    };*/
+	};
 
-private:
 	std::vector<std::vector<T>> grid;
 };
 

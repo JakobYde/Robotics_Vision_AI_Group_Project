@@ -67,6 +67,20 @@ void Map::loadImage(cv::Mat img, int upscaling)
 	//POST-SCALING PREPROCESSING 
 	wallVertices = getVertices(eObstacle); //(28ms)
 	floorVertices = getVertices(eFree); //(28ms)
+
+    for (Point pt : wallVertices) {
+        Point closestPoint = floorVertices[0];
+        double dist = pt.getDistance(closestPoint);
+        for (Point pt2 : floorVertices) {
+            double newDist = pt.getDistance(pt2);
+            if (newDist < dist) {
+            dist = newDist;
+            closestPoint = pt2;
+            }
+        }
+        cornerVertices.push_back((pt + closestPoint) / 2.0);
+    }
+
 	//edges = getEdges(); //(223ms)
 	calculateBrushfire(); //(437ms)
 }
@@ -124,11 +138,11 @@ cv::Mat Map::drawMap(drawType type, bool draw, drawArguments args)
 			Point p = getPointFromIndex(i);
 			MapNode n = map.at(p);
 			if (n.roomNumber == ROOM_PARTITION) {
-				for (int i = 0; i < postScale; i++) img.at<cv::Vec3b>((p * postScale + Point(i, 0.5 * postScale)).getCVPoint()) = vBlue;
+				for (int i = 0; i < postScale; i++) img.at<cv::Vec3b>((p * postScale + Point(i, 0.5 * postScale)).asCV()) = vBlue;
 			}
 		}
-		for (Point p : points) cv::circle(img, (p * postScale).getCVPoint(), 4, vBlue, -1);
-		for (int i = 0; i < points.size(); i++) cv::putText(img, std::to_string(i), (points[i] * postScale).getCVPoint(), cv::FONT_HERSHEY_PLAIN, 4, cv::Vec3b(0,0,0));
+		for (Point p : points) cv::circle(img, (p * postScale).asCV(), 4, vBlue, -1);
+		for (int i = 0; i < points.size(); i++) cv::putText(img, std::to_string(i), (points[i] * postScale).asCV(), cv::FONT_HERSHEY_PLAIN, 4, cv::Vec3b(0,0,0));
 
 		dontResize = true;
 	}
@@ -153,19 +167,19 @@ cv::Mat Map::drawMap(drawType type, bool draw, drawArguments args)
 		img = drawMap(eBasic, false);
 		for (Edge e : edges) {
 			std::vector<Point> line = e.getPoints();
-			for (Point p : line) img.at<cv::Vec3b>(p.getCVPoint()) = vRed;
+			for (Point p : line) img.at<cv::Vec3b>(p.asCV()) = vRed;
 		}
-		for (Point p : wallVertices) img.at<cv::Vec3b>(p.getCVPoint()) = vBlue;
-		for (Point p : floorVertices) img.at<cv::Vec3b>(p.getCVPoint()) = vDiscovered;
+		for (Point p : wallVertices) img.at<cv::Vec3b>(p.asCV()) = vBlue;
+		for (Point p : floorVertices) img.at<cv::Vec3b>(p.asCV()) = vRed;
 		break;
 
 	case ePath: {
 		Path path = getPath(args.A / scale, args.B / scale, args.padding / scale);
 		windowName = "Path";
 		img = drawMap(eBasic, false);
-		for (Point p : path) img.at<cv::Vec3b>(p.getCVPoint()) = vRed;
+		for (Point p : path) img.at<cv::Vec3b>(p.asCV()) = vRed;
 		path = simplifyPath(path);
-		for (Point p : path) img.at<cv::Vec3b>(p.getCVPoint()) = vBlue;
+		for (Point p : path) img.at<cv::Vec3b>(p.asCV()) = vBlue;
 	}
 		break;
 
@@ -192,15 +206,15 @@ cv::Mat Map::drawMap(drawType type, bool draw, drawArguments args)
 				}
 			}
 		}
-		for (Point p : floorVertices) img.at<cv::Vec3b>(p.getCVPoint()) = cv::Vec3b(0, 255, 0);
+		for (Point p : floorVertices) img.at<cv::Vec3b>(p.asCV()) = cv::Vec3b(0, 255, 0);
 		break;
 	}
 
 	if (draw) {
 		if (!dontResize) cv::resize(img, img, cv::Size(), postScale, postScale, cv::INTER_NEAREST);
-		cv::namedWindow(windowName, CV_WINDOW_AUTOSIZE);
-		cv::imshow(windowName, img);
-		cv::waitKey();
+        cv::namedWindow(windowName, CV_WINDOW_AUTOSIZE);
+        cv::imshow(windowName, img);
+        //cv::waitKey();
 	}
 	return img;
 }
@@ -213,8 +227,14 @@ Map::Plan Map::getPlan()
 	size_t N = points.size();
 	Path* paths = new Path[N * N];
 
+	cv::Mat img = drawMap(eBasic, false);
+	for (Point pt : points) img.at<cv::Vec3b>(pt.asCV()) = vBlue;
+	int postScale = MIN((1000 / map.rows()), (1920 / map.cols()));
+	cv::resize(img, img, cv::Size(), postScale, postScale, cv::INTER_NEAREST);
+	cv::imshow("Plan", img);
+	cv::waitKey(0);
 
-	int startIndex = rand() % N;
+	int startIndex = 8;
 
 	for (int i = 0; i < N; i++) {
 		if (i != startIndex) {
@@ -259,9 +279,9 @@ Map::Plan Map::getPlan()
 			g = i++ / plan.length;
 			gA = 1 - MAX(2 * g - 1, 0);
 			gB = MIN(2 * g, 1);
-			img.at<cv::Vec3b>(pt.getCVPoint()) = (gA * vRed + gB * vGreen);
+			img.at<cv::Vec3b>(pt.asCV()) = (gA * vRed + gB * vGreen);
 		}
-		for (Point pt : points) img.at<cv::Vec3b>(pt.getCVPoint()) = vBlue;
+		for (Point pt : points) img.at<cv::Vec3b>(pt.asCV()) = vBlue;
 		cv::resize(img, img, cv::Size(), postScale, postScale, cv::INTER_NEAREST);
 		cv::imshow("Plan", img);
 		cv::waitKey(1);

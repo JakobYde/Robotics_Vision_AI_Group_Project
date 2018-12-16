@@ -13,14 +13,36 @@
 
 #include "Point.h"
 #include "Lidar.h"
+#include "RandFloat.h"
 
 #define ESC_KEY 27
 
 void statCallback(ConstWorldStatisticsPtr &_msg) {
-  (void)_msg;
+
 }
 
+Lidar::transformation idealPosition;
+Lidar::transformation noisyPosition;
+
+
 void poseCallback(ConstPosesStampedPtr &_msg) {
+
+    for (int i = 0; i < _msg->pose_size(); i++) {
+        if (_msg->pose(i).name() == "pioneer2dx") {
+            double x = _msg->pose(i).position().x();
+            double y = _msg->pose(i).position().y();
+            double z = _msg->pose(i).orientation().z();
+            double w = _msg->pose(i).orientation().w();
+            double a = atan2(w, z);
+            Lidar::transformation newPosition = {{x, y}, a};
+
+            noisyPosition.angle += newPosition.angle - idealPosition.angle + RandFloat(-0.5, 0.5, RandFloat::IrwinHall);
+            noisyPosition.p += newPosition.p - idealPosition.p + Point(RandFloat(-0.5, 0.5, RandFloat::IrwinHall), RandFloat(-0.5, 0.5, RandFloat::IrwinHall));
+            idealPosition = newPosition;
+
+            std::cout << "Ideal position: " << idealPosition.p.x() << ", " << idealPosition.p.y() << " - angle: " << idealPosition.angle << std::endl;
+        }
+    }
 
 }
 
@@ -29,6 +51,7 @@ void cameraCallback(ConstImageStampedPtr &msg) {
 }
 
 Lidar l;
+Map m;
 
 void lidarCallbackImg(ConstLaserScanStampedPtr &msg) {
     std::vector<PolarPoint> polarPoints;
@@ -36,19 +59,20 @@ void lidarCallbackImg(ConstLaserScanStampedPtr &msg) {
     double maxRange = scan->range_max();
     double angleMin = scan->angle_min();
     double angleInc = scan->angle_step();
+    l.setAngleStep(angleInc);
     int nRanges = scan->ranges_size();
 
     for (int i = 0; i < nRanges; i++) {
         if (scan->ranges(i) < maxRange) {
             double angle = angleMin + i * angleInc;
             double range = scan->ranges(i);
-            l.setRadius(range);
+            l.setMaxRadius(range);
             polarPoints.push_back(PolarPoint(range, angle));
         }
     }
 
     l.addMeasurements(polarPoints);
-    l.drawProcess();
+    l.drawProcess(&m, noisyPosition);
 }
 
 int main(int _argc, char **_argv) {
@@ -83,6 +107,12 @@ int main(int _argc, char **_argv) {
     controlMessage.mutable_reset()->set_all(true);
     worldPublisher->WaitForConnection();
     worldPublisher->Publish(controlMessage);
+
+    const std::string imagePath = "map.png";
+    cv::Mat img;
+    img = cv::imread(imagePath);
+    m.loadImage(img, 8);
+    m.drawMap(eGeometry, true);
 
     // Loop
     while (true) {

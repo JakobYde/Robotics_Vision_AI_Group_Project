@@ -13,7 +13,7 @@
 #define BLEND_COLOR(a,b,alpha) (a * (1 - alpha) + b * alpha)
 #define GET_DISTANCE(a,b) (sqrt((a.x() - b.x())*(a.x() - b.x()) + sqrt((a.y() - b.y())*(a.y() - b.y()))))
 
-#define ROBOT_WIDTH 1.01
+#define ROBOT_WIDTH 2
 #define BALL_WIDTH 1
 
 #define ROOM_DEFAULT -1
@@ -50,6 +50,7 @@ struct Box {
 class Map
 {
 private: class MapNode;
+    friend class Lidar;
 public:
 	class Path
 	{
@@ -93,8 +94,8 @@ public:
 		~Plan() {};
 
 		double heuristic() const {
-			return length / (pointsVisited.size() * pointsVisited.size());
-			//return length / pointsVisited.size();
+			//return length / (pointsVisited.size() * pointsVisited.size());
+			return length / pointsVisited.size();
 			return length;
 		}
 
@@ -201,6 +202,7 @@ private:
 	//  -- GEOMETRY --
 	std::vector<Point> wallVertices;
 	std::vector<Point> floorVertices;
+    std::vector<Point> cornerVertices;
 	std::vector<Edge> edges;
 
 	std::vector<Point> getVertices(nodeType type);

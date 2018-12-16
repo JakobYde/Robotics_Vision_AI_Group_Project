@@ -39,7 +39,12 @@ public:
 	Line(double a, double d);
 	~Line();
 
-	Edge asEdge(Point A, Point B);
+	double x(double y);
+	double y(double x);
+
+	Edge asEdge(Point A, Point B, bool extensive = true);
+    bool isColinear(Line l, double threshold = 0.05);
+	Point getIntersection(Line l);
 
 	// Polar representation:
 	// a: Angle to x-axis.

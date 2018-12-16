@@ -11,7 +11,7 @@ class GraphDrawer
 {
 public:
 	GraphDrawer();
-    GraphDrawer(cv::Size imageSize) : imageSize(imageSize) {}
+	GraphDrawer(cv::Size imageSize) : imageSize(imageSize) {};
 	~GraphDrawer();
 
 	void addPoint(Point p, std::string pointset = "");

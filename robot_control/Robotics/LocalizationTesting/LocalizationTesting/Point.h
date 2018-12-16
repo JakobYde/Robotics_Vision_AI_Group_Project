@@ -3,6 +3,8 @@
 #include <opencv2/opencv.hpp>
 
 #include <vector>
+
+#define _USE_MATH_DEFINES
 #include <math.h>
 
 #define ORIGIN (Point(0,0))
@@ -14,13 +16,45 @@ class Point;
 class Line;
 class Edge;
 
-class PolarPoint 
+class Angle
+{
+private:
+    double val;
+  public:
+    Angle();
+    Angle(double val) : val(val) { }
+
+    operator double() const {
+        double _val = val;
+        while (_val < 0) _val += M_PI * 2;
+        _val = fmod(_val, M_PI * 2);
+        return _val;
+    }
+
+    Angle operator+(double val) {
+        return Angle(this->val + val);
+    }
+
+    void operator+=(double val) {
+        this->val += val;
+    }
+
+    void operator/=(double n) {
+        val /= n;
+    }
+
+};
+
+class PolarPoint
 {
 public:
 	PolarPoint();
 	PolarPoint(double d, double angle);
 	Point asPoint();
+	operator Point();
 	double d = 0, angle = 0;
+	
+	static std::vector<Point> asPoint(std::vector<PolarPoint> pts);
 };
 
 class Point
@@ -30,11 +64,12 @@ private:
 
 public:
 	Point() {}
+	Point(double val) : X(val), Y(val) {}
 	Point(double x, double y) : X(x), Y(y) {}
 	~Point() {}
 
-	double& x() { 
-		return X; 
+	double& x() {
+		return X;
 	}
 
 	double& y() {
@@ -93,11 +128,11 @@ public:
 	double getDistance(Line l);
 
 	Point normalized() {
-		return Point(X / MAX(abs(X),abs(Y)), Y / MAX(abs(X),abs(Y)));
+		return Point(X / MAX(abs(X), abs(Y)), Y / MAX(abs(X), abs(Y)));
 	}
 
 	PolarPoint asPolar() {
-		return PolarPoint(sqrt(X*X+Y*Y), atan2((double)Y, (double)X));
+		return PolarPoint(sqrt(X*X + Y * Y), atan2((double)Y, (double)X));
 	}
 
 	Point rotate(double angle) {
@@ -115,11 +150,41 @@ public:
 		return Point(std::floor(X), std::floor(Y));
 	}
 
-	cv::Point getCVPoint() {
-		return cv::Point(X,Y);
+	cv::Point asCV() {
+		return cv::Point(X, Y);
 	}
 
-	cv::Point getCVPoint(double x, double y) {
+	cv::Point asCV(Point offset, cv::Size size) {
+		return cv::Point((X + offset.X) * (0.5 * size.width / offset.X), (Y + offset.Y) * (0.5 * size.height / offset.Y));
+	}
+
+	cv::Point asCV(double x, double y) {
 		return cv::Point(X * x, Y * y);
 	}
+
+	static Point getMinPoint(std::vector<Point> pts) {
+		Point result;
+		if (pts.size() > 0) {
+			result = pts[0];
+			for (Point pt : pts) result = Point(MIN(pt.x(), result.x()), MIN(pt.y(), result.y()));
+		}
+		return result;
+	}
+
+	static Point getMaxPoint(std::vector<Point> pts) {
+		Point result;
+		if (pts.size() > 0) {
+			result = pts[0];
+			for (Point pt : pts) result = Point(MAX(pt.x(), result.x()), MAX(pt.y(), result.y()));
+		}
+		return result;
+	}
+
+    static bool isWithin(Point pt, std::vector<Point> pts) {
+        if (pts.size() != 2) return false;
+        if (pt.x() < MIN(pts[0].x(), pts[1].x()) || pt.x() > MAX(pts[0].x(), pts[1].x())) return false;
+        if (pt.y() < MIN(pts[0].y(), pts[1].y()) || pt.y() > MAX(pts[0].y(), pts[1].y())) return false;
+        return true;
+    }
+
 };

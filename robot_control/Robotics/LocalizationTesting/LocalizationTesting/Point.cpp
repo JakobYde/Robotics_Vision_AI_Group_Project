@@ -15,6 +15,18 @@ Point PolarPoint::asPoint() {
 	return Point(d * cos(angle), d * sin(angle));
 }
 
+PolarPoint::operator Point()
+{
+	return Point(d * cos(angle), d * sin(angle));
+}
+
+std::vector<Point> PolarPoint::asPoint(std::vector<PolarPoint> pts) {
+	std::vector<Point> result;
+	for (PolarPoint pt : pts) result.push_back(pt);
+	return result;
+}
+
+
 double Point::getDistance(Edge e)
 {
 	std::vector<Point> pts = e.getPoints();
@@ -25,10 +37,11 @@ double Point::getDistance(Edge e)
 
 double Point::getDistance(Line l)
 {
-	double x, y, tA = tan(l.a);
+    double x, y;
 
-	x = (X + Y * tA) / (1 + tA * tA);
-	y = x * tA;
+    x = (X + Y * l.A) / (1 + l.A * l.A);
+    y = x * l.A;
 	Point parallelPoint(x, y);
-	return abs(l.d - parallelPoint.getDistance(ORIGIN));
+    double dist = abs(getDistance(parallelPoint) - abs(l.d));
+    return dist;
 }

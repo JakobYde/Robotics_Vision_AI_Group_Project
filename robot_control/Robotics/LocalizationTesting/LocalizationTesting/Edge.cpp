@@ -52,12 +52,38 @@ Line::~Line()
 {
 }
 
-Edge Line::asEdge(Point A, Point B)
+double Line::x(double y)
+{
+	return (y - B) / A;
+}
+
+double Line::y(double x)
+{
+	return A * x + B;
+}
+
+Edge Line::asEdge(Point A, Point B, bool extensive)
 {
 	double minX, maxX, minY, maxY;
-	minX = MIN(MIN(A.x(), (A.y() - Line::B) / Line::A), MIN(B.x(), (B.y() - Line::B) / Line::A));
-	maxX = MAX(MAX(A.x(), (A.y() - Line::B) / Line::A), MAX(B.x(), (B.y() - Line::B) / Line::A));
-	Point edgeA(minX, Line::A * minX + Line::B);
-	Point edgeB(maxX, Line::A * maxX + Line::B);
+	if (extensive) minX = MIN(MIN(A.x(), x(A.y())), MIN(B.x(), x(B.y())));
+	else minX = MIN(MAX(A.x(), x(A.y())), MAX(B.x(), x(B.y())));
+	if (extensive) maxX = MAX(MAX(A.x(), x(A.y())), MAX(B.x(), x(B.y())));
+	else maxX = MAX(MIN(A.x(), x(A.y())), MIN(B.x(), x(B.y())));
+	Point edgeA(minX, y(minX));
+	Point edgeB(maxX, y(maxX));
 	return Edge(edgeA, edgeB);
+}
+
+bool Line::isColinear(Line l, double threshold)
+{
+	double dAngle = abs(a - l.a), dDistance = abs(d - l.d);
+	return (dAngle <= threshold && dDistance <= threshold);
+}
+
+Point Line::getIntersection(Line l)
+{
+	double x, y;
+	x = (l.B - B) / (A - l.A);
+	y = this->y(x);
+	return Point(x, y);
 }

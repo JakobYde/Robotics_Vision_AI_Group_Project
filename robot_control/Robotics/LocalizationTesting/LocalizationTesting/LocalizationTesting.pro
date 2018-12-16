@@ -9,8 +9,7 @@ SOURCES += main.cpp \
             Point.cpp \
             Grid.cpp \
             Map.cpp \
-            GraphDrawer.cpp \
-            Line.cpp
+            GraphDrawer.cpp
 
 HEADERS +=  Lidar.h \
             Edge.h \
@@ -18,7 +17,8 @@ HEADERS +=  Lidar.h \
             Grid.h \
             Map.h \
             GraphDrawer.h \
-            Line.h
+            Line.h \
+            RandFloat.h
 
 CONFIG += link_pkgconfig
 PKGCONFIG += gazebo
